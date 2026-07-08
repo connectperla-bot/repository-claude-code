@@ -1,10 +1,15 @@
 'use strict';
 
-// Riceve il webhook Shopify "orders/create", verifica la firma HMAC e, per ogni
-// riga d'ordine con una personalizzazione (proprieta' "_Personalizzazione"),
-// crea su Printify un prodotto con la foto posizionata esattamente come l'ha
-// impostata il cliente (stessi valori x/y/scale/angle scelti nello studio sul
-// sito), poi crea l'ordine collegato a quel prodotto.
+// Riceve il webhook Shopify "orders/create", verifica la firma HMAC reale di
+// Shopify e, per ogni riga d'ordine con una personalizzazione (proprieta'
+// "_Personalizzazione"), crea su Printify un prodotto con la foto posizionata
+// esattamente come l'ha impostata il cliente (stessi valori x/y/scale/angle
+// scelti nello studio sul sito), poi crea l'ordine collegato a quel prodotto.
+//
+// SHOPIFY_WEBHOOK_SECRET = il "signing secret" mostrato in Shopify Admin ->
+// Impostazioni -> Notifiche -> sezione Webhook, quando crei li' il webhook
+// "Order creation" verso questo servizio. Quel secret firma DAVVERO le
+// richieste in arrivo, quindi la verifica HMAC qui sotto e' autentica.
 //
 // IMPORTANTE: per sicurezza, il nuovo ordine NON viene inviato automaticamente
 // in produzione. Resta in sospeso nel pannello Printify finche' non lo approvi
