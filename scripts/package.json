@@ -1,0 +1,15 @@
+{
+  "name": "perla-printify-integration",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Servizi separati per upload foto cliente, assistente AI e sincronizzazione ordini Printify (non eseguiti dal file .bat)",
+  "scripts": {
+    "start:upload": "node perla-upload-endpoint.js",
+    "start:printify": "node perla-printify-order-sync.js",
+    "start:assistant": "node perla-assistant-bot.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1"
+  }
+}

@@ -1,0 +1,20 @@
+# Segreti - MAI committare
+config/printify.local.env
+config/*.local.env
+.env
+.env.*
+
+# Dipendenze
+node_modules/
+scripts/node_modules/
+
+# Stato locale claude-flow / tool interni, non serve nel repo di deploy
+.claude-flow/
+.hive-mind/
+.swarm/
+ruvector.db
+task.txt
+
+# OS
+Thumbs.db
+.DS_Store

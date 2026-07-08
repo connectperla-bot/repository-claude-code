@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell($p = \"$env:USERPROFILE\\\\Desktop\\\\Perla-Sito-Fix\"; if \\(Test-Path $p\\) { Write-Output \"EXISTS\"; Get-ChildItem $p -Recurse | Select-Object -First 60 FullName } else { Write-Output \"NOT FOUND: $p\" })",
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell($log = \"$env:USERPROFILE\\\\Desktop\\\\Perla-Sito-Fix-log.txt\"; if \\(Test-Path $log\\) { Get-Content $log | Select-String -Pattern \"theme|Theme|push|publish\" } else { \"no log\" })",
+      "PowerShell(Out-Null *)",
+      "PowerShell(node --check \"C:\\\\Users\\\\emanu\\\\ruflo-test\\\\scripts\\\\perla-printify-order-sync.js\")",
+      "PowerShell(node --check \"C:\\\\Users\\\\emanu\\\\ruflo-test\\\\scripts\\\\perla-upload-endpoint.js\")",
+      "PowerShell(if \\($?\\) { \"order-sync OK\" })",
+      "PowerShell(if \\($?\\) { \"upload-endpoint OK\" })",
+      "mcp__claude_ai_Shopify__search_collections",
+      "mcp__claude_ai_Shopify__search_products",
+      "mcp__claude_ai_Shopify__get-shop-info",
+      "mcp__claude_ai_Shopify__get-collection",
+      "Skill(artifact-design)",
+      "Artifact",
+      "mcp__claude_ai_Shopify__validate_graphql_codeblocks",
+      "mcp__claude_ai_Shopify__graphql_query",
+      "mcp__claude_ai_Shopify__graphql_schema",
+      "mcp__claude_ai_Shopify__update-collection",
+      "mcp__claude_ai_Shopify__update-product",
+      "mcp__claude_ai_Shopify__graphql_mutation"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "claude-flow"
+  ]
+}

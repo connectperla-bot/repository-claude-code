@@ -1,0 +1,85 @@
+services:
+  - type: web
+    name: perla-upload-endpoint
+    runtime: node
+    plan: free
+    rootDir: scripts
+    buildCommand: npm install
+    startCommand: node perla-upload-endpoint.js
+    envVars:
+      - key: PRINTIFY_API_KEY
+        sync: false
+      - key: ALLOWED_ORIGIN
+        value: "*"
+      - key: MAX_UPLOAD_MB
+        value: "10"
+
+  - type: web
+    name: perla-printify-order-sync
+    runtime: node
+    plan: free
+    rootDir: scripts
+    buildCommand: npm install
+    startCommand: node perla-printify-order-sync.js
+    envVars:
+      - key: SHOPIFY_WEBHOOK_SECRET
+        sync: false
+      - key: PRINTIFY_API_KEY
+        sync: false
+      - key: PRINTIFY_SHOP_ID
+        value: "27790439"
+      - key: COLLARE_BLUEPRINT_ID
+        value: "784"
+      - key: COLLARE_PROVIDER_ID
+        value: "93"
+      - key: COLLARE_VARIANT_ID
+        value: "74897"
+      - key: BANDANA_BLUEPRINT_ID
+        value: "562"
+      - key: BANDANA_PROVIDER_ID
+        value: "70"
+      - key: BANDANA_VARIANT_ID
+        value: "101403"
+      - key: MEDAGLIETTA_BLUEPRINT_ID
+        value: "566"
+      - key: MEDAGLIETTA_PROVIDER_ID
+        value: "70"
+      - key: MEDAGLIETTA_VARIANT_ID
+        value: "70870"
+      - key: CIOTOLA_BLUEPRINT_ID
+        value: "570"
+      - key: CIOTOLA_PROVIDER_ID
+        value: "70"
+      - key: CIOTOLA_VARIANT_ID
+        value: "71135"
+      - key: CUCCIA_BLUEPRINT_ID
+        value: "419"
+      - key: CUCCIA_PROVIDER_ID
+        value: "10"
+      - key: CUCCIA_VARIANT_ID
+        value: "61436"
+      - key: TAPPETINO_BLUEPRINT_ID
+        value: "855"
+      - key: TAPPETINO_PROVIDER_ID
+        value: "70"
+      - key: TAPPETINO_VARIANT_ID
+        value: "76892"
+      - key: GUINZAGLIO_BLUEPRINT_ID
+        value: "2791"
+      - key: GUINZAGLIO_PROVIDER_ID
+        value: "80"
+      - key: GUINZAGLIO_VARIANT_ID
+        value: "150707"
+
+  - type: web
+    name: perla-assistant-bot
+    runtime: node
+    plan: free
+    rootDir: scripts
+    buildCommand: npm install
+    startCommand: node perla-assistant-bot.js
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ALLOWED_ORIGIN
+        value: "*"
