@@ -1,0 +1,269 @@
+{
+  "fetchedAt": "2026-07-10T10:45:50.050Z",
+  "blueprint": {
+    "id": 784,
+    "title": "Dog Collar",
+    "description": "Add a touch of personality for all the playful pet pals out there with a personalized dog collar. Made in the USA from advanced Thermo-Elastomer material, this personalized collar for dogs is odor and stain-resistant as well as hypoallergenic. Add all your custom ideas and create a stunning collar for your own dog, or design your own custom pet collars line to sell online. <div>.:Comes in 4 sizes</div><br /><div>.:4 buckle options - black onyx, gun metal, rose gold, vintage brass</div><br /><div>.:Odor-proof and stain-resistant</div><br /><div>.:Hypoallergenic</div><br /><div>.:Waterproof and easy to clean</div>",
+    "brand": "Generic brand",
+    "model": "",
+    "images": [
+      "https://images.printify.com/66d703feb3728cd84f07b193",
+      "https://images.printify.com/66d703fff1f29624030ded8a",
+      "https://images.printify.com/67ee8f87318283ab7b0df182",
+      "https://images.printify.com/61893663de5c671241744795",
+      "https://images.printify.com/6189366492e88944e63d3902"
+    ]
+  },
+  "providers": [
+    {
+      "id": 93,
+      "title": "C4",
+      "decoration_methods": [
+        "dye-sublimation"
+      ]
+    }
+  ],
+  "printProviderDetail": null,
+  "variants": [
+    {
+      "id": 74897,
+      "title": "S / Black Onyx / TPU",
+      "options": {
+        "size": "S",
+        "finish": "Black Onyx",
+        "material": "TPU"
+      },
+      "placeholders": [
+        {
+          "position": "front",
+          "decoration_method": "dye-sublimation",
+          "width": 5764,
+          "height": 229
+        }
+      ],
+      "decoration_methods": [
+        "dye-sublimation"
+      ]
+    },
+    {
+      "id": 74898,
+      "title": "S / Gun Metal / TPU",
+      "options": {
+        "size": "S",
+        "finish": "Gun Metal",
+        "material": "TPU"
+      },
+      "placeholders": [
+        {
+          "position": "front",
+          "decoration_method": "dye-sublimation",
+          "width": 5764,
+          "height": 229
+        }
+      ],
+      "decoration_methods": [
+        "dye-sublimation"
+      ]
+    },
+    {
+      "id": 74900,
+      "title": "S / Vintage Brass / TPU",
+      "options": {
+        "size": "S",
+        "finish": "Vintage Brass",
+        "material": "TPU"
+      },
+      "placeholders": [
+        {
+          "position": "front",
+          "decoration_method": "dye-sublimation",
+          "width": 5764,
+          "height": 229
+        }
+      ],
+      "decoration_methods": [
+        "dye-sublimation"
+      ]
+    },
+    {
+      "id": 74901,
+      "title": "M / Black Onyx / TPU",
+      "options": {
+        "size": "M",
+        "finish": "Black Onyx",
+        "material": "TPU"
+      },
+      "placeholders": [
+        {
+          "position": "front",
+          "decoration_method": "dye-sublimation",
+          "width": 7257,
+          "height": 338
+        }
+      ],
+      "decoration_methods": [
+        "dye-sublimation"
+      ]
+    },
+    {
+      "id": 74902,
+      "title": "M / Gun Metal / TPU",
+      "options": {
+        "size": "M",
+        "finish": "Gun Metal",
+        "material": "TPU"
+      },
+      "placeholders": [
+        {
+          "position": "front",
+          "decoration_method": "dye-sublimation",
+          "width": 7257,
+          "height": 338
+        }
+      ],
+      "decoration_methods": [
+        "dye-sublimation"
+      ]
+    },
+    {
+      "id": 74904,
+      "title": "M / Vintage Brass / TPU",
+      "options": {
+        "size": "M",
+        "finish": "Vintage Brass",
+        "material": "TPU"
+      },
+      "placeholders": [
+        {
+          "position": "front",
+          "decoration_method": "dye-sublimation",
+          "width": 7257,
+          "height": 338
+        }
+      ],
+      "decoration_methods": [
+        "dye-sublimation"
+      ]
+    },
+    {
+      "id": 74905,
+      "title": "L / Black Onyx / TPU",
+      "options": {
+        "size": "L",
+        "finish": "Black Onyx",
+        "material": "TPU"
+      },
+      "placeholders": [
+        {
+          "position": "front",
+          "decoration_method": "dye-sublimation",
+          "width": 8318,
+          "height": 338
+        }
+      ],
+      "decoration_methods": [
+        "dye-sublimation"
+      ]
+    },
+    {
+      "id": 74906,
+      "title": "L / Gun Metal / TPU",
+      "options": {
+        "size": "L",
+        "finish": "Gun Metal",
+        "material": "TPU"
+      },
+      "placeholders": [
+        {
+          "position": "front",
+          "decoration_method": "dye-sublimation",
+          "width": 8318,
+          "height": 338
+        }
+      ],
+      "decoration_methods": [
+        "dye-sublimation"
+      ]
+    },
+    {
+      "id": 74908,
+      "title": "L / Vintage Brass / TPU",
+      "options": {
+        "size": "L",
+        "finish": "Vintage Brass",
+        "material": "TPU"
+      },
+      "placeholders": [
+        {
+          "position": "front",
+          "decoration_method": "dye-sublimation",
+          "width": 8318,
+          "height": 338
+        }
+      ],
+      "decoration_methods": [
+        "dye-sublimation"
+      ]
+    },
+    {
+      "id": 74909,
+      "title": "XL / Black Onyx / TPU",
+      "options": {
+        "size": "XL",
+        "finish": "Black Onyx",
+        "material": "TPU"
+      },
+      "placeholders": [
+        {
+          "position": "front",
+          "decoration_method": "dye-sublimation",
+          "width": 9519,
+          "height": 338
+        }
+      ],
+      "decoration_methods": [
+        "dye-sublimation"
+      ]
+    },
+    {
+      "id": 74910,
+      "title": "XL / Gun Metal / TPU",
+      "options": {
+        "size": "XL",
+        "finish": "Gun Metal",
+        "material": "TPU"
+      },
+      "placeholders": [
+        {
+          "position": "front",
+          "decoration_method": "dye-sublimation",
+          "width": 9519,
+          "height": 338
+        }
+      ],
+      "decoration_methods": [
+        "dye-sublimation"
+      ]
+    },
+    {
+      "id": 74912,
+      "title": "XL / Vintage Brass / TPU",
+      "options": {
+        "size": "XL",
+        "finish": "Vintage Brass",
+        "material": "TPU"
+      },
+      "placeholders": [
+        {
+          "position": "front",
+          "decoration_method": "dye-sublimation",
+          "width": 9519,
+          "height": 338
+        }
+      ],
+      "decoration_methods": [
+        "dye-sublimation"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "fetchedAt": "2026-07-10T10:54:36.992Z",
+  "blueprint": {
+    "id": 419,
+    "title": "Pet Bed",
+    "description": "Want to keep that doggo off of your furniture? Give them a place of their own with our pet bed! This feather soft fleece exterior is printable on one side, and has a dark brown zippered back and a pillow insert. Your roving home security system will love to lounge about in their very own nest right at your feet.<div>.:100% Polyester print area </div><br /><div>.:100% Cotton underside</div><br /><div>.:Zipper closure</div><br /><div>.:Shape retaining insert</div><br /><div>.:For indoor use only</div><br /><div>.:Note: Pre-constructed item. Size variance: 28\" × 18\" +/- 2\"; 40\" × 30\" +/- 2\"; 50\" × 40\" +/- 2.5\"</div>",
+    "brand": "Generic brand",
+    "model": "",
+    "images": [
+      "https://images.printify.com/66d83b415d53a711630043e3",
+      "https://images.printify.com/66d83b4e5d53a711630043e4",
+      "https://images.printify.com/5c94c36ab04d1a00184fd627",
+      "https://images.printify.com/5c8fbfae4dd299000e3ae632"
+    ]
+  },
+  "providers": [
+    {
+      "id": 10,
+      "title": "MWW On Demand",
+      "decoration_methods": [
+        "dye-sublimation"
+      ]
+    }
+  ],
+  "printProviderDetail": null,
+  "variants": [
+    {
+      "id": 61435,
+      "title": "50\" × 40\"",
+      "options": {
+        "size": "50\" × 40\""
+      },
+      "placeholders": [
+        {
+          "position": "front",
+          "decoration_method": "dye-sublimation",
+          "width": 15600,
+          "height": 12600
+        }
+      ],
+      "decoration_methods": [
+        "dye-sublimation"
+      ]
+    },
+    {
+      "id": 61436,
+      "title": "28\" × 18\"",
+      "options": {
+        "size": "28\" × 18\""
+      },
+      "placeholders": [
+        {
+          "position": "front",
+          "decoration_method": "dye-sublimation",
+          "width": 8850,
+          "height": 5850
+        }
+      ],
+      "decoration_methods": [
+        "dye-sublimation"
+      ]
+    },
+    {
+      "id": 61437,
+      "title": "40\" × 30\"",
+      "options": {
+        "size": "40\" × 30\""
+      },
+      "placeholders": [
+        {
+          "position": "front",
+          "decoration_method": "dye-sublimation",
+          "width": 12750,
+          "height": 9750
+        }
+      ],
+      "decoration_methods": [
+        "dye-sublimation"
+      ]
+    }
+  ]
+}

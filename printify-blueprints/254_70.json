@@ -1,0 +1,28 @@
+{
+  "fetchedAt": "2026-07-10T08:15:09.115Z",
+  "blueprint": {
+    "id": 254,
+    "title": "Bath Mat",
+    "description": "More personalization options for the most private room in one's house. This bath mat is as practical as it is stylish - the anti-slip backing keeps the bath mat firmly in place and reduces the risk of slipping.<div>.:Material: 100% Memory foam microfiber</div><br /><div>.:Binding around the edges</div><br /><div>.:Anti-slip backing</div><br /><div>.:Note: Pre-constructed item. Size variance: 24\" × 17\" +/- 0.75\"; 34\" × 21\" +/- 1\"</div><br /><div>.:Blank product sourced from China</div>",
+    "brand": "Generic brand",
+    "model": "",
+    "images": [
+      "https://images.printify.com/66c4585ff7f6f215ba05cb14",
+      "https://images.printify.com/66c45861f62c4399850f75d4",
+      "https://images.printify.com/5989cb4cb8e7e33e11528213",
+      "https://images.printify.com/5989cc34b8e7e310430f963c",
+      "https://images.printify.com/5989ccd0b8e7e33e2c3110d5"
+    ]
+  },
+  "providers": [
+    {
+      "id": 10,
+      "title": "MWW On Demand",
+      "decoration_methods": [
+        "dye-sublimation"
+      ]
+    }
+  ],
+  "printProviderDetail": null,
+  "variants": []
+}

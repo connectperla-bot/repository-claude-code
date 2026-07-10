@@ -1,0 +1,65 @@
+{
+  "fetchedAt": "2026-07-10T10:54:36.737Z",
+  "blueprint": {
+    "id": 562,
+    "title": "Pet Bandana",
+    "description": "The custom dog bandana is a great way to add some personality to your pet. These accessories are printable on the front side. Made of soft-spun polyester, the fabric will not bunch or irritate your pet’s skin. While animals already have their own character, a custom pet bandana can help bring things to the next level. All it needs is a stylish design.<div>.:Material: 100% polyester</div><br /><div>.:Available in 2 sizes: 20\" × 9.75\" (50.8 × 24.8cm) and 27\" × 13\" (68.6 × 33.0cm)</div><br /><div>.:One-sided print</div><br /><div>.:Sewn in label</div><br /><div>.:Pre-constructed item (size varies +/- 1\"(2.5cm))</div><br /><div>.:Blank product sourced from China</div>",
+    "brand": "Evergreen",
+    "model": "",
+    "images": [
+      "https://images.printify.com/66d6e4508fac8115920c1c82",
+      "https://images.printify.com/66d6e44c77c823835d05e673",
+      "https://images.printify.com/6037a28101714f5fda2a591a",
+      "https://images.printify.com/647609ac541a9c9e300f4b24",
+      "https://images.printify.com/647847b94d993dff8d09dbf3"
+    ]
+  },
+  "providers": [
+    {
+      "id": 70,
+      "title": "Printed Mint",
+      "decoration_methods": [
+        "dye-sublimation"
+      ]
+    }
+  ],
+  "printProviderDetail": null,
+  "variants": [
+    {
+      "id": 101403,
+      "title": "20\" × 10\"",
+      "options": {
+        "size": "20\" × 10\""
+      },
+      "placeholders": [
+        {
+          "position": "front",
+          "decoration_method": "dye-sublimation",
+          "width": 3150,
+          "height": 1691
+        }
+      ],
+      "decoration_methods": [
+        "dye-sublimation"
+      ]
+    },
+    {
+      "id": 101404,
+      "title": "27\" × 13\"",
+      "options": {
+        "size": "27\" × 13\""
+      },
+      "placeholders": [
+        {
+          "position": "front",
+          "decoration_method": "dye-sublimation",
+          "width": 4275,
+          "height": 2325
+        }
+      ],
+      "decoration_methods": [
+        "dye-sublimation"
+      ]
+    }
+  ]
+}

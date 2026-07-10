@@ -1,0 +1,53 @@
+{
+  "fetchedAt": "2026-07-10T10:54:36.688Z",
+  "blueprint": {
+    "id": 566,
+    "title": "Pet Tag",
+    "description": "Personalized pet tags provide a fresh way to spice up a furry friend's collar. The tag and clip are both made of metal. This increased durability comes in handy, as collar pieces can snag on brush, corners, etc. The base color is white, giving designs an even printing surface. Both sides are flattened. <div>.:Print on both sides</div><br /><div>.:Material: white coated solid metal</div><br /><div>.:Size: 1\" round</div><br /><div>.:Metal clip included</div>",
+    "brand": "Generic brand",
+    "model": "",
+    "images": [
+      "https://images.printify.com/66d6e59677c823835d05e677",
+      "https://images.printify.com/66d6e5955ee96747660897d2",
+      "https://images.printify.com/602e2ab9b38eaf0ba200feb5",
+      "https://images.printify.com/602e3096de7e343e995e78f6",
+      "https://images.printify.com/60366fbd50e7a24e2611140b"
+    ]
+  },
+  "providers": [
+    {
+      "id": 70,
+      "title": "Printed Mint",
+      "decoration_methods": [
+        "dye-sublimation"
+      ]
+    }
+  ],
+  "printProviderDetail": null,
+  "variants": [
+    {
+      "id": 70870,
+      "title": "1\"",
+      "options": {
+        "size": "1\""
+      },
+      "placeholders": [
+        {
+          "position": "front",
+          "decoration_method": "dye-sublimation",
+          "width": 810,
+          "height": 900
+        },
+        {
+          "position": "back",
+          "decoration_method": "dye-sublimation",
+          "width": 810,
+          "height": 900
+        }
+      ],
+      "decoration_methods": [
+        "dye-sublimation"
+      ]
+    }
+  ]
+}

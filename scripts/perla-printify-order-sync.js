@@ -28,6 +28,7 @@ const {
   SHOPIFY_WEBHOOK_SECRET,
   PRINTIFY_API_KEY,
   PRINTIFY_SHOP_ID,
+  PERLA_LOGO_IMAGE_ID,
   PORT = 3000,
 } = process.env;
 
@@ -150,7 +151,7 @@ async function createPrintifyProduct(order, item, custom, config) {
     headers: { Authorization: 'Bearer ' + PRINTIFY_API_KEY, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       title: (item.title || 'Personalizzato') + ' - Ordine #' + order.order_number,
-      description: 'Prodotto personalizzato dal cliente tramite lo studio foto del sito.',
+      description: 'Your best friend deserves the best. This custom personalized pet accessory is inspired by Italian elegance — clean lines and premium materials. As loved by real pets Aron & Mia.\n\n- Premium materials: soft, durable, easy to clean\n- Secure construction for daily use\n- Personalized with your pet\'s name or photo\n\nShips within the USA in 3-8 business days. FREE shipping over $59.\n\nCountry of Origin: varies by provider (often USA or imported). Complies with applicable U.S. consumer product safety regulations (CPSIA where applicable). Always supervise your pet. Personalized items are final sale. Tested on Aron & Mia.',
       blueprint_id: config.blueprintId,
       print_provider_id: config.printProviderId,
       variants: [{ id: config.variantId, price: 0, is_enabled: true }],
@@ -168,6 +169,14 @@ async function createPrintifyProduct(order, item, custom, config) {
                   scale: custom.scale,
                   angle: custom.angle,
                 },
+                // Fixed Perla logo layer - always visible, small in corner
+                ...(PERLA_LOGO_IMAGE_ID ? [{
+                  id: PERLA_LOGO_IMAGE_ID,
+                  x: 0.82,
+                  y: 0.82,
+                  scale: 0.12,
+                  angle: 0,
+                }] : []),
               ],
             },
           ],
