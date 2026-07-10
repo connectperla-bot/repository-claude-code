@@ -10,11 +10,17 @@
 const express = require('express');
 const multer = require('multer');
 
-const { PRINTIFY_API_KEY, PORT = 3001, MAX_UPLOAD_MB = 10, ALLOWED_ORIGIN = '*' } = process.env;
+const { PRINTIFY_API_KEY, PRINTIFY_SHOP_ID, PORT = 3001, MAX_UPLOAD_MB = 10, ALLOWED_ORIGIN = '*' } = process.env;
 
 if (!PRINTIFY_API_KEY) {
   console.error('Variabile PRINTIFY_API_KEY mancante: vedi config/printify.env.example');
   process.exit(1);
+}
+// PRINTIFY_SHOP_ID serve solo per /pattern-source (design di base dei prodotti
+// tipo 2/3). Non blocca l'avvio: /upload continua a funzionare senza, cosi'
+// il deploy non si rompe finche' non si aggiunge la variabile su Render.
+if (!PRINTIFY_SHOP_ID) {
+  console.warn('Variabile PRINTIFY_SHOP_ID mancante: /pattern-source restituira errore finche\' non la imposti.');
 }
 
 const ALLOWED_MIME = new Set(['image/png', 'image/jpeg', 'image/webp']);
@@ -67,6 +73,69 @@ app.post('/upload', upload.single('photo'), async function (req, res) {
   } catch (err) {
     console.error('Errore upload Printify:', err.message);
     res.status(502).json({ error: 'Caricamento su Printify non riuscito' });
+  }
+});
+
+// Design di base di un prodotto tipo 2/3 (pattern esistente o solo-logo su cui
+// il cliente aggiunge foto/nome/testo). Il frontend lo chiama una volta con il
+// printify_product_id salvato nel metafield printify_custom.printify_product_id
+// (vedi sections/main-product.liquid) per mostrare quel design come sfondo
+// dell'area di stampa e per mandarlo a scripts/perla-printify-order-sync.js
+// come base_image_id, cosi' l'ordine finale include design + aggiunte del
+// cliente invece di sostituire il design con la sola foto.
+const patternSourceCache = new Map(); // productId -> { data, expires }
+const PATTERN_SOURCE_TTL_MS = 10 * 60 * 1000;
+
+app.get('/pattern-source', async function (req, res) {
+  const productId = String(req.query.printify_product_id || '').trim();
+  if (!productId) {
+    return res.status(400).json({ error: 'printify_product_id mancante' });
+  }
+  if (!PRINTIFY_SHOP_ID) {
+    return res.status(500).json({ error: 'PRINTIFY_SHOP_ID non configurato sul server' });
+  }
+
+  const cached = patternSourceCache.get(productId);
+  if (cached && cached.expires > Date.now()) {
+    return res.json(cached.data);
+  }
+
+  try {
+    const productRes = await fetch(
+      'https://api.printify.com/v1/shops/' + PRINTIFY_SHOP_ID + '/products/' + productId + '.json',
+      { headers: { Authorization: 'Bearer ' + PRINTIFY_API_KEY } }
+    );
+    if (!productRes.ok) {
+      const text = await productRes.text();
+      throw new Error('Printify product error (' + productRes.status + '): ' + text);
+    }
+    const product = await productRes.json();
+    const baseImageId = product.print_areas &&
+      product.print_areas[0] &&
+      product.print_areas[0].placeholders &&
+      product.print_areas[0].placeholders[0] &&
+      product.print_areas[0].placeholders[0].images &&
+      product.print_areas[0].placeholders[0].images[0] &&
+      product.print_areas[0].placeholders[0].images[0].id;
+    if (!baseImageId) {
+      return res.status(404).json({ error: 'Nessun design di base trovato su questo prodotto Printify' });
+    }
+
+    const uploadRes = await fetch('https://api.printify.com/v1/uploads/' + baseImageId + '.json', {
+      headers: { Authorization: 'Bearer ' + PRINTIFY_API_KEY },
+    });
+    if (!uploadRes.ok) {
+      const text = await uploadRes.text();
+      throw new Error('Printify upload lookup error (' + uploadRes.status + '): ' + text);
+    }
+    const uploadData = await uploadRes.json();
+
+    const data = { id: uploadData.id, preview_url: uploadData.preview_url };
+    patternSourceCache.set(productId, { data: data, expires: Date.now() + PATTERN_SOURCE_TTL_MS });
+    res.json(data);
+  } catch (err) {
+    console.error('Errore pattern-source:', err.message);
+    res.status(502).json({ error: 'Impossibile recuperare il design di base da Printify' });
   }
 });
 

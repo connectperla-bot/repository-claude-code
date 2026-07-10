@@ -162,6 +162,17 @@ async function createPrintifyProduct(order, item, custom, config) {
             {
               position: custom.position || 'front',
               images: [
+                // Design di base (pattern tipo 2, o solo-logo tipo 3), sotto a
+                // tutto il resto. Identita' perche' e' gia' a piena area (vedi
+                // GET /pattern-source in perla-upload-endpoint.js). Assente per
+                // i prodotti tipo 1-con-foto di oggi: nessun cambiamento li'.
+                ...(custom.base_image_id ? [{
+                  id: custom.base_image_id,
+                  x: 0.5,
+                  y: 0.5,
+                  scale: 1,
+                  angle: 0,
+                }] : []),
                 {
                   id: custom.printify_image_id,
                   x: custom.x,

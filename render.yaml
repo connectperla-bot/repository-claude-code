@@ -9,6 +9,8 @@ services:
     envVars:
       - key: PRINTIFY_API_KEY
         sync: false
+      - key: PRINTIFY_SHOP_ID
+        value: "27790439"
       - key: ALLOWED_ORIGIN
         value: "*"
       - key: MAX_UPLOAD_MB
@@ -28,6 +30,8 @@ services:
         sync: false
       - key: PRINTIFY_SHOP_ID
         value: "27790439"
+      - key: PERLA_LOGO_IMAGE_ID
+        sync: false
       - key: COLLARE_BLUEPRINT_ID
         value: "784"
       - key: COLLARE_PROVIDER_ID
