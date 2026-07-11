@@ -222,10 +222,7 @@ app.post('/generate-mockup', express.json(), async function (req, res) {
     res.json({ images: mockupImages.slice(0, 4) });
   } catch (err) {
     console.error('Errore generate-mockup:', err.message);
-    // ATTENZIONE: dettaglio incluso temporaneamente in risposta per capire
-    // perche' fallisce (nessun dato del cliente qui dentro, solo l'errore
-    // tecnico di Printify) - da rimuovere una volta risolto.
-    res.status(502).json({ error: 'Impossibile generare l\'anteprima da Printify', detail: err.message });
+    res.status(502).json({ error: 'Impossibile generare l\'anteprima da Printify' });
   } finally {
     if (tempProductId) {
       try {
