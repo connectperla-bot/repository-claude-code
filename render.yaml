@@ -15,6 +15,48 @@ services:
         value: "*"
       - key: MAX_UPLOAD_MB
         value: "10"
+      - key: COLLARE_BLUEPRINT_ID
+        value: "784"
+      - key: COLLARE_PROVIDER_ID
+        value: "93"
+      - key: COLLARE_VARIANT_ID
+        value: "74897"
+      - key: BANDANA_BLUEPRINT_ID
+        value: "562"
+      - key: BANDANA_PROVIDER_ID
+        value: "70"
+      - key: BANDANA_VARIANT_ID
+        value: "101403"
+      - key: MEDAGLIETTA_BLUEPRINT_ID
+        value: "566"
+      - key: MEDAGLIETTA_PROVIDER_ID
+        value: "70"
+      - key: MEDAGLIETTA_VARIANT_ID
+        value: "70870"
+      - key: CIOTOLA_BLUEPRINT_ID
+        value: "570"
+      - key: CIOTOLA_PROVIDER_ID
+        value: "70"
+      - key: CIOTOLA_VARIANT_ID
+        value: "71135"
+      - key: CUCCIA_BLUEPRINT_ID
+        value: "419"
+      - key: CUCCIA_PROVIDER_ID
+        value: "10"
+      - key: CUCCIA_VARIANT_ID
+        value: "61436"
+      - key: TAPPETINO_BLUEPRINT_ID
+        value: "855"
+      - key: TAPPETINO_PROVIDER_ID
+        value: "70"
+      - key: TAPPETINO_VARIANT_ID
+        value: "76892"
+      - key: GUINZAGLIO_BLUEPRINT_ID
+        value: "2791"
+      - key: GUINZAGLIO_PROVIDER_ID
+        value: "80"
+      - key: GUINZAGLIO_VARIANT_ID
+        value: "150707"
 
   - type: web
     name: perla-printify-order-sync

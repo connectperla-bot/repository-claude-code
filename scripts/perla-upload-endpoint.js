@@ -139,6 +139,104 @@ app.get('/pattern-source', async function (req, res) {
   }
 });
 
+// "Salva anteprima" - genera un mockup REALE (fotorealistico, generato dai
+// server di Printify) del design del cliente. Regole di sicurezza:
+// 1. Non tocca MAI il prodotto vero collegato al catalogo: se aggiornassimo
+//    quello, la vetrina cambierebbe per TUTTI i clienti che lo guardano in
+//    quel momento, non solo per chi ha chiesto l'anteprima.
+// 2. Crea un prodotto TEMPORANEO isolato per QUESTA richiesta soltanto e lo
+//    cancella subito dopo aver preso le immagini (blocco finally qui sotto):
+//    mai un prodotto "di scorta" riusato tra piu' richieste, perche' la foto
+//    personale di un cliente potrebbe comparire per sbaglio nell'anteprima
+//    generata nello stesso momento per un altro cliente.
+const MOCKUP_PRODUCT_TYPES = ['COLLARE', 'BANDANA', 'MEDAGLIETTA', 'CIOTOLA', 'CUCCIA', 'TAPPETINO', 'GUINZAGLIO'];
+const MOCKUP_POLL_ATTEMPTS = 6;
+const MOCKUP_POLL_DELAY_MS = 1500;
+
+app.post('/generate-mockup', express.json(), async function (req, res) {
+  const body = req.body || {};
+  const type = String(body.product_type || '').toUpperCase();
+  const baseImageId = body.base_image_id;
+  const compositeImageId = body.composite_image_id;
+
+  if (!compositeImageId) {
+    return res.status(400).json({ error: 'composite_image_id mancante' });
+  }
+  if (!PRINTIFY_SHOP_ID) {
+    return res.status(500).json({ error: 'PRINTIFY_SHOP_ID non configurato sul server' });
+  }
+  if (MOCKUP_PRODUCT_TYPES.indexOf(type) === -1) {
+    return res.status(400).json({ error: 'Tipo prodotto non riconosciuto' });
+  }
+  const blueprintId = Number(process.env[type + '_BLUEPRINT_ID']);
+  const providerId = Number(process.env[type + '_PROVIDER_ID']);
+  const variantId = Number(process.env[type + '_VARIANT_ID']);
+  if (!blueprintId || !providerId || !variantId) {
+    return res.status(500).json({ error: 'Configurazione blueprint/provider/variante mancante sul server per questo tipo' });
+  }
+
+  const images = [];
+  if (baseImageId) images.push({ id: baseImageId, x: 0.5, y: 0.5, scale: 1, angle: 0 });
+  images.push({ id: compositeImageId, x: 0.5, y: 0.5, scale: 1, angle: 0 });
+
+  let tempProductId = null;
+  try {
+    const createRes = await fetch('https://api.printify.com/v1/shops/' + PRINTIFY_SHOP_ID + '/products.json', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + PRINTIFY_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: 'Perla - Anteprima temporanea',
+        description: 'Prodotto generato automaticamente solo per mostrare un\'anteprima al cliente. Viene cancellato in automatico subito dopo.',
+        blueprint_id: blueprintId,
+        print_provider_id: providerId,
+        variants: [{ id: variantId, price: 100, is_enabled: true }],
+        print_areas: [{ variant_ids: [variantId], placeholders: [{ position: 'front', images: images }] }],
+        tags: ['perla-preview-temp'],
+      }),
+    });
+    if (!createRes.ok) {
+      const text = await createRes.text();
+      throw new Error('Printify create error (' + createRes.status + '): ' + text);
+    }
+    const created = await createRes.json();
+    tempProductId = created.id;
+
+    // Il mockup viene generato lato Printify in modo asincrono: si interroga
+    // il prodotto finche' le immagini non sono pronte o si arriva al limite
+    // di tentativi (~9 secondi totali).
+    let mockupImages = (created.images || []).map(function (img) { return img.src; }).filter(Boolean);
+    for (let attempt = 0; attempt < MOCKUP_POLL_ATTEMPTS && mockupImages.length === 0; attempt++) {
+      await new Promise(function (r) { setTimeout(r, MOCKUP_POLL_DELAY_MS); });
+      const checkRes = await fetch('https://api.printify.com/v1/shops/' + PRINTIFY_SHOP_ID + '/products/' + tempProductId + '.json', {
+        headers: { Authorization: 'Bearer ' + PRINTIFY_API_KEY },
+      });
+      if (checkRes.ok) {
+        const checked = await checkRes.json();
+        mockupImages = (checked.images || []).map(function (img) { return img.src; }).filter(Boolean);
+      }
+    }
+
+    if (mockupImages.length === 0) {
+      return res.status(504).json({ error: 'Anteprima non pronta, riprova tra qualche secondo' });
+    }
+    res.json({ images: mockupImages.slice(0, 4) });
+  } catch (err) {
+    console.error('Errore generate-mockup:', err.message);
+    res.status(502).json({ error: 'Impossibile generare l\'anteprima da Printify' });
+  } finally {
+    if (tempProductId) {
+      try {
+        await fetch('https://api.printify.com/v1/shops/' + PRINTIFY_SHOP_ID + '/products/' + tempProductId + '.json', {
+          method: 'DELETE',
+          headers: { Authorization: 'Bearer ' + PRINTIFY_API_KEY },
+        });
+      } catch (cleanupErr) {
+        console.error('Errore cancellazione prodotto temporaneo:', cleanupErr.message);
+      }
+    }
+  }
+});
+
 app.use(function (err, req, res, next) {
   console.error('Errore upload:', err.message);
   res.status(400).json({ error: err.message });
