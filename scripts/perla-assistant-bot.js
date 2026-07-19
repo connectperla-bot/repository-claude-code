@@ -2,7 +2,7 @@
 
 // Servizio di risposta reale per l'assistente del sito (bolla in basso a destra).
 // Riceve la domanda del cliente e risponde usando un modello linguistico gratuito
-// (Google Gemini - gemini-1.5-flash, piano gratuito senza carta di credito:
+// (Google Gemini - gemini-flash-latest, piano gratuito senza carta di credito:
 // https://aistudio.google.com/apikey).
 // Va avviato ed ospitato separatamente (non viene eseguito dal file .bat).
 //
@@ -28,7 +28,8 @@ Regole:
 - Pagamenti: carte (Visa, Mastercard, Amex), PayPal, Apple Pay, Google Pay. Anche a rate con Scalapay/Klarna.
 - Prodotti personalizzabili: nome del pet ricamato/stampato, e in alcuni prodotti foto caricata dal cliente.
 - Se non conosci la risposta, o riguarda un ordine specifico (numero d'ordine, stato spedizione reale),
-  invita gentilmente il cliente a scrivere su WhatsApp o via email invece di inventare informazioni.
+  invita gentilmente il cliente a scrivere via email invece di inventare informazioni. Non menzionare
+  mai WhatsApp: il canale di contatto per le richieste che non sai gestire e' solo l'email.
 - Non inventare mai policy, prezzi o tempi diversi da quelli sopra.
 - Rispondi in massimo 3 frasi.`;
 
@@ -60,7 +61,7 @@ app.post('/assistant/ask', async function (req, res) {
 
 async function askGemini(message) {
   const url =
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' +
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=' +
     GEMINI_API_KEY;
 
   const response = await fetch(url, {
@@ -69,7 +70,11 @@ async function askGemini(message) {
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
       contents: [{ role: 'user', parts: [{ text: message }] }],
-      generationConfig: { maxOutputTokens: 200, temperature: 0.4 },
+      generationConfig: {
+        maxOutputTokens: 300,
+        temperature: 0.4,
+        thinkingConfig: { thinkingBudget: 0 },
+      },
     }),
   });
 
