@@ -224,15 +224,26 @@ app.post('/generate-mockup', express.json(), async function (req, res) {
     console.error('Errore generate-mockup:', err.message);
     res.status(502).json({ error: 'Impossibile generare l\'anteprima da Printify' });
   } finally {
+    // FIX "schermo blu, l'anteprima non si apre": cancellare il prodotto
+    // temporaneo SUBITO dopo aver risposto rompeva gli URL delle immagini
+    // mockup nel giro di pochi secondi (sono servite da Printify legate
+    // all'esistenza del prodotto) - la miniatura faceva in tempo a caricarsi
+    // una volta, ma cliccandola per ingrandirla il link era gia' morto.
+    // Il prodotto resta comunque dedicato a QUESTA sola richiesta (creato
+    // sopra, mai riusato tra clienti diversi: l'unico motivo per cui va
+    // cancellato e' non lasciare scorie nel catalogo Printify, non la
+    // privacy tra clienti) quindi possiamo ritardare la cancellazione senza
+    // reintrodurre il rischio che due clienti vedano la foto l'uno dell'altro.
     if (tempProductId) {
-      try {
-        await fetch('https://api.printify.com/v1/shops/' + PRINTIFY_SHOP_ID + '/products/' + tempProductId + '.json', {
+      const idToDelete = tempProductId;
+      setTimeout(function () {
+        fetch('https://api.printify.com/v1/shops/' + PRINTIFY_SHOP_ID + '/products/' + idToDelete + '.json', {
           method: 'DELETE',
           headers: { Authorization: 'Bearer ' + PRINTIFY_API_KEY },
+        }).catch(function (cleanupErr) {
+          console.error('Errore cancellazione prodotto temporaneo:', cleanupErr.message);
         });
-      } catch (cleanupErr) {
-        console.error('Errore cancellazione prodotto temporaneo:', cleanupErr.message);
-      }
+      }, 10 * 60 * 1000);
     }
   }
 });
