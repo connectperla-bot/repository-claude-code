@@ -28,7 +28,6 @@ const {
   SHOPIFY_WEBHOOK_SECRET,
   PRINTIFY_API_KEY,
   PRINTIFY_SHOP_ID,
-  PERLA_LOGO_IMAGE_ID,
   PORT = 3000,
 } = process.env;
 
@@ -180,14 +179,17 @@ async function createPrintifyProduct(order, item, custom, config) {
                   scale: custom.scale,
                   angle: custom.angle,
                 },
-                // Fixed Perla logo layer - always visible, small in corner
-                ...(PERLA_LOGO_IMAGE_ID ? [{
-                  id: PERLA_LOGO_IMAGE_ID,
-                  x: 0.82,
-                  y: 0.82,
-                  scale: 0.12,
-                  angle: 0,
-                }] : []),
+                // ROUND 16 — rimossa l'iniezione fissa del logo (era qui,
+                // vedi git log per PERLA_LOGO_IMAGE_ID): il logo Perla ora
+                // vive come livello nell'editor sul sito (sempre presente,
+                // non cancellabile, vedi assets/global.js) e viaggia gia'
+                // dentro custom.printify_image_id (il composito che il
+                // cliente vede e compone). Reintrodurlo qui creerebbe un
+                // logo doppio. custom.printify_image_id esiste SOLO quando
+                // il composito e' stato generato dall'editor (vedi il
+                // controllo custom.printify_image_id piu' sopra in
+                // handleCustomItem), quindi il logo e' garantito presente
+                // per ogni ordine che arriva fin qui.
               ],
             },
           ],
