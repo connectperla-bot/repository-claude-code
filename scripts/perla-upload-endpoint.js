@@ -158,6 +158,12 @@ app.post('/generate-mockup', express.json(), async function (req, res) {
   const type = String(body.product_type || '').toUpperCase();
   const baseImageId = body.base_image_id;
   const compositeImageId = body.composite_image_id;
+  // ROUND 17 — retro opzionale (medaglietta doppio lato): se presente, il
+  // prodotto temporaneo per il mockup include anche il placeholder "back",
+  // cosi' l'anteprima reale mostra entrambi i lati. Assente per tutti gli altri
+  // prodotti/lati singoli: comportamento di oggi invariato.
+  const backBaseImageId = body.back_base_image_id;
+  const backCompositeImageId = body.back_composite_image_id;
 
   if (!compositeImageId) {
     return res.status(400).json({ error: 'composite_image_id mancante' });
@@ -175,9 +181,16 @@ app.post('/generate-mockup', express.json(), async function (req, res) {
     return res.status(500).json({ error: 'Configurazione blueprint/provider/variante mancante sul server per questo tipo' });
   }
 
-  const images = [];
-  if (baseImageId) images.push({ id: baseImageId, x: 0.5, y: 0.5, scale: 1, angle: 0 });
-  images.push({ id: compositeImageId, x: 0.5, y: 0.5, scale: 1, angle: 0 });
+  function buildMockupImages(baseId, compositeId) {
+    const imgs = [];
+    if (baseId) imgs.push({ id: baseId, x: 0.5, y: 0.5, scale: 1, angle: 0 });
+    imgs.push({ id: compositeId, x: 0.5, y: 0.5, scale: 1, angle: 0 });
+    return imgs;
+  }
+  const placeholders = [{ position: 'front', images: buildMockupImages(baseImageId, compositeImageId) }];
+  if (backCompositeImageId) {
+    placeholders.push({ position: 'back', images: buildMockupImages(backBaseImageId, backCompositeImageId) });
+  }
 
   let tempProductId = null;
   try {
@@ -190,7 +203,7 @@ app.post('/generate-mockup', express.json(), async function (req, res) {
         blueprint_id: blueprintId,
         print_provider_id: providerId,
         variants: [{ id: variantId, price: 100, is_enabled: true }],
-        print_areas: [{ variant_ids: [variantId], placeholders: [{ position: 'front', images: images }] }],
+        print_areas: [{ variant_ids: [variantId], placeholders: placeholders }],
         tags: ['perla-preview-temp'],
       }),
     });

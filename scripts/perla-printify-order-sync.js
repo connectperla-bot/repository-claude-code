@@ -101,15 +101,33 @@ app.post('/webhooks/orders-create', async function (req, res) {
     }
 
     const order = JSON.parse(req.body.toString('utf8'));
+    // ROUND 17 — una riga e' personalizzata se ha il FRONTE o il RETRO valorizzato.
+    // Sul doppio lato (medaglietta) il cliente puo' lasciare il fronte al solo
+    // logo (che non genera composito, vedi hasContent in assets/global.js) e
+    // riempire solo il retro: quella riga NON va persa.
     const customItems = (order.line_items || []).filter(function (item) {
-      return (item.properties || []).some(function (p) { return p.name === '_Personalizzazione' && p.value; });
+      return (item.properties || []).some(function (p) {
+        return (p.name === '_Personalizzazione' || p.name === '_Personalizzazione_Retro') && p.value;
+      });
     });
 
     for (const item of customItems) {
-      const raw = item.properties.find(function (p) { return p.name === '_Personalizzazione'; }).value;
-      let custom;
-      try { custom = JSON.parse(raw); } catch (e) { console.error('Personalizzazione non leggibile:', raw); continue; }
-      await handleCustomItem(order, item, custom);
+      let custom = null;
+      const frontProp = item.properties.find(function (p) { return p.name === '_Personalizzazione' && p.value; });
+      if (frontProp) {
+        try { custom = JSON.parse(frontProp.value); }
+        catch (e) { console.error('Personalizzazione (fronte) non leggibile:', frontProp.value); }
+      }
+      // Retro opzionale (medaglietta doppio lato): presente solo se il cliente
+      // ha personalizzato ANCHE/SOLO il retro (input _Personalizzazione_Retro,
+      // vedi sections/main-product.liquid).
+      let customBack = null;
+      const backProp = item.properties.find(function (p) { return p.name === '_Personalizzazione_Retro' && p.value; });
+      if (backProp) {
+        try { customBack = JSON.parse(backProp.value); }
+        catch (e) { console.error('Personalizzazione (retro) non leggibile:', backProp.value); }
+      }
+      await handleCustomItem(order, item, custom, customBack);
     }
 
     res.status(200).send('OK');
@@ -119,32 +137,76 @@ app.post('/webhooks/orders-create', async function (req, res) {
   }
 });
 
-async function handleCustomItem(order, item, custom) {
-  const config = PRODUCT_TYPE_CONFIG[custom.product_type];
+async function handleCustomItem(order, item, custom, customBack) {
+  // ROUND 17 — un lato e' "valido" se porta un composito (printify_image_id).
+  // Si procede se e' presente il FRONTE o il RETRO (o entrambi): cosi' il
+  // caso "solo retro" (fronte al solo logo) non viene perso.
+  const front = custom && custom.printify_image_id ? custom : null;
+  const back = customBack && customBack.printify_image_id ? customBack : null;
+  if (!front && !back) {
+    console.error('Nessuna immagine Printify associata alla riga ordine ' + order.id + ' (upload non riuscito o design vuoto).');
+    return;
+  }
+  // product_type: da qualunque lato sia presente (entrambi lo riportano uguale).
+  const productType = (front && front.product_type) || (back && back.product_type);
+  const config = PRODUCT_TYPE_CONFIG[productType];
   if (!config) {
-    console.error('Tipo prodotto sconosciuto ("' + custom.product_type + '") per ordine ' + order.id + ': aggiungi il tag tipo-* al prodotto in Shopify.');
+    console.error('Tipo prodotto sconosciuto ("' + productType + '") per ordine ' + order.id + ': aggiungi il tag tipo-* al prodotto in Shopify.');
     return;
   }
   if (!config.variantId) {
     console.error(
-      'Variante Printify non configurata per "' + custom.product_type + '". ' +
-      'Imposta ' + custom.product_type.toUpperCase() + '_VARIANT_ID in config/printify.local.env ' +
+      'Variante Printify non configurata per "' + productType + '". ' +
+      'Imposta ' + String(productType).toUpperCase() + '_VARIANT_ID in config/printify.local.env ' +
       '(trovi gli id variante chiamando GET /v1/catalog/blueprints/' + config.blueprintId +
       '/print_providers/' + config.printProviderId + '/variants.json con la tua chiave Printify).'
     );
     return;
   }
-  if (!custom.printify_image_id) {
-    console.error('Nessuna immagine Printify associata alla riga ordine ' + order.id + ' (upload non riuscito o endpoint non configurato).');
-    return;
-  }
 
-  const product = await createPrintifyProduct(order, item, custom, config);
+  const product = await createPrintifyProduct(order, item, front, config, back);
   await createPrintifyOrder(order, product.id, config.variantId, item.quantity);
   console.log('Ordine Printify creato (in sospeso, da approvare manualmente) per ordine Shopify ' + order.id);
 }
 
-async function createPrintifyProduct(order, item, custom, config) {
+// Costruisce un placeholder Printify (un lato di stampa) dai valori salvati
+// dall'editor: base_image_id opzionale (design di base, sotto) + il composito
+// del cliente (printify_image_id) con la sua trasformazione. ROUND 17: estratto
+// per riusarlo identico su fronte e retro.
+function buildPlaceholder(data, fallbackPosition) {
+  return {
+    position: data.position || fallbackPosition,
+    images: [
+      // Design di base (pattern tipo 2, o solo-logo tipo 3), sotto a tutto il
+      // resto. Identita' perche' e' gia' a piena area (vedi GET /pattern-source
+      // in perla-upload-endpoint.js). Assente per i prodotti tipo 1-con-foto e
+      // per la medaglietta neutro (nessun pattern): nessun cambiamento li'.
+      ...(data.base_image_id ? [{ id: data.base_image_id, x: 0.5, y: 0.5, scale: 1, angle: 0 }] : []),
+      {
+        id: data.printify_image_id,
+        x: data.x != null ? data.x : 0.5,
+        y: data.y != null ? data.y : 0.5,
+        scale: data.scale != null ? data.scale : 1,
+        angle: data.angle != null ? data.angle : 0,
+      },
+      // ROUND 16 — niente iniezione fissa del logo (era qui, vedi git log per
+      // PERLA_LOGO_IMAGE_ID): il logo Perla vive come livello nell'editor sul
+      // sito e viaggia gia' dentro data.printify_image_id (il composito che il
+      // cliente vede e compone). Reintrodurlo qui creerebbe un logo doppio. Il
+      // logo appare solo sul FRONTE per scelta di brand (assets/global.js,
+      // withLogo); il composito del fronte lo contiene gia'.
+    ],
+  };
+}
+
+async function createPrintifyProduct(order, item, front, config, back) {
+  // Un placeholder = un lato di stampa. Si aggiunge un lato SOLO se ha un
+  // composito valido: cosi' funzionano fronte-solo (caso di oggi), retro-solo
+  // (fronte al solo logo) e fronte+retro (medaglietta doppio lato). ROUND 17.
+  const placeholders = [];
+  if (front && front.printify_image_id) placeholders.push(buildPlaceholder(front, 'front'));
+  if (back && back.printify_image_id) placeholders.push(buildPlaceholder(back, 'back'));
+
   const response = await fetch('https://api.printify.com/v1/shops/' + PRINTIFY_SHOP_ID + '/products.json', {
     method: 'POST',
     headers: { Authorization: 'Bearer ' + PRINTIFY_API_KEY, 'Content-Type': 'application/json' },
@@ -157,42 +219,7 @@ async function createPrintifyProduct(order, item, custom, config) {
       print_areas: [
         {
           variant_ids: [config.variantId],
-          placeholders: [
-            {
-              position: custom.position || 'front',
-              images: [
-                // Design di base (pattern tipo 2, o solo-logo tipo 3), sotto a
-                // tutto il resto. Identita' perche' e' gia' a piena area (vedi
-                // GET /pattern-source in perla-upload-endpoint.js). Assente per
-                // i prodotti tipo 1-con-foto di oggi: nessun cambiamento li'.
-                ...(custom.base_image_id ? [{
-                  id: custom.base_image_id,
-                  x: 0.5,
-                  y: 0.5,
-                  scale: 1,
-                  angle: 0,
-                }] : []),
-                {
-                  id: custom.printify_image_id,
-                  x: custom.x,
-                  y: custom.y,
-                  scale: custom.scale,
-                  angle: custom.angle,
-                },
-                // ROUND 16 — rimossa l'iniezione fissa del logo (era qui,
-                // vedi git log per PERLA_LOGO_IMAGE_ID): il logo Perla ora
-                // vive come livello nell'editor sul sito (sempre presente,
-                // non cancellabile, vedi assets/global.js) e viaggia gia'
-                // dentro custom.printify_image_id (il composito che il
-                // cliente vede e compone). Reintrodurlo qui creerebbe un
-                // logo doppio. custom.printify_image_id esiste SOLO quando
-                // il composito e' stato generato dall'editor (vedi il
-                // controllo custom.printify_image_id piu' sopra in
-                // handleCustomItem), quindi il logo e' garantito presente
-                // per ogni ordine che arriva fin qui.
-              ],
-            },
-          ],
+          placeholders: placeholders,
         },
       ],
     }),
