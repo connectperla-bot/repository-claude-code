@@ -10,7 +10,10 @@
 const express = require('express');
 const multer = require('multer');
 
-const { PRINTIFY_API_KEY, PRINTIFY_SHOP_ID, PORT = 3001, MAX_UPLOAD_MB = 10, ALLOWED_ORIGIN = '*' } = process.env;
+const {
+  PRINTIFY_API_KEY, PRINTIFY_SHOP_ID, PRINTFUL_API_KEY, PRINTFUL_STORE_ID,
+  PORT = 3001, MAX_UPLOAD_MB = 10, ALLOWED_ORIGIN = '*',
+} = process.env;
 
 if (!PRINTIFY_API_KEY) {
   console.error('Variabile PRINTIFY_API_KEY mancante: vedi config/printify.env.example');
@@ -21,6 +24,13 @@ if (!PRINTIFY_API_KEY) {
 // il deploy non si rompe finche' non si aggiunge la variabile su Render.
 if (!PRINTIFY_SHOP_ID) {
   console.warn('Variabile PRINTIFY_SHOP_ID mancante: /pattern-source restituira errore finche\' non la imposti.');
+}
+// PRINTFUL_API_KEY/PRINTFUL_STORE_ID servono solo per /generate-mockup sui
+// tipi EU (collare_eu/bandana_eu/ciotola_eu/guinzaglio_eu, fornitore
+// Printful) — vedi PRINTFUL_MOCKUP_CONFIG piu' sotto. Non bloccano l'avvio,
+// stesso trattamento di PRINTIFY_SHOP_ID sopra.
+if (!PRINTFUL_API_KEY || !PRINTFUL_STORE_ID) {
+  console.warn('Variabili PRINTFUL_API_KEY/PRINTFUL_STORE_ID mancanti: /generate-mockup sui tipi _eu restituira errore finche\' non le imposti.');
 }
 
 const ALLOWED_MIME = new Set(['image/png', 'image/jpeg', 'image/webp']);
@@ -153,6 +163,100 @@ const MOCKUP_PRODUCT_TYPES = ['COLLARE', 'BANDANA', 'MEDAGLIETTA', 'CIOTOLA', 'C
 const MOCKUP_POLL_ATTEMPTS = 6;
 const MOCKUP_POLL_DELAY_MS = 1500;
 
+// Prodotti EU (fornitore Printful, non Printify): niente prodotto temporaneo
+// da creare/cancellare come sotto -- il Mockup Generator di Printful e'
+// gia' un task effimero lato loro (create-task + poll, nessuna scoria da
+// pulire). catalogId/placement/area presi dalle risposte REALI di
+// GET /mockup-generator/printfiles/<catalogId> (verificato con l'account
+// Printful vero, stessi dati gia' usati in snippets/perla-print-areas.liquid
+// per i ratio ROUND 18/28) -- non inventati. variantEnv punta alla variante
+// Shopify/Printful gia' in uso per quel tipo (vedi config/printify.local.env).
+const PRINTFUL_MOCKUP_CONFIG = {
+  COLLARE_EU: { catalogId: 749, variantEnv: 'PRINTFUL_COLLARE_EU_VARIANT_ID', placement: 'front', width: 7169, height: 315 },
+  BANDANA_EU: { catalogId: 630, variantEnv: 'PRINTFUL_BANDANA_EU_VARIANT_ID', placement: 'front', width: 4125, height: 4125 },
+  CIOTOLA_EU: { catalogId: 678, variantEnv: 'PRINTFUL_CIOTOLA_EU_VARIANT_ID', placement: 'default', width: 6496, height: 803 },
+  GUINZAGLIO_EU: { catalogId: 745, variantEnv: 'PRINTFUL_GUINZAGLIO_EU_VARIANT_ID', placement: 'front', width: 12389, height: 219 },
+};
+const PRINTFUL_POLL_ATTEMPTS = 8;
+const PRINTFUL_POLL_DELAY_MS = 1500;
+
+// Il client manda sempre un id di un'immagine gia' caricata su Printify
+// (vedi /upload sopra, riusato come semplice hosting pubblico anche per i
+// compositi destinati a Printful) -- qui si risolve quell'id nella sua URL
+// pubblica (stesso identico lookup di /pattern-source sopra), perche' il
+// Mockup Generator di Printful vuole una URL fetchabile, non un id Printify.
+async function resolvePrintifyImageUrl(imageId) {
+  const res = await fetch('https://api.printify.com/v1/uploads/' + imageId + '.json', {
+    headers: { Authorization: 'Bearer ' + PRINTIFY_API_KEY },
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error('Printify upload lookup error (' + res.status + '): ' + text);
+  }
+  const data = await res.json();
+  if (!data.preview_url) throw new Error('Nessuna preview_url per questo upload Printify');
+  return data.preview_url;
+}
+
+async function generatePrintfulMockup(config, compositeImageId, res) {
+  if (!PRINTFUL_API_KEY || !PRINTFUL_STORE_ID) {
+    return res.status(500).json({ error: 'PRINTFUL_API_KEY/PRINTFUL_STORE_ID non configurati sul server' });
+  }
+  const variantId = Number(process.env[config.variantEnv]);
+  if (!variantId) {
+    return res.status(500).json({ error: 'Variante Printful non configurata sul server per questo tipo' });
+  }
+  try {
+    const imageUrl = await resolvePrintifyImageUrl(compositeImageId);
+    const createRes = await fetch('https://api.printful.com/mockup-generator/create-task/' + config.catalogId, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + PRINTFUL_API_KEY, 'X-PF-Store-Id': String(PRINTFUL_STORE_ID), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        variant_ids: [variantId],
+        files: [{
+          placement: config.placement,
+          image_url: imageUrl,
+          // Il composito ha gia' tutti i livelli posizionati (stesso principio
+          // della trasformazione IDENTITA' usata per Printify, vedi
+          // writePropData in assets/global.js): riempie l'intera area di stampa.
+          position: { area_width: config.width, area_height: config.height, width: config.width, height: config.height, top: 0, left: 0 },
+        }],
+        format: 'jpg',
+      }),
+    });
+    if (!createRes.ok) {
+      const text = await createRes.text();
+      throw new Error('Printful create-task error (' + createRes.status + '): ' + text);
+    }
+    const created = await createRes.json();
+    const taskKey = created.result && created.result.task_key;
+    if (!taskKey) throw new Error('Nessun task_key restituito da Printful');
+
+    let mockups = [];
+    for (let attempt = 0; attempt < PRINTFUL_POLL_ATTEMPTS && mockups.length === 0; attempt++) {
+      await new Promise(function (r) { setTimeout(r, PRINTFUL_POLL_DELAY_MS); });
+      const pollRes = await fetch('https://api.printful.com/mockup-generator/task?task_key=' + taskKey, {
+        headers: { Authorization: 'Bearer ' + PRINTFUL_API_KEY, 'X-PF-Store-Id': String(PRINTFUL_STORE_ID) },
+      });
+      if (!pollRes.ok) continue;
+      const polled = await pollRes.json();
+      const status = polled.result && polled.result.status;
+      if (status === 'completed') {
+        mockups = (polled.result.mockups || []).map(function (m) { return m.mockup_url; }).filter(Boolean);
+      } else if (status === 'failed') {
+        throw new Error('Printful mockup task failed');
+      }
+    }
+    if (mockups.length === 0) {
+      return res.status(504).json({ error: 'Anteprima non pronta, riprova tra qualche secondo' });
+    }
+    res.json({ images: mockups.slice(0, 4) });
+  } catch (err) {
+    console.error('Errore generate-mockup (Printful):', err.message);
+    res.status(502).json({ error: 'Impossibile generare l\'anteprima da Printful' });
+  }
+}
+
 app.post('/generate-mockup', express.json(), async function (req, res) {
   const body = req.body || {};
   const type = String(body.product_type || '').toUpperCase();
@@ -167,6 +271,13 @@ app.post('/generate-mockup', express.json(), async function (req, res) {
 
   if (!compositeImageId) {
     return res.status(400).json({ error: 'composite_image_id mancante' });
+  }
+  // Tipi EU (fornitore Printful): stesso payload del client, ma un flusso di
+  // generazione mockup completamente diverso (vedi PRINTFUL_MOCKUP_CONFIG
+  // sopra) -- nessuna delle regole/pulizia del prodotto temporaneo Printify
+  // qui sotto si applica a questi tipi.
+  if (PRINTFUL_MOCKUP_CONFIG[type]) {
+    return generatePrintfulMockup(PRINTFUL_MOCKUP_CONFIG[type], compositeImageId, res);
   }
   if (!PRINTIFY_SHOP_ID) {
     return res.status(500).json({ error: 'PRINTIFY_SHOP_ID non configurato sul server' });

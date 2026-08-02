@@ -15,6 +15,22 @@ services:
         value: "*"
       - key: MAX_UPLOAD_MB
         value: "10"
+      # Printful (fornitore EU per collare_eu/bandana_eu/ciotola_eu/
+      # guinzaglio_eu): servono solo per /generate-mockup su questi 4 tipi
+      # (vedi PRINTFUL_MOCKUP_CONFIG in perla-upload-endpoint.js). Stessi
+      # valori gia' in uso nel servizio perla-printify-order-sync qui sotto.
+      - key: PRINTFUL_API_KEY
+        sync: false
+      - key: PRINTFUL_STORE_ID
+        value: "18346388"
+      - key: PRINTFUL_COLLARE_EU_VARIANT_ID
+        value: "19186"
+      - key: PRINTFUL_BANDANA_EU_VARIANT_ID
+        value: "16031"
+      - key: PRINTFUL_CIOTOLA_EU_VARIANT_ID
+        value: "16785"
+      - key: PRINTFUL_GUINZAGLIO_EU_VARIANT_ID
+        value: "19126"
       - key: COLLARE_BLUEPRINT_ID
         value: "784"
       - key: COLLARE_PROVIDER_ID
@@ -74,6 +90,18 @@ services:
         value: "27790439"
       - key: PERLA_LOGO_IMAGE_ID
         sync: false
+      # Printful (collare_eu/bandana_eu, prodotti nuovi e distinti dal
+      # collare/bandana Printify — vedi scripts/provider-router.js e
+      # scripts/providers/printful-client.js). Senza PRINTFUL_API_KEY il
+      # router usa sempre Printify, nessun rischio per gli ordini esistenti.
+      - key: PRINTFUL_API_KEY
+        sync: false
+      - key: PRINTFUL_STORE_ID
+        value: "18346388"
+      - key: PRINTFUL_COLLARE_EU_VARIANT_ID
+        value: "19186"
+      - key: PRINTFUL_BANDANA_EU_VARIANT_ID
+        value: "16031"
       - key: COLLARE_BLUEPRINT_ID
         value: "784"
       - key: COLLARE_PROVIDER_ID
