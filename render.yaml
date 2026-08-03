@@ -31,6 +31,14 @@ services:
         value: "16785"
       - key: PRINTFUL_GUINZAGLIO_EU_VARIANT_ID
         value: "19126"
+      # TEMPORANEO (2026-08-03): callback OAuth per ottenere un token Admin
+      # API Shopify con scope di scrittura reale, vedi /oauth/callback in
+      # perla-upload-endpoint.js e la memoria perla-shopify-app-scope-gotcha.
+      # App "perla-files" sul Dev Dashboard. Rimuovere a token ottenuto.
+      - key: OAUTH_CLIENT_ID
+        value: "25a61c89c45d4498ae8d92a0c081ed58"
+      - key: OAUTH_CLIENT_SECRET
+        sync: false
       - key: COLLARE_BLUEPRINT_ID
         value: "784"
       - key: COLLARE_PROVIDER_ID
