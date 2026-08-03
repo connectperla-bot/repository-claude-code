@@ -9,9 +9,11 @@
 
 const express = require('express');
 const multer = require('multer');
+const crypto = require('crypto');
 
 const {
   PRINTIFY_API_KEY, PRINTIFY_SHOP_ID, PRINTFUL_API_KEY, PRINTFUL_STORE_ID,
+  CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET,
   PORT = 3001, MAX_UPLOAD_MB = 10, ALLOWED_ORIGIN = '*',
 } = process.env;
 
@@ -31,6 +33,37 @@ if (!PRINTIFY_SHOP_ID) {
 // stesso trattamento di PRINTIFY_SHOP_ID sopra.
 if (!PRINTFUL_API_KEY || !PRINTFUL_STORE_ID) {
   console.warn('Variabili PRINTFUL_API_KEY/PRINTFUL_STORE_ID mancanti: /generate-mockup sui tipi _eu restituira errore finche\' non le imposti.');
+}
+// CLOUDINARY_* servono per ospitare il composito a piena risoluzione (Printify
+// preview_url tronca a 1200px sul lato lungo, che diventa anche il file usato
+// per la stampa reale su Printful — vedi perla-shopify-app-scope-gotcha).
+// Se mancano, /upload ricade sul preview_url Printify come prima: nessun
+// deploy si rompe.
+if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
+  console.warn('Variabili CLOUDINARY_* mancanti: /upload restituira\' l\'URL Printify (1200px) invece della piena risoluzione.');
+}
+
+async function uploadToCloudinary(buffer, fileName) {
+  const timestamp = Math.round(Date.now() / 1000);
+  const signature = crypto
+    .createHash('sha1')
+    .update('timestamp=' + timestamp + CLOUDINARY_API_SECRET)
+    .digest('hex');
+  const form = new FormData();
+  form.append('file', new Blob([buffer]), fileName);
+  form.append('api_key', CLOUDINARY_API_KEY);
+  form.append('timestamp', String(timestamp));
+  form.append('signature', signature);
+  const res = await fetch('https://api.cloudinary.com/v1_1/' + CLOUDINARY_CLOUD_NAME + '/image/upload', {
+    method: 'POST',
+    body: form,
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error('Cloudinary upload error (' + res.status + '): ' + text);
+  }
+  const data = await res.json();
+  return data.secure_url;
 }
 
 const ALLOWED_MIME = new Set(['image/png', 'image/jpeg', 'image/webp']);
@@ -79,7 +112,15 @@ app.post('/upload', upload.single('photo'), async function (req, res) {
     }
 
     const data = await response.json();
-    res.json({ id: data.id, url: data.preview_url });
+    var previewUrl = data.preview_url;
+    if (CLOUDINARY_CLOUD_NAME && CLOUDINARY_API_KEY && CLOUDINARY_API_SECRET) {
+      try {
+        previewUrl = await uploadToCloudinary(req.file.buffer, req.file.originalname);
+      } catch (cloudErr) {
+        console.error('Errore upload Cloudinary (uso preview Printify come fallback):', cloudErr.message);
+      }
+    }
+    res.json({ id: data.id, url: previewUrl });
   } catch (err) {
     console.error('Errore upload Printify:', err.message);
     res.status(502).json({ error: 'Caricamento su Printify non riuscito' });

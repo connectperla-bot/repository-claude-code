@@ -39,6 +39,16 @@ services:
         value: "25a61c89c45d4498ae8d92a0c081ed58"
       - key: OAUTH_CLIENT_SECRET
         sync: false
+      # Cloudinary: ospita il composito finale a piena risoluzione (Printify
+      # preview_url tronca a 1200px, che diventava anche il file usato per
+      # la stampa reale su Printful). Se mancano, /upload ricade sul preview
+      # Printify come prima, nessun rischio per il deploy.
+      - key: CLOUDINARY_CLOUD_NAME
+        value: "qarb7ouo"
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
       - key: COLLARE_BLUEPRINT_ID
         value: "784"
       - key: COLLARE_PROVIDER_ID
