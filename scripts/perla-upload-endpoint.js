@@ -372,6 +372,31 @@ app.post('/generate-mockup', express.json(), async function (req, res) {
   }
 });
 
+// TEMPORANEO (2026-08-03): callback OAuth per ottenere un token Admin API
+// con scope reale (write_files/write_inventory), vedi memoria
+// perla-shopify-app-scope-gotcha. Da rimuovere una volta ottenuto il token.
+const OAUTH_CLIENT_ID = process.env.OAUTH_CLIENT_ID;
+const OAUTH_CLIENT_SECRET = process.env.OAUTH_CLIENT_SECRET;
+app.get('/oauth/callback', async function (req, res) {
+  try {
+    var code = req.query.code;
+    var shop = req.query.shop;
+    if (!code || !shop || !OAUTH_CLIENT_ID || !OAUTH_CLIENT_SECRET) {
+      return res.status(400).send('missing code/shop or server not configured');
+    }
+    var tokenRes = await fetch('https://' + shop + '/admin/oauth/access_token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ client_id: OAUTH_CLIENT_ID, client_secret: OAUTH_CLIENT_SECRET, code: code })
+    });
+    var data = await tokenRes.json();
+    console.log('OAUTH TOKEN RESULT', JSON.stringify(data));
+    res.send('<pre>' + JSON.stringify(data, null, 2).replace(/</g, '&lt;') + '</pre>');
+  } catch (e) {
+    res.status(500).send(String(e && e.message));
+  }
+});
+
 app.use(function (err, req, res, next) {
   console.error('Errore upload:', err.message);
   res.status(400).json({ error: err.message });
