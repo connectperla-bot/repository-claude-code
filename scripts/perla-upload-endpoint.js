@@ -372,28 +372,55 @@ app.post('/generate-mockup', express.json(), async function (req, res) {
   }
 });
 
-// TEMPORANEO (2026-08-03): callback OAuth per ottenere un token Admin API
-// con scope reale (write_files/write_inventory), vedi memoria
-// perla-shopify-app-scope-gotcha. Da rimuovere una volta ottenuto il token.
+// TEMPORANEO (2026-08-03): handshake App Bridge / token exchange per
+// ottenere UNA VOLTA un token Admin API con scope reale (write_products,
+// write_inventory), vedi memoria perla-shopify-app-scope-gotcha -- il
+// classico redirect OAuth (/oauth/callback, ora rimosso) non funziona per
+// questo tipo di app su questo negozio, Shopify salta dritto al token
+// exchange basato su session token. Il token offline risultante non scade:
+// va copiato una sola volta come SHOPIFY_ADMIN_TOKEN su Render, poi questa
+// route puo' essere rimossa.
 const OAUTH_CLIENT_ID = process.env.OAUTH_CLIENT_ID;
 const OAUTH_CLIENT_SECRET = process.env.OAUTH_CLIENT_SECRET;
-app.get('/oauth/callback', async function (req, res) {
+const EMBEDDED_SHOP = 'perlaitaly-store.myshopify.com';
+app.get('/embedded', function (req, res) {
+  res.send(
+    '<!doctype html><html><head><meta name="shopify-api-key" content="' + OAUTH_CLIENT_ID + '">' +
+    '<script src="https://cdn.shopify.com/shopifycloud/app-bridge.js"></script></head>' +
+    '<body>In corso...<pre id="out"></pre>' +
+    '<script>(async function(){' +
+    'try{' +
+    'var token = await window.shopify.idToken();' +
+    'var r = await fetch("/session-exchange",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({session_token:token})});' +
+    'var d = await r.json();' +
+    'document.getElementById("out").textContent = JSON.stringify(d,null,2);' +
+    '}catch(e){document.getElementById("out").textContent = String(e);}' +
+    '})();</script></body></html>'
+  );
+});
+app.post('/session-exchange', express.json(), async function (req, res) {
   try {
-    var code = req.query.code;
-    var shop = req.query.shop;
-    if (!code || !shop || !OAUTH_CLIENT_ID || !OAUTH_CLIENT_SECRET) {
-      return res.status(400).send('missing code/shop or server not configured');
+    var sessionToken = req.body.session_token;
+    if (!sessionToken || !OAUTH_CLIENT_ID || !OAUTH_CLIENT_SECRET) {
+      return res.status(400).json({ error: 'missing session_token or server not configured' });
     }
-    var tokenRes = await fetch('https://' + shop + '/admin/oauth/access_token', {
+    var tokenRes = await fetch('https://' + EMBEDDED_SHOP + '/admin/oauth/access_token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ client_id: OAUTH_CLIENT_ID, client_secret: OAUTH_CLIENT_SECRET, code: code })
+      body: JSON.stringify({
+        client_id: OAUTH_CLIENT_ID,
+        client_secret: OAUTH_CLIENT_SECRET,
+        grant_type: 'urn:ietf:params:oauth:grant-type:token-exchange',
+        subject_token: sessionToken,
+        subject_token_type: 'urn:ietf:params:oauth:token-type:id_token',
+        requested_token_type: 'urn:shopify:params:oauth:token-type:offline-access-token'
+      })
     });
     var data = await tokenRes.json();
-    console.log('OAUTH TOKEN RESULT', JSON.stringify(data));
-    res.send('<pre>' + JSON.stringify(data, null, 2).replace(/</g, '&lt;') + '</pre>');
+    console.log('TOKEN EXCHANGE RESULT', JSON.stringify(data));
+    res.json(data);
   } catch (e) {
-    res.status(500).send(String(e && e.message));
+    res.status(500).json({ error: String(e && e.message) });
   }
 });
 
