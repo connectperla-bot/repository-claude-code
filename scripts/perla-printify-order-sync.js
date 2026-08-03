@@ -23,6 +23,7 @@
 
 const crypto = require('crypto');
 const express = require('express');
+const providerRouter = require('./provider-router');
 
 const {
   SHOPIFY_WEBHOOK_SECRET,
@@ -36,45 +37,112 @@ if (!SHOPIFY_WEBHOOK_SECRET || !PRINTIFY_API_KEY || !PRINTIFY_SHOP_ID) {
   process.exit(1);
 }
 
-// Mappatura tipo prodotto -> blueprint/print provider/variante Printify.
-// blueprint_id e print_provider_id sono gia' compilati con i valori reali del
-// catalogo Printify per questi prodotti; VARIANT_ID va scelto da te in base
-// alla taglia/colore che vendi davvero (vedi guida nel messaggio di errore).
+// Mappatura tipo prodotto -> blueprint/print provider/variante, UNA per
+// fornitore possibile (oggi solo Printify per tutti, + Printful per
+// collare/bandana quando spediscono in EU — vedi provider-router.js).
+// blueprint_id e print_provider_id di Printify sono gia' compilati con i
+// valori reali del catalogo; VARIANT_ID va scelto da te in base alla
+// taglia/colore che vendi davvero (vedi guida nel messaggio di errore).
 const PRODUCT_TYPE_CONFIG = {
-  collare: {
-    blueprintId: Number(process.env.COLLARE_BLUEPRINT_ID || 784),
-    printProviderId: Number(process.env.COLLARE_PROVIDER_ID || 93),
-    variantId: Number(process.env.COLLARE_VARIANT_ID || 0),
+  printify: {
+    collare: {
+      blueprintId: Number(process.env.COLLARE_BLUEPRINT_ID || 784),
+      printProviderId: Number(process.env.COLLARE_PROVIDER_ID || 93),
+      variantId: Number(process.env.COLLARE_VARIANT_ID || 0),
+    },
+    bandana: {
+      blueprintId: Number(process.env.BANDANA_BLUEPRINT_ID || 562),
+      printProviderId: Number(process.env.BANDANA_PROVIDER_ID || 70),
+      variantId: Number(process.env.BANDANA_VARIANT_ID || 0),
+    },
+    medaglietta: {
+      blueprintId: Number(process.env.MEDAGLIETTA_BLUEPRINT_ID || 566),
+      printProviderId: Number(process.env.MEDAGLIETTA_PROVIDER_ID || 70),
+      variantId: Number(process.env.MEDAGLIETTA_VARIANT_ID || 0),
+    },
+    ciotola: {
+      blueprintId: Number(process.env.CIOTOLA_BLUEPRINT_ID || 570),
+      printProviderId: Number(process.env.CIOTOLA_PROVIDER_ID || 70),
+      variantId: Number(process.env.CIOTOLA_VARIANT_ID || 0),
+    },
+    cuccia: {
+      blueprintId: Number(process.env.CUCCIA_BLUEPRINT_ID || 419),
+      printProviderId: Number(process.env.CUCCIA_PROVIDER_ID || 10),
+      variantId: Number(process.env.CUCCIA_VARIANT_ID || 0),
+    },
+    tappetino: {
+      blueprintId: Number(process.env.TAPPETINO_BLUEPRINT_ID || 855),
+      printProviderId: Number(process.env.TAPPETINO_PROVIDER_ID || 70),
+      variantId: Number(process.env.TAPPETINO_VARIANT_ID || 0),
+    },
+    guinzaglio: {
+      blueprintId: Number(process.env.GUINZAGLIO_BLUEPRINT_ID || 2791),
+      printProviderId: Number(process.env.GUINZAGLIO_PROVIDER_ID || 80),
+      variantId: Number(process.env.GUINZAGLIO_VARIANT_ID || 0),
+    },
+    // ROUND 18 — rete di sicurezza: se per errore un ordine non-EU (o senza
+    // Printful configurato) arriva con product_type collare_eu/bandana_eu,
+    // finisce comunque su Printify (stesso blueprint del collare/bandana
+    // normale) invece di fallire silenziosamente - vedi handleCustomItem.
+    collare_eu: {
+      blueprintId: Number(process.env.COLLARE_BLUEPRINT_ID || 784),
+      printProviderId: Number(process.env.COLLARE_PROVIDER_ID || 93),
+      variantId: Number(process.env.COLLARE_VARIANT_ID || 0),
+    },
+    bandana_eu: {
+      blueprintId: Number(process.env.BANDANA_BLUEPRINT_ID || 562),
+      printProviderId: Number(process.env.BANDANA_PROVIDER_ID || 70),
+      variantId: Number(process.env.BANDANA_VARIANT_ID || 0),
+    },
+    // ROUND 28 -- stessa rete di sicurezza di collare_eu/bandana_eu sopra,
+    // per ciotola_eu/guinzaglio_eu.
+    ciotola_eu: {
+      blueprintId: Number(process.env.CIOTOLA_BLUEPRINT_ID || 570),
+      printProviderId: Number(process.env.CIOTOLA_PROVIDER_ID || 70),
+      variantId: Number(process.env.CIOTOLA_VARIANT_ID || 0),
+    },
+    guinzaglio_eu: {
+      blueprintId: Number(process.env.GUINZAGLIO_BLUEPRINT_ID || 2791),
+      printProviderId: Number(process.env.GUINZAGLIO_PROVIDER_ID || 80),
+      variantId: Number(process.env.GUINZAGLIO_VARIANT_ID || 0),
+    },
   },
-  bandana: {
-    blueprintId: Number(process.env.BANDANA_BLUEPRINT_ID || 562),
-    printProviderId: Number(process.env.BANDANA_PROVIDER_ID || 70),
-    variantId: Number(process.env.BANDANA_VARIANT_ID || 0),
-  },
-  medaglietta: {
-    blueprintId: Number(process.env.MEDAGLIETTA_BLUEPRINT_ID || 566),
-    printProviderId: Number(process.env.MEDAGLIETTA_PROVIDER_ID || 70),
-    variantId: Number(process.env.MEDAGLIETTA_VARIANT_ID || 0),
-  },
-  ciotola: {
-    blueprintId: Number(process.env.CIOTOLA_BLUEPRINT_ID || 570),
-    printProviderId: Number(process.env.CIOTOLA_PROVIDER_ID || 70),
-    variantId: Number(process.env.CIOTOLA_VARIANT_ID || 0),
-  },
-  cuccia: {
-    blueprintId: Number(process.env.CUCCIA_BLUEPRINT_ID || 419),
-    printProviderId: Number(process.env.CUCCIA_PROVIDER_ID || 10),
-    variantId: Number(process.env.CUCCIA_VARIANT_ID || 0),
-  },
-  tappetino: {
-    blueprintId: Number(process.env.TAPPETINO_BLUEPRINT_ID || 855),
-    printProviderId: Number(process.env.TAPPETINO_PROVIDER_ID || 70),
-    variantId: Number(process.env.TAPPETINO_VARIANT_ID || 0),
-  },
-  guinzaglio: {
-    blueprintId: Number(process.env.GUINZAGLIO_BLUEPRINT_ID || 2791),
-    printProviderId: Number(process.env.GUINZAGLIO_PROVIDER_ID || 80),
-    variantId: Number(process.env.GUINZAGLIO_VARIANT_ID || 0),
+  // ROUND 18 — collare_eu/bandana_eu (NON collare/bandana): Printful non ha
+  // un prodotto equivalente al collare TPU o alla bandana rettangolare
+  // venduti oggi (collare Printful e' in tessuto, bandana Printful e'
+  // quadrata) - vedi provider-router.js. Sono quindi prodotti Shopify
+  // NUOVI e distinti, cosi' l'attivazione di PRINTFUL_API_KEY non tocca
+  // mai gli ordini dei prodotti collare/bandana esistenti.
+  // storeId: l'account Printful ha un solo store nativo ("Personal
+  // orders"), richiesto in ogni chiamata (header X-PF-Store-Id) - vedi
+  // providers/printful-client.js.
+  // options: alcuni prodotti Printful richiedono opzioni extra (verificato
+  // con un ordine di prova reale, poi annullato): la bandana quadrata vuole
+  // stitch_color, il collare no.
+  printful: {
+    collare_eu: {
+      storeId: Number(process.env.PRINTFUL_STORE_ID || 0),
+      variantId: Number(process.env.PRINTFUL_COLLARE_EU_VARIANT_ID || 0),
+    },
+    bandana_eu: {
+      storeId: Number(process.env.PRINTFUL_STORE_ID || 0),
+      variantId: Number(process.env.PRINTFUL_BANDANA_EU_VARIANT_ID || 0),
+      options: [{ id: 'stitch_color', value: 'white' }],
+    },
+    // ROUND 28 -- ciotola_eu (Printful "Pet Bowl", id catalogo 678) e
+    // guinzaglio_eu ("Pet Leash", id catalogo 745). Nessuna opzione extra
+    // richiesta per questi due (verificato leggendo lo schema prodotto via
+    // API, a differenza della bandana quadrata sopra che vuole
+    // stitch_color) -- da confermare con un ordine di prova reale come gia'
+    // fatto per collare_eu/bandana_eu, vedi commento in testa al file.
+    ciotola_eu: {
+      storeId: Number(process.env.PRINTFUL_STORE_ID || 0),
+      variantId: Number(process.env.PRINTFUL_CIOTOLA_EU_VARIANT_ID || 0),
+    },
+    guinzaglio_eu: {
+      storeId: Number(process.env.PRINTFUL_STORE_ID || 0),
+      variantId: Number(process.env.PRINTFUL_GUINZAGLIO_EU_VARIANT_ID || 0),
+    },
   },
 };
 
@@ -144,17 +212,26 @@ async function handleCustomItem(order, item, custom, customBack) {
   const front = custom && custom.printify_image_id ? custom : null;
   const back = customBack && customBack.printify_image_id ? customBack : null;
   if (!front && !back) {
-    console.error('Nessuna immagine Printify associata alla riga ordine ' + order.id + ' (upload non riuscito o design vuoto).');
+    console.error('Nessuna immagine associata alla riga ordine ' + order.id + ' (upload non riuscito o design vuoto).');
     return;
   }
   // product_type: da qualunque lato sia presente (entrambi lo riportano uguale).
   const productType = (front && front.product_type) || (back && back.product_type);
-  const config = PRODUCT_TYPE_CONFIG[productType];
+
+  // Instrada al fornitore giusto (Printify di default, Printful per
+  // collare/bandana spediti in EU quando l'account e' configurato) — vedi
+  // provider-router.js. Questo e' il SOLO punto che decide il fornitore:
+  // il resto della funzione non sa nemmeno quale sia stato scelto.
+  const providerName = providerRouter.chooseProviderName(productType, order, process.env);
+  const config = (PRODUCT_TYPE_CONFIG[providerName] || {})[productType];
   if (!config) {
-    console.error('Tipo prodotto sconosciuto ("' + productType + '") per ordine ' + order.id + ': aggiungi il tag tipo-* al prodotto in Shopify.');
+    console.error(
+      'Tipo prodotto sconosciuto ("' + productType + '") per fornitore "' + providerName + '", ordine ' + order.id +
+      ': aggiungi il tag tipo-* al prodotto in Shopify, o il tipo a PRODUCT_TYPE_CONFIG.' + providerName + '.'
+    );
     return;
   }
-  if (!config.variantId) {
+  if (providerName === 'printify' && !config.variantId) {
     console.error(
       'Variante Printify non configurata per "' + productType + '". ' +
       'Imposta ' + String(productType).toUpperCase() + '_VARIANT_ID in config/printify.local.env ' +
@@ -164,100 +241,15 @@ async function handleCustomItem(order, item, custom, customBack) {
     return;
   }
 
-  const product = await createPrintifyProduct(order, item, front, config, back);
-  await createPrintifyOrder(order, product.id, config.variantId, item.quantity);
-  console.log('Ordine Printify creato (in sospeso, da approvare manualmente) per ordine Shopify ' + order.id);
-}
-
-// Costruisce un placeholder Printify (un lato di stampa) dai valori salvati
-// dall'editor: base_image_id opzionale (design di base, sotto) + il composito
-// del cliente (printify_image_id) con la sua trasformazione. ROUND 17: estratto
-// per riusarlo identico su fronte e retro.
-function buildPlaceholder(data, fallbackPosition) {
-  return {
-    position: data.position || fallbackPosition,
-    images: [
-      // Design di base (pattern tipo 2, o solo-logo tipo 3), sotto a tutto il
-      // resto. Identita' perche' e' gia' a piena area (vedi GET /pattern-source
-      // in perla-upload-endpoint.js). Assente per i prodotti tipo 1-con-foto e
-      // per la medaglietta neutro (nessun pattern): nessun cambiamento li'.
-      ...(data.base_image_id ? [{ id: data.base_image_id, x: 0.5, y: 0.5, scale: 1, angle: 0 }] : []),
-      {
-        id: data.printify_image_id,
-        x: data.x != null ? data.x : 0.5,
-        y: data.y != null ? data.y : 0.5,
-        scale: data.scale != null ? data.scale : 1,
-        angle: data.angle != null ? data.angle : 0,
-      },
-      // ROUND 16 — niente iniezione fissa del logo (era qui, vedi git log per
-      // PERLA_LOGO_IMAGE_ID): il logo Perla vive come livello nell'editor sul
-      // sito e viaggia gia' dentro data.printify_image_id (il composito che il
-      // cliente vede e compone). Reintrodurlo qui creerebbe un logo doppio. Il
-      // logo appare solo sul FRONTE per scelta di brand (assets/global.js,
-      // withLogo); il composito del fronte lo contiene gia'.
-    ],
-  };
-}
-
-async function createPrintifyProduct(order, item, front, config, back) {
-  // Un placeholder = un lato di stampa. Si aggiunge un lato SOLO se ha un
-  // composito valido: cosi' funzionano fronte-solo (caso di oggi), retro-solo
-  // (fronte al solo logo) e fronte+retro (medaglietta doppio lato). ROUND 17.
-  const placeholders = [];
-  if (front && front.printify_image_id) placeholders.push(buildPlaceholder(front, 'front'));
-  if (back && back.printify_image_id) placeholders.push(buildPlaceholder(back, 'back'));
-
-  const response = await fetch('https://api.printify.com/v1/shops/' + PRINTIFY_SHOP_ID + '/products.json', {
-    method: 'POST',
-    headers: { Authorization: 'Bearer ' + PRINTIFY_API_KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      title: (item.title || 'Personalizzato') + ' - Ordine #' + order.order_number,
-      description: 'Your best friend deserves the best. This custom personalized pet accessory is inspired by Italian elegance — clean lines and premium materials. As loved by real pets Aron & Mia.\n\n- Premium materials: soft, durable, easy to clean\n- Secure construction for daily use\n- Personalized with your pet\'s name or photo\n\nShips within the USA in 3-8 business days. FREE shipping over $59.\n\nCountry of Origin: varies by provider (often USA or imported). Complies with applicable U.S. consumer product safety regulations (CPSIA where applicable). Always supervise your pet. Personalized items are final sale. Tested on Aron & Mia.',
-      blueprint_id: config.blueprintId,
-      print_provider_id: config.printProviderId,
-      variants: [{ id: config.variantId, price: 0, is_enabled: true }],
-      print_areas: [
-        {
-          variant_ids: [config.variantId],
-          placeholders: placeholders,
-        },
-      ],
-    }),
+  const client = providerRouter.chooseClient(productType, order, process.env);
+  const result = await client.fulfillOrder({
+    order, item, front, back, config,
+    env: process.env,
   });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error('Errore creazione prodotto Printify (' + response.status + '): ' + text);
-  }
-  return response.json();
-}
-
-async function createPrintifyOrder(order, productId, variantId, quantity) {
-  const response = await fetch('https://api.printify.com/v1/shops/' + PRINTIFY_SHOP_ID + '/orders.json', {
-    method: 'POST',
-    headers: { Authorization: 'Bearer ' + PRINTIFY_API_KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      external_id: String(order.id),
-      line_items: [{ product_id: productId, variant_id: variantId, quantity: quantity }],
-      shipping_method: 1,
-      send_shipping_notification: false,
-      address_to: {
-        first_name: order.shipping_address && order.shipping_address.first_name,
-        last_name: order.shipping_address && order.shipping_address.last_name,
-        email: order.email,
-        address1: order.shipping_address && order.shipping_address.address1,
-        city: order.shipping_address && order.shipping_address.city,
-        zip: order.shipping_address && order.shipping_address.zip,
-        country: order.shipping_address && order.shipping_address.country_code,
-      },
-    }),
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error('Errore creazione ordine Printify (' + response.status + '): ' + text);
-  }
-  return response.json();
+  console.log(
+    'Ordine ' + result.provider + ' creato (in sospeso, da approvare manualmente) per ordine Shopify ' + order.id +
+    (result.orderId ? ' -> ' + result.provider + ' order ' + result.orderId : '')
+  );
 }
 
 app.listen(PORT, function () {
