@@ -120,6 +120,15 @@ services:
         value: "19186"
       - key: PRINTFUL_BANDANA_EU_VARIANT_ID
         value: "16031"
+      # ROUND 33 -- mancavano su QUESTO servizio (gia' presenti sul gemello
+      # perla-upload-endpoint qui sopra, che le usa solo per /generate-mockup):
+      # senza queste due, un ordine EU reale per ciotola_eu/guinzaglio_eu
+      # veniva instradato a Printful da provider-router.js ma falliva alla
+      # creazione ordine per variantId mancante (0) -- vedi providers/printful-client.js.
+      - key: PRINTFUL_CIOTOLA_EU_VARIANT_ID
+        value: "16785"
+      - key: PRINTFUL_GUINZAGLIO_EU_VARIANT_ID
+        value: "19126"
       - key: COLLARE_BLUEPRINT_ID
         value: "784"
       - key: COLLARE_PROVIDER_ID

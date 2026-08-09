@@ -1,12 +1,11 @@
 'use strict';
 
-// Client Printful — NON ANCORA UTILIZZABILE IN PRODUZIONE: serve un account
-// Printful reale (PRINTFUL_API_KEY) e gli ID variante del loro catalogo per
-// collare/bandana (PRINTFUL_COLLARE_VARIANT_ID / PRINTFUL_BANDANA_VARIANT_ID),
-// nessuno dei due esiste ancora. Scritto seguendo la documentazione ufficiale
-// dell'API Printful (POST /orders) cosi' e' pronto appena l'account esiste;
-// provider-router.js non lo sceglie mai se PRINTFUL_API_KEY manca (torna
-// automaticamente su Printify, vedi quel file).
+// Client Printful — account reale collegato dal 2026-07-29 (store "Personal
+// orders"), variantId per ogni tipo EU in config/printify.local.env. Scritto
+// seguendo la documentazione ufficiale dell'API Printful (POST /orders).
+// provider-router.js non lo sceglie mai se PRINTFUL_API_KEY manca sul
+// servizio Render specifico (torna automaticamente su Printify, vedi quel
+// file) -- verifica quella variabile su Render se un ordine EU non evade.
 //
 // Differenza chiave rispetto a Printify: Printful vuole una URL pubblica
 // dell'immagine (files[].url), non un id di un'immagine gia' caricata sui
@@ -14,7 +13,7 @@
 // printify_image_url (oltre a printify_image_id) nella proprieta'
 // _Personalizzazione — vedi quel file, funzione writePropData.
 
-async function createOrderOnPrintful(order, item, front, back, config, apiKey) {
+async function createOrderOnPrintful(order, item, front, back, config, apiKey, autoConfirm) {
   const files = [];
   if (front && front.printify_image_url) files.push({ type: 'default', url: front.printify_image_url });
   if (back && back.printify_image_url) files.push({ type: 'back', url: back.printify_image_url });
@@ -36,10 +35,14 @@ async function createOrderOnPrintful(order, item, front, back, config, apiKey) {
     },
     body: JSON.stringify({
       external_id: String(order.id),
-      // confirm:false -> l'ordine resta in bozza su Printful finche' non lo
-      // approvi manualmente da li', stessa cautela gia' in uso per Printify
-      // (vedi commento in testa a perla-printify-order-sync.js).
-      confirm: false,
+      // ROUND 35 -- confirm:false (default): l'ordine arriva su Printful
+      // come bozza in "Draft orders", in attesa che la titolare lo confermi
+      // da li' (approvazione manuale voluta "all'inizio"). Diventa
+      // confirm:true solo con PRINTFUL_AUTO_CONFIRM=true su Render, stesso
+      // interruttore di PRINTIFY_AUTO_SEND_TO_PRODUCTION in
+      // providers/printify-client.js -- un solo env var da cambiare quando
+      // si vorra' passare all'invio automatico, nessun redeploy di codice.
+      confirm: !!autoConfirm,
       recipient: {
         name: [order.shipping_address && order.shipping_address.first_name, order.shipping_address && order.shipping_address.last_name].filter(Boolean).join(' '),
         address1: order.shipping_address && order.shipping_address.address1,
@@ -80,8 +83,9 @@ async function fulfillOrder(ctx) {
       'una volta che l\'account Printful esiste (li trovi nel loro catalogo API).'
     );
   }
-  const printfulOrder = await createOrderOnPrintful(order, item, front, back, config, env.PRINTFUL_API_KEY);
-  return { provider: 'printful', orderId: printfulOrder.result && printfulOrder.result.id };
+  const autoConfirm = env.PRINTFUL_AUTO_CONFIRM === 'true';
+  const printfulOrder = await createOrderOnPrintful(order, item, front, back, config, env.PRINTFUL_API_KEY, autoConfirm);
+  return { provider: 'printful', orderId: printfulOrder.result && printfulOrder.result.id, sentToProduction: autoConfirm };
 }
 
 module.exports = { fulfillOrder };

@@ -11,10 +11,18 @@
 // "Order creation" verso questo servizio. Quel secret firma DAVVERO le
 // richieste in arrivo, quindi la verifica HMAC qui sotto e' autentica.
 //
-// IMPORTANTE: per sicurezza, il nuovo ordine NON viene inviato automaticamente
-// in produzione. Resta in sospeso nel pannello Printify finche' non lo approvi
-// tu manualmente (Printify > Ordini > Invia in produzione). Quando sarai
-// sicuro del flusso potrai automatizzare anche quel passo.
+// ROUND 35 -- per scelta esplicita della titolare, il nuovo ordine resta in
+// approvazione MANUALE "all'inizio": Printify va approvato da Printify >
+// Orders > Send to production, Printful da Printful > Draft orders. Il
+// codice per l'invio automatico (send_to_production / confirm:true) esiste
+// gia' in providers/*-client.js, disattivato di default dietro due env var
+// (PRINTIFY_AUTO_SEND_TO_PRODUCTION / PRINTFUL_AUTO_CONFIRM) -- va attivato
+// solo quando la titolare decide di fidarsi del flusso senza controllo riga
+// per riga. Indipendentemente da questo interruttore, ogni riga d'ordine e'
+// isolata nel proprio try/catch: se una riga fallisce (variante non
+// configurata, fornitore che rifiuta l'ordine, ecc.) resta solo loggata per
+// un controllo manuale, senza bloccare ne' duplicare le altre righe dello
+// stesso ordine (vedi isolamento errori qui sotto).
 //
 // Va avviato ed ospitato separatamente (non viene eseguito dal file .bat).
 // Configurazione: copia config/printify.env.example in config/printify.local.env,
@@ -179,6 +187,16 @@ app.post('/webhooks/orders-create', async function (req, res) {
       });
     });
 
+    // ROUND 33 -- ogni riga viene elaborata nel proprio try/catch: prima, un
+    // errore su UNA riga (es. variante non configurata) mandava in eccezione
+    // l'intero handler, Express rispondeva 500, e Shopify ritenta lo stesso
+    // webhook fino a ~48h -- rielaborando anche le righe GIA' andate a buon
+    // fine, creando ordini duplicati su Printify/Printful (nessuna chiave di
+    // idempotenza esiste qui). Isolando l'errore per riga, si risponde
+    // sempre 200 dopo aver tentato tutte le righe: quelle riuscite non
+    // vengono mai ripetute, quelle fallite restano loggate per un controllo
+    // manuale invece di sparire o moltiplicarsi.
+    const failures = [];
     for (const item of customItems) {
       let custom = null;
       const frontProp = item.properties.find(function (p) { return p.name === '_Personalizzazione' && p.value; });
@@ -195,12 +213,23 @@ app.post('/webhooks/orders-create', async function (req, res) {
         try { customBack = JSON.parse(backProp.value); }
         catch (e) { console.error('Personalizzazione (retro) non leggibile:', backProp.value); }
       }
-      await handleCustomItem(order, item, custom, customBack);
+      try {
+        await handleCustomItem(order, item, custom, customBack);
+      } catch (err) {
+        console.error('Riga ordine ' + order.id + ' (' + (item.title || item.id) + ') NON evasa, richiede controllo manuale:', err.message);
+        failures.push({ item: item.title || item.id, error: err.message });
+      }
     }
 
+    if (failures.length > 0) {
+      console.error('Ordine ' + order.id + ': ' + failures.length + ' riga/righe su ' + customItems.length + ' richiedono controllo manuale.');
+    }
+    // Sempre 200: Shopify non deve ritentare (rielaborerebbe anche le righe
+    // gia' riuscite). I fallimenti restano nei log di Render per un controllo
+    // manuale -- non silenziosi, solo non piu' causa di duplicati.
     res.status(200).send('OK');
   } catch (err) {
-    console.error('Errore elaborazione ordine:', err);
+    console.error('Errore elaborazione ordine (prima di iniziare le righe):', err);
     res.status(500).send('Errore interno');
   }
 });
@@ -246,8 +275,14 @@ async function handleCustomItem(order, item, custom, customBack) {
     order, item, front, back, config,
     env: process.env,
   });
+  // ROUND 35 -- approvazione manuale voluta dalla titolare "all'inizio":
+  // sentToProduction e' false di default per entrambi i fornitori (vedi
+  // providers/*-client.js, env PRINTIFY_AUTO_SEND_TO_PRODUCTION /
+  // PRINTFUL_AUTO_CONFIRM) finche' non verranno attivati. Stato normale in
+  // attesa, non un errore -- il log lo riflette cosi'.
+  const statusLabel = result.sentToProduction ? 'inviato in produzione automaticamente' : 'creato, in attesa di approvazione manuale (pannello ' + result.provider + ')';
   console.log(
-    'Ordine ' + result.provider + ' creato (in sospeso, da approvare manualmente) per ordine Shopify ' + order.id +
+    'Ordine ' + result.provider + ' ' + statusLabel + ' per ordine Shopify ' + order.id +
     (result.orderId ? ' -> ' + result.provider + ' order ' + result.orderId : '')
   );
 }

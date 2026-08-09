@@ -78,6 +78,25 @@ async function createOrderOnPrintify(order, productId, variantId, quantity, apiK
   return response.json();
 }
 
+// ROUND 33 -- creare l'ordine su Printify lo lascia in stato "pending", NON
+// in produzione: senza questa seconda chiamata resta in sospeso nel pannello
+// Printify (Orders) finche' qualcuno non lo approva a mano, premendo "Send to
+// production" li'. ROUND 35 -- la titolare vuole approvare lei gli ordini
+// "all'inizio", quindi fulfillOrder() sotto NON chiama piu' questa funzione
+// di default: resta qui pronta (non cancellata) per quando vorra' passare
+// all'invio automatico, dietro l'env var PRINTIFY_AUTO_SEND_TO_PRODUCTION.
+async function sendToProduction(orderId, apiKey, shopId) {
+  const response = await fetch(
+    'https://api.printify.com/v1/shops/' + shopId + '/orders/' + orderId + '/send_to_production.json',
+    { method: 'POST', headers: { Authorization: 'Bearer ' + apiKey } }
+  );
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error('Errore invio in produzione Printify ordine ' + orderId + ' (' + response.status + '): ' + text);
+  }
+  return response.json();
+}
+
 // Interfaccia comune usata da provider-router.js: fulfillOrder(ctx) dove ctx
 // contiene { order, item, front, back, config, env }. env porta le chiavi
 // API/shopId invece di leggerle da process.env qui dentro, cosi' il modulo
@@ -86,7 +105,22 @@ async function fulfillOrder(ctx) {
   const { order, item, front, back, config, env } = ctx;
   const product = await createProduct(order, item, front, back, config, env.PRINTIFY_API_KEY, env.PRINTIFY_SHOP_ID);
   const printifyOrder = await createOrderOnPrintify(order, product.id, config.variantId, item.quantity, env.PRINTIFY_API_KEY, env.PRINTIFY_SHOP_ID);
-  return { provider: 'printify', productId: product.id, orderId: printifyOrder.id };
+
+  let sentToProduction = false;
+  if (env.PRINTIFY_AUTO_SEND_TO_PRODUCTION === 'true') {
+    try {
+      await sendToProduction(printifyOrder.id, env.PRINTIFY_API_KEY, env.PRINTIFY_SHOP_ID);
+      sentToProduction = true;
+    } catch (err) {
+      // Ordine creato ma non confermato in automatico: resta pending su
+      // Printify, va inviato a mano da li'.
+      console.error('Ordine Printify ' + printifyOrder.id + ' creato ma NON inviato in produzione automaticamente:', err.message);
+    }
+  }
+  // Approvazione manuale (default): l'ordine resta "pending" nel pannello
+  // Printify -> Orders finche' la titolare non preme "Send to production".
+
+  return { provider: 'printify', productId: product.id, orderId: printifyOrder.id, sentToProduction };
 }
 
 module.exports = { fulfillOrder };
