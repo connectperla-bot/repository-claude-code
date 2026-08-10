@@ -212,11 +212,22 @@ const MOCKUP_POLL_DELAY_MS = 1500;
 // Printful vero, stessi dati gia' usati in snippets/perla-print-areas.liquid
 // per i ratio ROUND 18/28) -- non inventati. variantEnv punta alla variante
 // Shopify/Printful gia' in uso per quel tipo (vedi config/printify.local.env).
+//
+// placement e' l'ID del file, cioe' il campo files[].id di
+// GET https://api.printful.com/products/<catalogId> (endpoint pubblico, non
+// serve la chiave) -- NON il suo files[].type. Su tutti e quattro i prodotti
+// l'id della posizione stampabile principale e' "default"; il type e' "front"
+// su collare, bandana e guinzaglio e "default" sulla ciotola. Dove la
+// posizione stampabile e' una sola, Printful accetta lo stesso anche il type,
+// ed e' il motivo per cui "front" ha sempre funzionato su collare e bandana.
+// Il guinzaglio e' l'unico con DUE posizioni (default + back): li' "front" non
+// corrisponde a nessun id, la create-task veniva rifiutata e il cliente che
+// premeva "Genera anteprima reale" riceveva solo un errore generico.
 const PRINTFUL_MOCKUP_CONFIG = {
   COLLARE_EU: { catalogId: 749, variantEnv: 'PRINTFUL_COLLARE_EU_VARIANT_ID', placement: 'front', width: 7169, height: 315 },
   BANDANA_EU: { catalogId: 630, variantEnv: 'PRINTFUL_BANDANA_EU_VARIANT_ID', placement: 'front', width: 4125, height: 4125 },
   CIOTOLA_EU: { catalogId: 678, variantEnv: 'PRINTFUL_CIOTOLA_EU_VARIANT_ID', placement: 'default', width: 6496, height: 803 },
-  GUINZAGLIO_EU: { catalogId: 745, variantEnv: 'PRINTFUL_GUINZAGLIO_EU_VARIANT_ID', placement: 'front', width: 12389, height: 219 },
+  GUINZAGLIO_EU: { catalogId: 745, variantEnv: 'PRINTFUL_GUINZAGLIO_EU_VARIANT_ID', placement: 'default', width: 12389, height: 219 },
 };
 const PRINTFUL_POLL_ATTEMPTS = 8;
 const PRINTFUL_POLL_DELAY_MS = 1500;
@@ -285,7 +296,7 @@ async function generatePrintfulMockup(config, compositeImageId, res) {
       if (status === 'completed') {
         mockups = (polled.result.mockups || []).map(function (m) { return m.mockup_url; }).filter(Boolean);
       } else if (status === 'failed') {
-        throw new Error('Printful mockup task failed');
+        throw new Error('Printful mockup task failed: ' + (polled.result.error || 'nessun motivo indicato'));
       }
     }
     if (mockups.length === 0) {
@@ -293,8 +304,18 @@ async function generatePrintfulMockup(config, compositeImageId, res) {
     }
     res.json({ images: mockups.slice(0, 4) });
   } catch (err) {
+    // Il messaggio per il cliente resta quello, generico e in italiano: e'
+    // quello che il tema mostra. "detail" e' in piu', per chi guarda la
+    // risposta con gli strumenti da sviluppatore -- prima il motivo vero
+    // esisteva solo nei log di Render, e per capire perche' il guinzaglio non
+    // generava mockup e' servito ricostruirlo dal catalogo pubblico. Sono
+    // messaggi di Printful tipo "Placement 'front' is not valid": nessun
+    // segreto, nessuna chiave, tagliati a 300 caratteri.
     console.error('Errore generate-mockup (Printful):', err.message);
-    res.status(502).json({ error: 'Impossibile generare l\'anteprima da Printful' });
+    res.status(502).json({
+      error: 'Impossibile generare l\'anteprima da Printful',
+      detail: String(err.message || '').slice(0, 300),
+    });
   }
 }
 
