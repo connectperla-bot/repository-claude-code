@@ -213,21 +213,27 @@ const MOCKUP_POLL_DELAY_MS = 1500;
 // per i ratio ROUND 18/28) -- non inventati. variantEnv punta alla variante
 // Shopify/Printful gia' in uso per quel tipo (vedi config/printify.local.env).
 //
-// placement e' l'ID del file, cioe' il campo files[].id di
+// placement e' il files[].TYPE di
 // GET https://api.printful.com/products/<catalogId> (endpoint pubblico, non
-// serve la chiave) -- NON il suo files[].type. Su tutti e quattro i prodotti
-// l'id della posizione stampabile principale e' "default"; il type e' "front"
-// su collare, bandana e guinzaglio e "default" sulla ciotola. Dove la
-// posizione stampabile e' una sola, Printful accetta lo stesso anche il type,
-// ed e' il motivo per cui "front" ha sempre funzionato su collare e bandana.
-// Il guinzaglio e' l'unico con DUE posizioni (default + back): li' "front" non
-// corrisponde a nessun id, la create-task veniva rifiutata e il cliente che
-// premeva "Genera anteprima reale" riceveva solo un errore generico.
+// serve la chiave) -- non il files[].id.
+//
+// Il commento che stava qui diceva l'esatto contrario, ed era sbagliato: il
+// guinzaglio, messo su 'default' (il suo id) per quel motivo, ha continuato a
+// fallire. Adesso che generatePrintfulMockup riporta il messaggio di Printful
+// nel campo "detail" si legge in chiaro:
+//
+//   Printful create-task error (400): "File type default is not allowed for
+//   this product"
+//
+// Sui quattro cataloghi l'id e' sempre "default"; il type e' "front" su
+// collare, bandana e guinzaglio, "default" sulla ciotola. Usare il type spiega
+// tutto quello che si e' visto: collare e bandana hanno sempre funzionato con
+// 'front', la ciotola con 'default', e il guinzaglio ora torna in riga.
 const PRINTFUL_MOCKUP_CONFIG = {
   COLLARE_EU: { catalogId: 749, variantEnv: 'PRINTFUL_COLLARE_EU_VARIANT_ID', placement: 'front', width: 7169, height: 315 },
   BANDANA_EU: { catalogId: 630, variantEnv: 'PRINTFUL_BANDANA_EU_VARIANT_ID', placement: 'front', width: 4125, height: 4125 },
   CIOTOLA_EU: { catalogId: 678, variantEnv: 'PRINTFUL_CIOTOLA_EU_VARIANT_ID', placement: 'default', width: 6496, height: 803 },
-  GUINZAGLIO_EU: { catalogId: 745, variantEnv: 'PRINTFUL_GUINZAGLIO_EU_VARIANT_ID', placement: 'default', width: 12389, height: 219 },
+  GUINZAGLIO_EU: { catalogId: 745, variantEnv: 'PRINTFUL_GUINZAGLIO_EU_VARIANT_ID', placement: 'front', width: 12389, height: 219 },
 };
 const PRINTFUL_POLL_ATTEMPTS = 8;
 const PRINTFUL_POLL_DELAY_MS = 1500;
