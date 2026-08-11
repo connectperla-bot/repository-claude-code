@@ -273,7 +273,12 @@ async function generatePrintfulMockup(config, compositeImageId, res) {
           // writePropData in assets/global.js): riempie l'intera area di stampa.
           position: { area_width: config.width, area_height: config.height, width: config.width, height: config.height, top: 0, left: 0 },
         }],
-        format: 'jpg',
+        // PNG e non JPG: stessa dimensione in pixel (1000x1000, e non si puo'
+        // alzare -- create-task non ha nessun parametro di larghezza, i
+        // parametri accettati sono solo variant_ids, files, format, options,
+        // option_groups e product_options), ma senza gli aloni della
+        // compressione attorno alle volute dorate, che e' dove si notano.
+        format: 'png',
       }),
     });
     if (!createRes.ok) {
@@ -294,7 +299,17 @@ async function generatePrintfulMockup(config, compositeImageId, res) {
       const polled = await pollRes.json();
       const status = polled.result && polled.result.status;
       if (status === 'completed') {
-        mockups = (polled.result.mockups || []).map(function (m) { return m.mockup_url; }).filter(Boolean);
+        // Ogni voce di "mockups" ha l'inquadratura principale in mockup_url e
+        // le altre in extra[] (piegato, indossato, di lato -- dipende dal
+        // catalogo). Prima tenevamo solo la prima e i prodotti EU restavano con
+        // una foto sola, contro le otto dei Printify. Ora si prendono tutte, in
+        // ordine: prima le principali, poi le aggiuntive.
+        var principali = [], aggiuntive = [];
+        (polled.result.mockups || []).forEach(function (m) {
+          if (m.mockup_url) principali.push(m.mockup_url);
+          (m.extra || []).forEach(function (e) { if (e && e.url) aggiuntive.push(e.url); });
+        });
+        mockups = principali.concat(aggiuntive);
       } else if (status === 'failed') {
         throw new Error('Printful mockup task failed: ' + (polled.result.error || 'nessun motivo indicato'));
       }
