@@ -232,6 +232,31 @@ const PRINTFUL_MOCKUP_CONFIG = {
 const PRINTFUL_POLL_ATTEMPTS = 8;
 const PRINTFUL_POLL_DELAY_MS = 1500;
 
+// ROUND 23 -- le anteprime EU uscivano impastate, a qualunque risoluzione.
+//
+// Misurato: dando in pasto a questa rotta lo stesso motivo a 7169x315 (nativo),
+// 2400x105 e 1200x53 il mockup che torna indietro e' sempre lo stesso impasto,
+// con le stesse identiche metriche. Cioe' la risoluzione di partenza non conta:
+// a Printful arriva comunque una copia a 1200px, perche' resolvePrintifyImageUrl
+// qui sotto restituisce il preview_url di Printify, che tronca il lato lungo a
+// 1200px (e' scritto anche nel commento delle variabili CLOUDINARY_* in cima).
+// Su un collare 7169px significa buttare via 6 pixel su 7: le volute dorate del
+// damascato diventano una macchia. Non si vedeva prima perche' i vecchi file di
+// stampa erano gia' larghi ~1200px, con il motivo molto piu' rado.
+//
+// Il file a piena risoluzione pero' esiste gia': /upload lo mette su Cloudinary
+// e ne restituisce la URL insieme all'id Printify. Quindi se il client la
+// rimanda (composite_image_url) si usa quella; se non c'e' -- client vecchi,
+// chiamate fatte a mano -- si ricade sul preview_url di prima.
+//
+// Solo Cloudinary, e solo https: e' l'unico host su cui scriviamo noi, e questa
+// URL finisce dentro una richiesta autenticata al nostro account Printful.
+const CLOUDINARY_HOST_RE = /^https:\/\/res\.cloudinary\.com\/[A-Za-z0-9_-]+\/image\/upload\//;
+
+function urlCompositoValida(url) {
+  return typeof url === 'string' && url.length < 2048 && CLOUDINARY_HOST_RE.test(url);
+}
+
 // Il client manda sempre un id di un'immagine gia' caricata su Printify
 // (vedi /upload sopra, riusato come semplice hosting pubblico anche per i
 // compositi destinati a Printful) -- qui si risolve quell'id nella sua URL
@@ -250,7 +275,7 @@ async function resolvePrintifyImageUrl(imageId) {
   return data.preview_url;
 }
 
-async function generatePrintfulMockup(config, compositeImageId, res) {
+async function generatePrintfulMockup(config, compositeImageId, res, compositeImageUrl) {
   if (!PRINTFUL_API_KEY || !PRINTFUL_STORE_ID) {
     return res.status(500).json({ error: 'PRINTFUL_API_KEY/PRINTFUL_STORE_ID non configurati sul server' });
   }
@@ -259,7 +284,9 @@ async function generatePrintfulMockup(config, compositeImageId, res) {
     return res.status(500).json({ error: 'Variante Printful non configurata sul server per questo tipo' });
   }
   try {
-    const imageUrl = await resolvePrintifyImageUrl(compositeImageId);
+    const imageUrl = urlCompositoValida(compositeImageUrl)
+      ? compositeImageUrl
+      : await resolvePrintifyImageUrl(compositeImageId);
     const createRes = await fetch('https://api.printful.com/mockup-generator/create-task/' + config.catalogId, {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + PRINTFUL_API_KEY, 'X-PF-Store-Id': String(PRINTFUL_STORE_ID), 'Content-Type': 'application/json' },
@@ -339,6 +366,10 @@ app.post('/generate-mockup', express.json(), async function (req, res) {
   const type = String(body.product_type || '').toUpperCase();
   const baseImageId = body.base_image_id;
   const compositeImageId = body.composite_image_id;
+  // URL a piena risoluzione dello stesso composito (vedi urlCompositoValida):
+  // opzionale, serve solo ai tipi EU. Il percorso Printify qui sotto non la
+  // usa -- la' il composito viaggia gia' per id, dentro il loro sistema.
+  const compositeImageUrl = body.composite_image_url;
   // ROUND 17 — retro opzionale (medaglietta doppio lato): se presente, il
   // prodotto temporaneo per il mockup include anche il placeholder "back",
   // cosi' l'anteprima reale mostra entrambi i lati. Assente per tutti gli altri
@@ -354,7 +385,7 @@ app.post('/generate-mockup', express.json(), async function (req, res) {
   // sopra) -- nessuna delle regole/pulizia del prodotto temporaneo Printify
   // qui sotto si applica a questi tipi.
   if (PRINTFUL_MOCKUP_CONFIG[type]) {
-    return generatePrintfulMockup(PRINTFUL_MOCKUP_CONFIG[type], compositeImageId, res);
+    return generatePrintfulMockup(PRINTFUL_MOCKUP_CONFIG[type], compositeImageId, res, compositeImageUrl);
   }
   if (!PRINTIFY_SHOP_ID) {
     return res.status(500).json({ error: 'PRINTIFY_SHOP_ID non configurato sul server' });
