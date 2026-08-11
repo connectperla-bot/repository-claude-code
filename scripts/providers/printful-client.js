@@ -13,10 +13,50 @@
 // printify_image_url (oltre a printify_image_id) nella proprieta'
 // _Personalizzazione — vedi quel file, funzione writePropData.
 
+// ROUND 22 -- il motivo non finiva nel file di stampa.
+//
+// buildComposite() in assets/global.js esporta SOLO il canvas Fabric: il nome
+// del cliente su fondo trasparente, niente motivo (in global.js non esiste
+// nessun setBackgroundImage). Sui prodotti Printify il motivo arriva a parte,
+// come base_image_id preso da /pattern-source; ma /pattern-source lavora sul
+// printify_product_id, che i prodotti Printful non hanno. Risultato: un ordine
+// EU stampava il nome su un accessorio BIANCO, non sul damascato della foto.
+//
+// Qui i due livelli vengono uniti prima di mandarli a Printful, con una
+// sovrapposizione Cloudinary: motivo sotto (a piena risoluzione nativa, la
+// stessa dell'area di stampa), livello cliente sopra. Il risultato esce
+// automaticamente alla misura del motivo, quindi non serve nessuna tabella di
+// misure da tenere allineata: e' la stessa formula per collare, bandana,
+// ciotola e guinzaglio (verificato su tutti e quattro).
+//
+// Non si tocca il percorso Printify: la' il motivo c'e' gia', e sovrapporlo
+// una seconda volta lo stamperebbe doppio.
+function idPubblicoCloudinary(url) {
+  // https://res.cloudinary.com/<cloud>/image/upload/v123/<id>.<est>
+  const m = String(url || '').match(/\/image\/upload\/(?:[^/]+\/)*?([^/.]+)\.[a-z0-9]+$/i);
+  return m ? m[1] : null;
+}
+
+function componiConMotivo(urlCliente, urlMotivo) {
+  const idCliente = idPubblicoCloudinary(urlCliente);
+  const idMotivo = idPubblicoCloudinary(urlMotivo);
+  // Se uno dei due non e' su Cloudinary (ordini vecchi, prodotti neutri che
+  // non hanno un motivo) si torna al comportamento di prima: meglio il file
+  // di oggi che un file di stampa costruito male.
+  if (!idCliente || !idMotivo) return urlCliente;
+  const base = String(urlMotivo).split('/image/upload/')[0] + '/image/upload';
+  // w_1.0/h_1.0 + fl_relative = "grande quanto il motivo", c_fit non deforma.
+  return base + '/l_' + idCliente + ',w_1.0,h_1.0,c_fit,fl_relative/fl_layer_apply/' + idMotivo + '.jpg';
+}
+
 async function createOrderOnPrintful(order, item, front, back, config, apiKey, autoConfirm) {
   const files = [];
-  if (front && front.printify_image_url) files.push({ type: 'default', url: front.printify_image_url });
-  if (back && back.printify_image_url) files.push({ type: 'back', url: back.printify_image_url });
+  if (front && front.printify_image_url) {
+    files.push({ type: 'default', url: componiConMotivo(front.printify_image_url, front.pattern_url) });
+  }
+  if (back && back.printify_image_url) {
+    files.push({ type: 'back', url: componiConMotivo(back.printify_image_url, back.pattern_url) });
+  }
   if (!files.length) {
     throw new Error('Nessuna URL immagine disponibile per Printful (printify_image_url mancante — il cliente ha personalizzato prima di questo aggiornamento del sito?).');
   }
