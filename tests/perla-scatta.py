@@ -70,6 +70,21 @@ def main():
           window.scrollTo(0, 0);
           await new Promise(r => setTimeout(r, 500));
         }""")
+        # ...ma scorrere non basta: il tema ha uno scorrimento morbido tutto suo
+        # (motion.js sposta un contenitore con transform) e nello specchio non
+        # parte, quindi window.scrollTo non muove niente e le rivelazioni non
+        # scattano mai. Misurato: 3 elementi su 34 rivelati -- e la stessa cosa
+        # sul tema pubblicato, che nessuno ha toccato, quindi e' un limite dello
+        # specchio e non un difetto del sito. Si forza lo stato finale: le
+        # schermate mostrano l'animazione finita, che e' quello che serve
+        # guardare. Per collaudare l'animazione mentre avviene serve il sito vero.
+        p.evaluate("""()=>{
+          document.querySelectorAll('[data-reveal]').forEach(e => e.classList.add('is-visible'));
+          document.querySelectorAll('[data-words],[data-rule],[data-blinds],[data-curtain]')
+            .forEach(e => e.classList.add('is-in', 'in'));
+          document.querySelectorAll('.stagger-item').forEach(e => e.classList.add('stagger-in'));
+        }""")
+        p.wait_for_timeout(900)
         p.wait_for_timeout(800)
         p.screenshot(path="/tmp/shots/%s-%s-alto.png" % (suff, nome))
         p.screenshot(path="/tmp/shots/%s-%s-intera.png" % (suff, nome), full_page=True)
