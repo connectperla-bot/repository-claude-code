@@ -21,3 +21,8 @@ Thumbs.db
 
 # database locale delle skill: stato di questa macchina, non del progetto
 .claude/memory.db
+
+# Area di transito di scripts/perla-eu-foto-mockup.py: i JPG vivono il tempo di
+# essere appiattiti su bianco e caricati. Le copie che contano stanno su
+# Cloudinary (URL permanenti) e su Shopify; qui resterebbero 8 MB di duplicati.
+out-foto/
