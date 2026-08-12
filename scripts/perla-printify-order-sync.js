@@ -155,6 +155,16 @@ const PRODUCT_TYPE_CONFIG = {
 };
 
 const app = express();
+
+// Annullare/cambiare un ordine prima che parta la stampa (perla-annulla-ordine.js).
+// Va montato PRIMA di express.raw: quel raw prende ogni application/json e lo
+// lascia come Buffer -- serve cosi' al webhook, che deve rifirmare i byte
+// esatti per verificare l'HMAC, ma le rotte dell'annullamento vogliono JSON
+// gia' letto. Montandole prima, rispondono loro e il raw non le vede nemmeno.
+// Se mancano le chiavi Shopify Admin il modulo non si monta e basta: il
+// webhook degli ordini continua a funzionare come sempre.
+require('./perla-annulla-ordine').montaSuApp(app, process.env);
+
 app.use(express.raw({ type: 'application/json' }));
 
 function verifyShopifyWebhook(req) {
