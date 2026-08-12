@@ -437,7 +437,7 @@
   "handle": "guinzaglio-eu-medaglioni-fornitore-europeo",
   "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786397365/xpxutizaeiyshqwwxoau.jpg",
   "media": 1,
-  "gia_fatta": false
+  "gia_fatta": true
  },
  {
   "id": "gid://shopify/Product/15925793882456",
@@ -445,7 +445,7 @@
   "handle": "guinzaglio-eu-onda-fornitore-europeo",
   "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786397403/akz8fo0qckte94x4q2sb.jpg",
   "media": 1,
-  "gia_fatta": false
+  "gia_fatta": true
  },
  {
   "id": "gid://shopify/Product/15925793915224",
@@ -453,7 +453,7 @@
   "handle": "guinzaglio-eu-petrolio-fornitore-europeo",
   "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786397489/pii8enbftbsmlbgovokq.jpg",
   "media": 1,
-  "gia_fatta": false
+  "gia_fatta": true
  },
  {
   "id": "gid://shopify/Product/15925793947992",
@@ -461,7 +461,7 @@
   "handle": "guinzaglio-eu-smeraldo-fornitore-europeo",
   "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786397528/jlaky90tsemdakd4wsn5.jpg",
   "media": 1,
-  "gia_fatta": false
+  "gia_fatta": true
  },
  {
   "id": "gid://shopify/Product/15925837988184",
@@ -469,7 +469,7 @@
   "handle": "bandana-eu-tartan-fornitore-europeo",
   "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786402237/pxank2u4oual9mib17qk.jpg",
   "media": 1,
-  "gia_fatta": false
+  "gia_fatta": true
  },
  {
   "id": "gid://shopify/Product/15925838020952",
@@ -477,7 +477,7 @@
   "handle": "bandana-eu-marinara-fornitore-europeo",
   "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786402142/hm4qxbunda8aadqdwv3v.jpg",
   "media": 1,
-  "gia_fatta": false
+  "gia_fatta": true
  },
  {
   "id": "gid://shopify/Product/15925838053720",
@@ -485,7 +485,7 @@
   "handle": "bandana-eu-terracotta-fornitore-europeo",
   "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786402286/tam9qdeesdcdtfvpkdis.jpg",
   "media": 1,
-  "gia_fatta": false
+  "gia_fatta": true
  },
  {
   "id": "gid://shopify/Product/15925838086488",
@@ -493,7 +493,7 @@
   "handle": "bandana-eu-lino-fornitore-europeo",
   "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786402100/kreovne1zwyffsxdbscf.jpg",
   "media": 1,
-  "gia_fatta": false
+  "gia_fatta": true
  },
  {
   "id": "gid://shopify/Product/15925838119256",
@@ -501,7 +501,7 @@
   "handle": "collare-eu-tartan-fornitore-europeo",
   "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786402496/amdyovxyqqiju2guhvof.jpg",
   "media": 1,
-  "gia_fatta": false
+  "gia_fatta": true
  },
  {
   "id": "gid://shopify/Product/15925838152024",
@@ -509,7 +509,7 @@
   "handle": "collare-eu-marinara-fornitore-europeo",
   "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786402408/oc2qvxu6df7sqjh2zd4w.jpg",
   "media": 1,
-  "gia_fatta": false
+  "gia_fatta": true
  },
  {
   "id": "gid://shopify/Product/15925838184792",
@@ -517,7 +517,7 @@
   "handle": "collare-eu-terracotta-fornitore-europeo",
   "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786402534/w7aznycwfnm1vwiedsvu.jpg",
   "media": 1,
-  "gia_fatta": false
+  "gia_fatta": true
  },
  {
   "id": "gid://shopify/Product/15925838217560",
@@ -525,6 +525,6 @@
   "handle": "collare-eu-lino-fornitore-europeo",
   "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786402373/evotskrhirwwxhzqafzl.jpg",
   "media": 1,
-  "gia_fatta": false
+  "gia_fatta": true
  }
 ]
