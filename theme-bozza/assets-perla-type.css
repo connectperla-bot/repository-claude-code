@@ -1,0 +1,385 @@
+/* ============================================================================
+   Perla — tipografia: correzioni al foglio principale.
+
+   Caricato DOPO base.css in layout/theme.liquid: a parita' di specificita'
+   vince l'ordine di caricamento, quindi qui si correggono regole di base.css
+   (161 KB) senza doverlo riscrivere — stesso motivo per cui esiste
+   assets/perla-studio.css.
+
+   In base.css NON esiste un solo font-family scritto per nome: tutte e 70 le
+   dichiarazioni passano dai token --font-heading/--font-body/--font-accent.
+   Il cambio di font arriva quindi ovunque da solo. Questo file serve per gli
+   effetti collaterali del cambio, non per rincorrere font hardcoded.
+
+   ROUND 18 — il font passa da Fraunces a Bodoni Moda (vedi layout/theme.liquid)
+   e viene corretto il difetto che tagliava il testo.
+   ========================================================================= */
+
+/* ---------------------------------------------------------------------------
+   1. IL TESTO TAGLIATO
+
+   Questo NON e' un problema del font, ed e' il motivo per cui va corretto a
+   prescindere da quale font si sceglie.
+
+   assets/motion.js riscrive ogni titolo [data-words] parola per parola:
+       <span class="word"><span class="word__in">Parola</span></span>
+   e base.css mette overflow:hidden su .word per far salire la parola da sotto:
+       [data-words] .word { display:inline-block; overflow:hidden; vertical-align:top }
+       [data-words] .word__in { transform: translateY(105%) }
+
+   .word non ha altezza propria: e' alta esattamente quanto la line-height del
+   titolo. E i titoli in base.css stanno a line-height 1.0 (h1), 1.04 (h2),
+   1.08 (h3-h5), cioe' una scatola alta 1em. Playfair Display sta dentro 1em;
+   quasi nessun altro serif ci sta. Tutto quello che sporge sotto — le
+   discendenti di g, p, q, y, j — finisce fuori dalla scatola e viene
+   tagliato. Su un h1 da 6.4rem la fetta persa è di diversi pixel.
+
+   Correzione: allargare la scatola che ritaglia SENZA cambiare il layout,
+   con padding compensato da un margine negativo uguale. E siccome la scatola
+   ora è più alta, la posizione di partenza dell'animazione va spinta più giù,
+   altrimenti si intravede la parola prima che entri.
+   ------------------------------------------------------------------------ */
+[data-words] .word {
+  padding-bottom: .16em;
+  margin-bottom: -.16em;
+  padding-top: .04em;
+  margin-top: -.04em;
+}
+[data-words] .word__in { transform: translateY(125%); }
+[data-words].is-in .word__in { transform: translateY(0); }
+@media (prefers-reduced-motion: reduce) {
+  [data-words] .word__in { transform: none; }
+}
+
+/* Interlinee: 1.0 su un h1 e' sotto la soglia di sicurezza per qualsiasi
+   serif con discendenti profonde. Alzate quel tanto che basta perche' la
+   scatola contenga il carattere, senza slabbrare i titoli. */
+h1 { line-height: 1.1; }
+h2 { line-height: 1.12; }
+h3, h4, h5, h6 { line-height: 1.18; }
+
+/* Stesso meccanismo, altri due punti gia' individuati in base.css:
+   - .card__title usa -webkit-line-clamp:2, che fissa la scatola a 2 righe
+     esatte: le discendenti della seconda riga sparivano.
+   - .fullmenu__link ha overflow:hidden con line-height 1.05 e la stessa
+     animazione a scorrimento delle parole. */
+.card__title { line-height: 1.35; }
+.fullmenu__link { line-height: 1.15; padding-bottom: .1em; }
+
+/* .btn ha overflow:hidden (serve al ripple e al riflesso dorato): quando
+   l'etichetta del checkout va a capo, l'ultima riga perdeva le discendenti. */
+.btn .btn__label { line-height: 1.3; }
+
+/* Il campo di ricerca a schermo intero arriva a 4rem: i browser danno agli
+   <input> un riquadro interno che taglia le teste delle lettere. */
+.search-overlay__input { line-height: 1.25; padding: .5em 0; }
+
+/* ---------------------------------------------------------------------------
+   2. FALLBACK OBSOLETI DENTRO LE var()
+
+   15 regole di base.css scrivono var(--font-heading, 'Playfair Display', serif)
+   o var(--font-accent, 'Cormorant Garamond', serif). Il fallback e' inerte
+   finche' il token esiste, ma quei due font non sono piu' caricati: se il
+   token uscisse di scope si ripiegherebbe su un font assente. Riallineati.
+   ------------------------------------------------------------------------ */
+.preloader__word,
+.section-number,
+.scopri-cursor,
+.search-overlay__brand,
+.search-overlay__input,
+.search-result__title,
+.search-card__title,
+.search-empty,
+.search-loading,
+.fullmenu__brand,
+.fullmenu__link,
+.marquee__item,
+[data-cross] {
+  font-family: var(--font-heading, "Bodoni Moda", Georgia, serif);
+}
+
+.cart-line__hallmark,
+.reviews-empty,
+.founder-note p:first-child {
+  font-family: var(--font-accent, "Bodoni Moda", Georgia, serif);
+}
+
+/* ---------------------------------------------------------------------------
+   3. h5 e h6
+
+   base.css elenca solo h1..h5 nel blocco che assegna il font dei titoli, e h5
+   non ha mai ricevuto una dimensione. Risultato: <h6> usciva nel font del
+   TESTO alla dimensione di default del browser, e <h5> nel font dei titoli ma
+   a corpo 1rem. Nel rich-text delle schede prodotto compaiono entrambi.
+   ------------------------------------------------------------------------ */
+h6 {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  color: var(--color-ink);
+  margin: 0 0 .5em;
+  letter-spacing: var(--heading-tracking);
+  text-transform: var(--heading-transform);
+  font-optical-sizing: auto;
+  text-wrap: balance;
+}
+h5 { font-size: calc(1.05rem * var(--h-scale, 1)); }
+h6 { font-size: calc(.95rem * var(--h-scale, 1)); }
+
+/* ---------------------------------------------------------------------------
+   4. CRENATURA DEI TITOLI
+
+   base.css stringe molto i titoli (h1 -0.022em ... h4 -0.008em), valori
+   scelti per Playfair Display. Bodoni Moda ha proporzioni simili a Playfair
+   — molto piu' stretta di Fraunces — quindi si torna vicino agli originali,
+   solo un soffio piu' larghi perche' le grazie orizzontali sottilissime di
+   Bodoni hanno bisogno di respirare per non impastarsi.
+
+   Nota: --heading-tracking (da layout/theme.liquid) NON governa h1..h4,
+   base.css lo sovrascrive con valori fissi. Resta in uso solo su h5/h6.
+   ------------------------------------------------------------------------ */
+h1 { letter-spacing: -0.018em; }
+h2 { letter-spacing: -0.015em; }
+h3 { letter-spacing: -0.010em; }
+h4 { letter-spacing: -0.006em; }
+
+@media (max-width: 749px) {
+  h1 { letter-spacing: -0.014em; }
+}
+
+/* Il wordmark nell'header aveva +.04em, tarato su Playfair. Bodoni e' di
+   larghezza simile ma con aste piu' marcate: appena piu' stretto. */
+.brand__name { letter-spacing: .03em; }
+
+/* ---------------------------------------------------------------------------
+   5. TESTI "ACCENTO"
+
+   Le nove regole che usano var(--font-accent) erano tarate su Cormorant
+   Garamond (altezza-x molto piccola). Nel Round 17 erano state ridotte del
+   10% per Fraunces, che ce l'ha molto grande. Bodoni Moda sta nel mezzo,
+   vicina a Playfair: la riduzione va quasi tutta annullata, resta un 5%
+   perche' il contrasto forte di Bodoni la fa comunque "pesare" di piu'.
+   ------------------------------------------------------------------------ */
+.tagline { font-size: clamp(1.25rem, .96rem + 1.05vw, 1.72rem); }
+.story__text .signature { font-size: 1.42rem; }
+.review-card p { font-size: 1.14rem; }
+.cart-line__hallmark { font-size: .85rem; }
+.footer__tagline { font-size: 1.1rem; }
+.reviews-empty { font-size: 1.28rem; }
+.founder-note p:first-child { font-size: 1.28rem; }
+.founder-note .signature { font-size: 1.24rem; }
+[data-policy-body] h3::before { font-size: .9rem; }
+
+/* ---------------------------------------------------------------------------
+   6. LE ASTE SOTTILI DI BODONI A CORPO PICCOLO
+
+   Bodoni Moda e' un didone: il contrasto fra pieni e sottili e' estremo, e
+   sotto i 16px le aste sottili si assottigliano fino a sparire su schermi non
+   retina. L'asse ottico (opsz 6..96) compensa in parte — base.css ha gia'
+   font-optical-sizing:auto su h1..h5, .card__title, .stat__num e
+   .marquee__item, e con Playfair quella riga era inerte perche' Playfair non
+   ha l'asse: adesso lavora davvero.
+
+   Dove il titolo scende sotto 1.15rem si aggiunge comunque un filo di peso,
+   che e' il rimedio classico per i didoni a corpo piccolo.
+   ------------------------------------------------------------------------ */
+.card__title,
+.sticky-atc__title,
+.buy-bar__name,
+.search-card__title,
+.cart-line__title {
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------------------
+   7. TESTO CORRENTE
+
+   Inter ha un'altezza-x generosa: alla stessa misura in px "pesa" piu' di
+   Assistant. Cifre tabellari sui prezzi, che finora ereditavano quelle
+   proporzionali (le colonne di prezzo nel carrello non si allineavano mai).
+   ------------------------------------------------------------------------ */
+body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+.price,
+.cart-line__price,
+.buy-bar__price,
+.bundle__price,
+.cart-drawer__upsell-price,
+.stat__num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* ---------------------------------------------------------------------------
+   8. ROUND 24 — tre difetti visti guardando l'anteprima, non leggendo il CSS
+
+   Sono correzioni a base.css, che sta 161 KB e non si riscrive per tre regole.
+   ------------------------------------------------------------------------ */
+
+/* 8a. LA SCRITTA CHE NON SCORRE.
+   motion.js clona .marquee__track e appende la copia dentro .marquee, quindi le
+   tracce affiancate sono due. Il fotogramma di base.css pero' porta ognuna a
+   -50% della PROPRIA larghezza: la traccia misura 2376px in un box da 1440, si
+   sposta di 1188px e poi salta indietro scoprendo un vuoto. Con -100% la prima
+   traccia esce di scena esattamente quando la seconda ne prende il posto, che e'
+   il motivo per cui la copia esiste. Ridefinire i fotogrammi qui sostituisce
+   quelli di base.css: non serve toccarlo. */
+@keyframes marqueeMove { to { transform: translateX(-100%); } }
+
+/* 8b. IL MENU CHE VA A CAPO.
+   A 1440px "Personalizzati con il Nome", "Ciotole e Tovagliette" e "Cucce &
+   Letti" andavano a capo su due e tre righe: l'header diventava alto e
+   sfrangiato. Le voci non devono spezzarsi mai; sotto i 1400px si stringe lo
+   spazio fra loro invece di mandarle a capo. */
+.header__link { white-space: nowrap; }
+
+/* Misurato: contenitore 1340px, contenuto 1363px gia' a schermo pieno, e
+   l'icona del carrello 61px fuori dalla finestra a 1440. La tentazione era
+   min-width:0 sulla griglia, ma il logo sta nella colonna centrale e le voci,
+   non potendo andare a capo, gli finivano SOTTO: peggio di prima. Lo spazio va
+   recuperato davvero, stringendo le voci.
+
+   Le soglie sono tarate sulle misure vere di questo menu (otto voci, la piu'
+   lunga "Personalizzati con il Nome"), non a occhio: a 1440 lo spazio da
+   recuperare e' una settantina di pixel, a 1280 un centinaio. */
+@media (max-width: 1500px) { .header__nav { gap: 1.15rem; } }
+@media (max-width: 1340px) { .header__nav { gap: .8rem; } .header__link { font-size: .84rem; } }
+@media (max-width: 1120px) { .header__nav { gap: .6rem; } .header__link { font-size: .8rem; } }
+
+/* Sotto i 1280px le otto voci non ci stanno piu' nemmeno strette: misurato,
+   sforano di 113px a 1100 e di 417 a 780. base.css passa al menu a panino solo
+   a 749px, e nella fascia in mezzo l'header era sfondato da mesi -- prima non
+   si vedeva perche' le voci andavano a capo invece di sbordare. Qui il panino
+   arriva prima; le stesse quattro regole che base.css applica a 749, cosi' il
+   comportamento e' identico e non c'e' una seconda strada da mantenere. */
+@media (min-width: 750px) and (max-width: 1279px) {
+  .header__inner { grid-template-columns: auto 1fr auto; }
+  .header__nav:not(.header__nav--right) { display: none; }
+  .menu-toggle { display: grid; }
+  .brand { justify-self: start; }
+}
+
+/* 8c. LA FOTO CHE COPRE IL LOGO.
+   Sull'header trasparente sopra la hero, il velo sta su .hero__media::after e
+   svanisce al 26% dell'altezza della foto: dove capita la testa scura del cane,
+   "PERLA" in bianco e soprattutto "ITALIA" in oro sotto restano illeggibili.
+   Il velo va agganciato all'header, non alla foto: cosi' segue la barra a
+   qualunque altezza sia la hero, e vale su ogni pagina che usa l'overlay. Si
+   spegne appena l'header diventa solido, dove non serve piu'. */
+.header--overlay { position: fixed; }
+.header--overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 220%;
+  pointer-events: none;
+  z-index: -1;
+  background: linear-gradient(180deg,
+    rgba(var(--color-ink-rgb), .68) 0%,
+    rgba(var(--color-ink-rgb), .34) 55%,
+    rgba(var(--color-ink-rgb), 0) 100%);
+  transition: opacity .35s;
+}
+.header--overlay.is-solid::before { opacity: 0; }
+
+/* ---------------------------------------------------------------------------
+   9. ROUND 24 — menu di telefono, e l'emblema che gira al caricamento
+   ------------------------------------------------------------------------ */
+
+/* 9a. IL MENU DI TELEFONO ERA TROPPO STRETTO.
+   base.css mette le voci a clamp(2rem,10vw,3.6rem) con gap .2rem e padding
+   .18em: su un telefono da 390px sono righe da 58px separate da tre pixel, si
+   toccano. Con "Salvati" in piu' le voci diventano otto, quindi non basta
+   allargare: si abbassa anche il corpo, e la lista puo' scorrere se lo schermo
+   e' corto (telefoni bassi, o tastiera aperta). */
+.fullmenu__nav {
+  gap: .5rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.fullmenu__link {
+  font-size: clamp(1.7rem, 7.4vw, 2.6rem);
+  padding: .24em 0;
+}
+@media (max-height: 720px) {
+  .fullmenu__nav { gap: .3rem; }
+  .fullmenu__link { font-size: clamp(1.4rem, 5.8vw, 2rem); padding: .18em 0; }
+}
+
+/* 9b. L'EMBLEMA CHE GIRA AL CARICAMENTO.
+   La regola che conta e' l'ultima: il velo se ne va da solo, con
+   animation-fill-mode: forwards, anche se il JS non parte. Il JS aggiunge
+   .is-out prima, quando la pagina e' pronta davvero; qui l'animazione fa da
+   rete di sicurezza, non da temporizzatore principale. */
+.perla-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  background: var(--color-bg, #FBF8F3);
+  animation: perlaLoaderVia .45s ease 1.35s forwards;
+}
+.perla-loader__mark {
+  width: 72px;
+  height: 72px;
+  animation: perlaLoaderGira 1.15s linear infinite;
+}
+.perla-loader.is-out {
+  animation: perlaLoaderVia .4s ease forwards;
+}
+@keyframes perlaLoaderGira { to { transform: rotate(360deg); } }
+@keyframes perlaLoaderVia {
+  to { opacity: 0; visibility: hidden; pointer-events: none; }
+}
+
+/* Con "riduci animazioni" attivo l'emblema non gira e il velo se ne va subito:
+   una rotazione infinita e' esattamente cio' che quell'impostazione chiede di
+   non fare. */
+@media (prefers-reduced-motion: reduce) {
+  .perla-loader { animation-delay: .2s; animation-duration: .2s; }
+  .perla-loader__mark { animation: none; }
+}
+
+/* 9c. L'EDITOR A NASTRO (collare, ciotola, guinzaglio).
+   Vedi il commento lungo in sections/main-product.liquid: l'altezza arriva da
+   li' in pixel, calcolata dal rapporto dell'area di stampa. Qui si tolgono i
+   due vincoli di base.css che rimetterebbero la larghezza al comando --
+   width:100% e max-width:100% -- e si lascia che sia il rapporto a decidere
+   quanto e' lunga la striscia. Il viewport ha gia' overflow:auto, quindi
+   scorre in orizzontale. */
+.fabric-studio--nastro {
+  /* larghezza e altezza arrivano in pixel dallo stile inline (vedi il commento
+     in sections/main-product.liquid). Qui si toglie solo il tetto di base.css,
+     che altrimenti riporterebbe la striscia alla larghezza della colonna, e si
+     impedisce a un eventuale contenitore flex di comprimerla. */
+  max-width: none;
+  flex: 0 0 auto;
+}
+.fabric-studio--nastro ~ * { max-width: 100%; }
+/* Il riquadro invece resta largo quanto la colonna, altrimenti se lo porta
+   dietro la striscia e sfonda la pagina in orizzontale (misurato: 4526px). E'
+   lui a scorrere, col dito o con la barra; overscroll-behavior evita che a fine
+   corsa il gesto passi alla pagina. */
+.fabric-studio__viewport--nastro {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+}
+/* width:100% da solo non basta: i contenitori sopra sono elementi di flex/grid
+   e hanno min-width:auto, cioe' si allargano fino al contenuto invece di
+   stringersi. Misurato: il riquadro seguiva la striscia fino a 4526px. Con
+   min-width:0 lungo tutta la catena il vincolo arriva davvero al riquadro. */
+.product-personalize,
+.product-personalize__photo,
+.photo-studio__panels,
+.photo-studio__panel,
+.fabric-studio__viewport--nastro { min-width: 0; }
+.fabric-studio__viewport { overscroll-behavior-x: contain; touch-action: pan-x pan-y; }
+
+/* 9d. IL TASTO "SCHERMO INTERO" CHE RESTAVA.
+   initPhotoStudioFullscreen sposta nella modale il sottoalbero
+   .photo-studio__panels; il tasto pero' e' fuori da quel sottoalbero, quindi
+   restava sulla pagina dietro alla modale -- e su schermi bassi si intravedeva.
+   perla-studio.css nasconde gia' il tasto DENTRO la modale; qui si nasconde
+   anche quello rimasto sotto, finche' la modale e' aperta. */
+body.pd-open .photo-studio__tool--fullscreen { display: none; }
