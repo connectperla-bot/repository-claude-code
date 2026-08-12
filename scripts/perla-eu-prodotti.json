@@ -1,0 +1,530 @@
+[
+ {
+  "id": "gid://shopify/Product/15902504255832",
+  "title": "Collare \"Barocco\"",
+  "handle": "collare-eu-barocco-navy-oro-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438346/wrzgagt92hqb3rr81w6k.jpg",
+  "media": 1,
+  "gia_fatta": true
+ },
+ {
+  "id": "gid://shopify/Product/15902504321368",
+  "title": "Collare \"Barocco Floreale\"",
+  "handle": "collare-eu-barocco-floreale-navy-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438349/ix29udkledizweidnelr.jpg",
+  "media": 1,
+  "gia_fatta": true
+ },
+ {
+  "id": "gid://shopify/Product/15902504386904",
+  "title": "Collare \"Ulivo\"",
+  "handle": "collare-eu-ulivo-crema-oro-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438352/zbkr4bybxxe2llzzwlpd.jpg",
+  "media": 1,
+  "gia_fatta": true
+ },
+ {
+  "id": "gid://shopify/Product/15902504452440",
+  "title": "Collare \"Damasco\"",
+  "handle": "collare-eu-damasco-bordeaux-oro-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438354/pdj7m8uhb5jmbccpblit.jpg",
+  "media": 1,
+  "gia_fatta": true
+ },
+ {
+  "id": "gid://shopify/Product/15902504517976",
+  "title": "Collare \"Damasco Classico\"",
+  "handle": "collare-eu-damasco-classico-bordeaux-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438356/grlnqbt6inntmcknmhzh.jpg",
+  "media": 1,
+  "gia_fatta": true
+ },
+ {
+  "id": "gid://shopify/Product/15902504616280",
+  "title": "Collare \"Damasco Verde\"",
+  "handle": "collare-eu-damasco-verde-salvia-oro-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438358/sdtgjgnhg07syeyrhzuh.jpg",
+  "media": 1,
+  "gia_fatta": true
+ },
+ {
+  "id": "gid://shopify/Product/15902504714584",
+  "title": "Collare \"Floreale\"",
+  "handle": "collare-eu-floreale-verde-smeraldo-oro-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438361/ygoopxdmwsbqencicwbh.jpg",
+  "media": 1,
+  "gia_fatta": true
+ },
+ {
+  "id": "gid://shopify/Product/15902504845656",
+  "title": "Collare \"Geometrico\"",
+  "handle": "collare-eu-geometrico-nero-rosa-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438363/swdbielptpzt1evheuiy.jpg",
+  "media": 1,
+  "gia_fatta": true
+ },
+ {
+  "id": "gid://shopify/Product/15902504911192",
+  "title": "Collare \"Geometrico Minimal\"",
+  "handle": "collare-eu-geometrico-minimal-antracite-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438365/a7ie5scqhjilb8vsevzp.jpg",
+  "media": 1,
+  "gia_fatta": true
+ },
+ {
+  "id": "gid://shopify/Product/15902505009496",
+  "title": "Collare \"Medaglioni\"",
+  "handle": "collare-eu-medaglioni-antracite-argento-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438367/zgdptk21rb6p2tuf8afv.jpg",
+  "media": 1,
+  "gia_fatta": true
+ },
+ {
+  "id": "gid://shopify/Product/15902506058072",
+  "title": "Collare \"Astratto\"",
+  "handle": "collare-eu-astratto-antracite-argento-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438370/odg6yuvxmobr5bwkhcxp.jpg",
+  "media": 1,
+  "gia_fatta": true
+ },
+ {
+  "id": "gid://shopify/Product/15902506189144",
+  "title": "Collare \"Onde Geometriche\"",
+  "handle": "collare-eu-onde-geometriche-antracite-rosa-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438372/zxappr4abymqaxdcmbsm.jpg",
+  "media": 1,
+  "gia_fatta": true
+ },
+ {
+  "id": "gid://shopify/Product/15902506287448",
+  "title": "Collare \"Chevron\"",
+  "handle": "collare-eu-chevron-verde-petrolio-oro-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438374/eop9hd8h87kbofza88ty.jpg",
+  "media": 1,
+  "gia_fatta": true
+ },
+ {
+  "id": "gid://shopify/Product/15902506385752",
+  "title": "Collare \"Minimal\"",
+  "handle": "collare-eu-minimal-antracite-argento-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438377/in56npmarponpx6nh4rf.jpg",
+  "media": 1,
+  "gia_fatta": true
+ },
+ {
+  "id": "gid://shopify/Product/15902506484056",
+  "title": "Collare \"Onda\"",
+  "handle": "collare-eu-onda-navy-oro-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438380/q02wov45clafovre7d5l.jpg",
+  "media": 1,
+  "gia_fatta": true
+ },
+ {
+  "id": "gid://shopify/Product/15902506615128",
+  "title": "Collare \"Ramo d'Ulivo\"",
+  "handle": "collare-eu-ramo-dulivo-crema-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438383/y3lfmxf0zmhd2fu85e4t.jpg",
+  "media": 1,
+  "gia_fatta": true
+ },
+ {
+  "id": "gid://shopify/Product/15902506713432",
+  "title": "Collare \"Foglia di Salvia\"",
+  "handle": "collare-eu-foglia-di-salvia-verde-salvia-oro-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438385/bl6yri0hpfpq1iwwyvcu.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15902506811736",
+  "title": "Collare \"Paisley\"",
+  "handle": "collare-eu-paisley-avorio-rosa-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438387/qou40fv2qehnhkj8fof3.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15902506877272",
+  "title": "Collare \"Toile\"",
+  "handle": "collare-eu-toile-crema-bordeaux-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438390/tjbnkeljl1uz4bnqiegi.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15902507106648",
+  "title": "Bandana \"Barocco\"",
+  "handle": "bandana-eu-barocco-navy-oro-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438393/qq3lev164esxtyw5cafc.jpg",
+  "media": 2,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15902507204952",
+  "title": "Bandana \"Ulivo Nuovo\"",
+  "handle": "bandana-eu-ulivo-nuovo-verde-smeraldo-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438396/fjupxiazisa98s6a7jdq.jpg",
+  "media": 2,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15902507270488",
+  "title": "Bandana \"Erbario\"",
+  "handle": "bandana-eu-erbario-verde-smeraldo-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438399/vffvjcfzsqf4xxsa8kze.jpg",
+  "media": 2,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15902507401560",
+  "title": "Bandana \"Ulivo\"",
+  "handle": "bandana-eu-ulivo-verde-salvia-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438403/xhop2ashyzyzimniqsrb.jpg",
+  "media": 2,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15902507467096",
+  "title": "Bandana \"Damasco Diamante\"",
+  "handle": "bandana-eu-damasco-diamante-bordeaux-oro-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438406/fsdhoujslt4gjne0jrqm.jpg",
+  "media": 2,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15902507565400",
+  "title": "Bandana \"Damasco Reale\"",
+  "handle": "bandana-eu-damasco-reale-bordeaux-oro-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438410/nwcsn5bdniztqxtyppgv.jpg",
+  "media": 2,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15902507696472",
+  "title": "Bandana \"Paisley Cammeo\"",
+  "handle": "bandana-eu-paisley-cammeo-avorio-navy-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438413/nhjv0zbakqbhpipy7uab.jpg",
+  "media": 2,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15902507762008",
+  "title": "Bandana \"Floreale Elegante\"",
+  "handle": "bandana-eu-floreale-elegante-verde-oro-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438417/pteolbeiekcyy2z1fybz.jpg",
+  "media": 2,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15902507958616",
+  "title": "Bandana \"Art Deco Rosa\"",
+  "handle": "bandana-eu-art-deco-rosa-nero-rosa-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438421/y5ktyzyfxyv8jnxdaxlo.jpg",
+  "media": 2,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15902508089688",
+  "title": "Bandana \"Ghirigori\"",
+  "handle": "bandana-eu-ghirigori-nero-oro-rosa-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438425/udpcfnce9judfsjbmuqv.jpg",
+  "media": 2,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15902508155224",
+  "title": "Bandana \"Diamanti\"",
+  "handle": "bandana-eu-diamanti-nero-argento-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438428/qmtlifhhgkcj9jbnqutf.jpg",
+  "media": 2,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15902508319064",
+  "title": "Bandana \"Ramo d'Ulivo\"",
+  "handle": "bandana-eu-ramo-dulivo-crema-verde-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438430/k4tninwcdpn9wdof9ifd.jpg",
+  "media": 2,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15902508384600",
+  "title": "Bandana \"Paisley Rosa\"",
+  "handle": "bandana-eu-paisley-rosa-avorio-rosa-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438433/cowirrndr0qap9bbvbnq.jpg",
+  "media": 2,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15902508450136",
+  "title": "Bandana \"Onde\"",
+  "handle": "bandana-eu-onde-petrolio-oro-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438436/mcmeuukhednl0wprghzf.jpg",
+  "media": 2,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15902508745048",
+  "title": "Bandana \"Onde Dorate\"",
+  "handle": "bandana-eu-onde-dorate-petrolio-oro-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438440/urqtcrez6lgyzhv01r1l.jpg",
+  "media": 2,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15906067546456",
+  "title": "Ciotola \"Barocco\"",
+  "handle": "ciotola-eu-barocco-navy-oro-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438443/qmv1aotpzmktc0raz1kz.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15906067644760",
+  "title": "Ciotola \"Damasco\"",
+  "handle": "ciotola-eu-damasco-bordeaux-oro-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438445/fgzrf6szphng575wpmvs.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15906067743064",
+  "title": "Ciotola \"Floreale\"",
+  "handle": "ciotola-eu-floreale-smeraldo-oro-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438447/z5cmlcq1shbiv5adesuu.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15906067841368",
+  "title": "Ciotola \"Paisley\"",
+  "handle": "ciotola-eu-paisley-avorio-rosa-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438450/fqsvu93mei00klu7eioq.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15906067939672",
+  "title": "Guinzaglio \"Barocco\"",
+  "handle": "guinzaglio-eu-barocco-navy-oro-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438453/otiqjwnffwkqjzgkhjuz.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15906068103512",
+  "title": "Guinzaglio \"Damasco\"",
+  "handle": "guinzaglio-eu-damasco-bordeaux-oro-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438455/ulkwmgdlisc1wbwjljaj.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15906068267352",
+  "title": "Guinzaglio \"Floreale\"",
+  "handle": "guinzaglio-eu-floreale-smeraldo-oro-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438458/v8uj0v30zzzbdoq4wunk.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15906068529496",
+  "title": "Guinzaglio \"Paisley\"",
+  "handle": "guinzaglio-eu-paisley-avorio-rosa-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438460/spbkwrlejnxmuoik8ens.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15907532308824",
+  "title": "Collare \"Crea il Tuo Design\"",
+  "handle": "collare-eu-crea-il-tuo-design-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438462/nf8ebxiuebl0goexhiot.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15907532472664",
+  "title": "Bandana \"Crea il Tuo Design\"",
+  "handle": "bandana-eu-crea-il-tuo-design-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438464/oalsfeiw1hnvnwtqgt6e.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15907532734808",
+  "title": "Ciotola \"Crea il Tuo Design\"",
+  "handle": "ciotola-eu-crea-il-tuo-design-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438466/uiuy7i0qh77acncrbxd9.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15907532800344",
+  "title": "Guinzaglio \"Crea il Tuo Design\"",
+  "handle": "guinzaglio-eu-crea-il-tuo-design-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786438468/zertvgevloithkfowkal.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15925793227096",
+  "title": "Ciotola \"Avorio\"",
+  "handle": "ciotola-eu-avorio-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786396851/ebshzedzesjujhrbghtf.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15925793259864",
+  "title": "Ciotola \"Geometrico\"",
+  "handle": "ciotola-eu-geometrico-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786396889/gruhx0r9korzagg4xakg.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15925793292632",
+  "title": "Ciotola \"Medaglioni\"",
+  "handle": "ciotola-eu-medaglioni-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786396982/wyrfynjukyqiqravjyfz.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15925793325400",
+  "title": "Ciotola \"Onda\"",
+  "handle": "ciotola-eu-onda-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786397021/jkxlbdq9z32jqmigbngk.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15925793358168",
+  "title": "Ciotola \"Petrolio\"",
+  "handle": "ciotola-eu-petrolio-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786397111/k8y7arsva5pdi9p8wbhs.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15925793390936",
+  "title": "Ciotola \"Smeraldo\"",
+  "handle": "ciotola-eu-smeraldo-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786397150/l2jw5ld3xpuoxpe3uviv.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15925793784152",
+  "title": "Guinzaglio \"Avorio\"",
+  "handle": "guinzaglio-eu-avorio-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786397240/ou431d4tl66vjfqyooug.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15925793816920",
+  "title": "Guinzaglio \"Geometrico\"",
+  "handle": "guinzaglio-eu-geometrico-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786397277/fosoogjdqsflyfhi18da.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15925793849688",
+  "title": "Guinzaglio \"Medaglioni\"",
+  "handle": "guinzaglio-eu-medaglioni-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786397365/xpxutizaeiyshqwwxoau.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15925793882456",
+  "title": "Guinzaglio \"Onda\"",
+  "handle": "guinzaglio-eu-onda-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786397403/akz8fo0qckte94x4q2sb.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15925793915224",
+  "title": "Guinzaglio \"Petrolio\"",
+  "handle": "guinzaglio-eu-petrolio-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786397489/pii8enbftbsmlbgovokq.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15925793947992",
+  "title": "Guinzaglio \"Smeraldo\"",
+  "handle": "guinzaglio-eu-smeraldo-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786397528/jlaky90tsemdakd4wsn5.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15925837988184",
+  "title": "Bandana \"Tartan\"",
+  "handle": "bandana-eu-tartan-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786402237/pxank2u4oual9mib17qk.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15925838020952",
+  "title": "Bandana \"Marinara\"",
+  "handle": "bandana-eu-marinara-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786402142/hm4qxbunda8aadqdwv3v.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15925838053720",
+  "title": "Bandana \"Terracotta\"",
+  "handle": "bandana-eu-terracotta-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786402286/tam9qdeesdcdtfvpkdis.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15925838086488",
+  "title": "Bandana \"Lino\"",
+  "handle": "bandana-eu-lino-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786402100/kreovne1zwyffsxdbscf.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15925838119256",
+  "title": "Collare \"Tartan\"",
+  "handle": "collare-eu-tartan-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786402496/amdyovxyqqiju2guhvof.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15925838152024",
+  "title": "Collare \"Marinara\"",
+  "handle": "collare-eu-marinara-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786402408/oc2qvxu6df7sqjh2zd4w.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15925838184792",
+  "title": "Collare \"Terracotta\"",
+  "handle": "collare-eu-terracotta-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786402534/w7aznycwfnm1vwiedsvu.jpg",
+  "media": 1,
+  "gia_fatta": false
+ },
+ {
+  "id": "gid://shopify/Product/15925838217560",
+  "title": "Collare \"Lino\"",
+  "handle": "collare-eu-lino-fornitore-europeo",
+  "pattern": "https://res.cloudinary.com/qarb7ouo/image/upload/v1786402373/evotskrhirwwxhzqafzl.jpg",
+  "media": 1,
+  "gia_fatta": false
+ }
+]
