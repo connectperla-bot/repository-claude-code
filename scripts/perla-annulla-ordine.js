@@ -57,6 +57,15 @@ const PRINTIFY_ANNULLABILE = ['pending', 'on-hold', 'payment-not-received'];
 // quindi il tetto non puo' essere stretto. Venti in un quarto d'ora fermano
 // l'enumerazione (indovinare numero E email insieme non si fa in venti colpi)
 // senza chiudere fuori nessuno.
+//
+// QUANTO VALE DAVVERO, detto senza girarci intorno: questa mappa vive nel
+// processo. Si azzera a ogni deploy di Render, e se un giorno il servizio gira
+// su piu' istanze ognuna avra' la sua, moltiplicando il tetto per il numero di
+// istanze. Contro qualcuno che ci prova sul serio non e' una difesa: e' un
+// dosso. La difesa vera restano le due cose che bisogna sapere insieme, numero
+// d'ordine ed email. Se un giorno servisse di piu', il posto giusto e' un
+// contatore condiviso (Redis) o il rate limit del gestore davanti al
+// servizio, non questa mappa.
 const FINESTRA_MS = 15 * 60 * 1000;
 const TENTATIVI_MAX = 20;
 const tentativi = new Map();
@@ -196,6 +205,15 @@ async function printfulAnnulla(idShopify, env) {
 // ordine annullabile e' per forza recente (non e' ancora andato in stampa),
 // quindi tre pagine da cinquanta sono abbondanti; oltre si smette invece di
 // consumare la quota dell'API.
+//
+// IL LIMITE, scritto perche' un giorno mordera': sono 150 ordini. Finche' ne
+// arrivano pochi al giorno un ordine ancora annullabile ci sta dentro con
+// larghezza. Quando il volume sale, un ordine vero puo' cadere fuori dalla
+// finestra e il cliente si sente rispondere "non troviamo un ordine con questo
+// numero" -- che e' falso, ed e' la risposta peggiore possibile perche' lo
+// manda a cercare l'errore dove non c'e'. Quando succedera' la cura e' alzare
+// questo numero, oppure distinguere "non trovato in 150 ordini" da "non
+// esiste" e in quel caso invitare a scrivere invece di negare.
 const PAGINE_PRINTIFY = 3;
 
 async function printifyOrdine(idShopify, env) {
