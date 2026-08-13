@@ -85,11 +85,20 @@ NUCLEO = ["Barocco", "Damasco", "Floreale", "Geometrico", "Medaglioni", "Onda", 
 # aree di stampa, e comunque il loro studio scala l'immagine. Si produce quindi
 # il ritaglio piu' grande che ogni proporzione consente, e la tabella finale
 # dice fino a che dimensione fisica regge.
+#
+# I rapporti NON sono arrotondamenti comodi: devono combaciare con l'area di
+# stampa vera, altrimenti il fornitore adatta il file da solo e il motivo esce
+# deformato. Per cuccia e tappetino il numero di riferimento e' quello scritto
+# in snippets/perla-print-areas.liquid nel tema, che a sua volta e' stato
+# ricavato dai dati reali del catalogo Printify (vedi ROUND 16 in quel file:
+# la cuccia era impostata a 1.24 contro un'area reale di 8850x5850 = 1.51, e
+# i design dei clienti venivano stampati schiacciati).
 FORME = {
-    "quadrato": (1, 1),      # bandana, coperta
-    "cuccia":   (3, 2),      # cuccia, tappetino
-    "fascia":   (8, 1),      # ciotola
-    "nastro":   (40, 1),     # guinzaglio
+    "quadrato":  (1, 1),      # bandana, coperta
+    "cuccia":    (151, 100),  # 1.51 - area reale 8850x5850 della variante 28"x18"
+    "tappetino": (36, 25),    # 1.44 - stesso valore della riga tappetino nel tema
+    "fascia":    (8, 1),      # ciotola
+    "nastro":    (40, 1),     # guinzaglio
 }
 
 MOCKUP_LATO_LUNGO = 1600
@@ -214,6 +223,7 @@ def main():
 
     os.makedirs(USCITA, exist_ok=True)
     righe = []
+    manifesto = []
 
     for motivo in motivi:
         # Si scaricano solo gli originali di questo motivo, una volta sola.
@@ -248,7 +258,26 @@ def main():
             immagine.resize(anteprima, Image.LANCZOS).save(
                 base + "-anteprima.jpg", quality=90)
 
+            manifesto.append({
+                "forma": forma,
+                "motivo": motivo,
+                "file": os.path.basename(base + ".jpg"),
+                "anteprima": os.path.basename(base + "-anteprima.jpg"),
+                "originale": tipo,
+                "larghezza": w,
+                "altezza": h,
+                # il giudizio viaggia col file: chi lo consuma non deve
+                # rifare il conto dei pollici per sapere se e' usabile
+                "esito": "ok" if pollici_a(150, max(w, h)) >= POLLICI_MINIMI else "scarso",
+            })
             righe.append((motivo, forma, tipo, w, h, ""))
+
+    # Il manifesto e' il ponte verso chi carica i file (scripts/
+    # perla-crea-tappetini.js): porta dimensioni ed esito, cosi' nessuno
+    # ricarica per sbaglio un ritaglio marcato scarso. Stessa convenzione di
+    # perla-build-eu-print-files.py, che scrive anche lui un files.json.
+    with open(os.path.join(USCITA, "files.json"), "w") as fh:
+        json.dump(manifesto, fh, indent=1, ensure_ascii=False)
 
     # Tabella finale. La colonna in pollici e' la cosa da guardare: dice fino
     # a che dimensione fisica il file regge una stampa di qualita'.
