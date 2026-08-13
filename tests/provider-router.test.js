@@ -13,11 +13,8 @@ const ordineIT = { shipping_address: { country_code: 'IT' } };
 const ordineUS = { shipping_address: { country_code: 'US' } };
 const ordineSenzaIndirizzo = {};
 
-// Ambienti tipici: nessuna chiave, solo Printful, solo Contrado, tutte.
 const senzaChiavi = {};
 const conPrintful = { PRINTFUL_API_KEY: 'x' };
-const conContrado = { CONTRADO_API_KEY: 'x' };
-const conTutte = { PRINTFUL_API_KEY: 'x', CONTRADO_API_KEY: 'x' };
 
 let passati = 0;
 function prova(descrizione, fn) {
@@ -32,34 +29,14 @@ function prova(descrizione, fn) {
   }
 }
 
-console.log('\nTipi Contrado (_lux): sempre Contrado, in ogni paese');
-
-prova('cuccia_lux con spedizione in Italia va su Contrado', function () {
-  assert.strictEqual(router.chooseProviderName('cuccia_lux', ordineIT, conTutte), 'contrado');
-});
-
-// Il caso che distingue Contrado dai tipi _eu: fuori dall'EU NON si ripiega
-// su Printify, perche' il prodotto premium esiste solo su Contrado.
-prova('cuccia_lux con spedizione negli Stati Uniti va comunque su Contrado', function () {
-  assert.strictEqual(router.chooseProviderName('cuccia_lux', ordineUS, conTutte), 'contrado');
-});
-
-prova('guinzaglio_lux senza chiave Contrado resta su Contrado (errore esplicito, non ripiego)', function () {
-  assert.strictEqual(router.chooseProviderName('guinzaglio_lux', ordineIT, senzaChiavi), 'contrado');
-});
-
-prova('tutti i sei tipi _lux vanno su Contrado', function () {
-  Object.keys(router.CONTRADO_TYPES).forEach(function (tipo) {
-    assert.strictEqual(router.chooseProviderName(tipo, ordineIT, conTutte), 'contrado', tipo);
-  });
-});
-
 console.log('\nTipi EU (_eu): Printful solo in EU e solo con la chiave');
 
 prova('collare_eu in EU con chiave Printful va su Printful', function () {
   assert.strictEqual(router.chooseProviderName('collare_eu', ordineIT, conPrintful), 'printful');
 });
 
+// Fuori dall'EU il motivo per usare Printful (evitare la dogana al cliente
+// europeo) non esiste piu': si torna su Printify.
 prova('collare_eu fuori EU va su Printify', function () {
   assert.strictEqual(router.chooseProviderName('collare_eu', ordineUS, conPrintful), 'printify');
 });
@@ -68,28 +45,28 @@ prova('collare_eu senza chiave Printful va su Printify', function () {
   assert.strictEqual(router.chooseProviderName('collare_eu', ordineIT, senzaChiavi), 'printify');
 });
 
-console.log('\nNessuna regressione: i tipi gia\' in vendita non cambiano fornitore');
-
-// Il punto dell'intera separazione dei tipi: aggiungere Contrado non deve
-// spostare un solo prodotto di quelli gia' online.
-prova('collare/bandana/cuccia/guinzaglio restano su Printify anche con Contrado attivo', function () {
-  ['collare', 'bandana', 'cuccia', 'guinzaglio', 'ciotola', 'medaglietta', 'tappetino'].forEach(function (tipo) {
-    assert.strictEqual(router.chooseProviderName(tipo, ordineIT, conTutte), 'printify', tipo + ' (IT)');
-    assert.strictEqual(router.chooseProviderName(tipo, ordineUS, conTutte), 'printify', tipo + ' (US)');
+prova('tutti e quattro i tipi _eu si comportano allo stesso modo', function () {
+  Object.keys(router.EU_CAPABLE_TYPES).forEach(function (tipo) {
+    assert.strictEqual(router.chooseProviderName(tipo, ordineIT, conPrintful), 'printful', tipo + ' (IT)');
+    assert.strictEqual(router.chooseProviderName(tipo, ordineUS, conPrintful), 'printify', tipo + ' (US)');
   });
 });
 
-prova('i tipi _eu con Contrado attivo si comportano esattamente come prima', function () {
-  ['collare_eu', 'bandana_eu', 'ciotola_eu', 'guinzaglio_eu'].forEach(function (tipo) {
-    assert.strictEqual(router.chooseProviderName(tipo, ordineIT, conTutte), 'printful', tipo + ' (IT)');
-    assert.strictEqual(router.chooseProviderName(tipo, ordineUS, conTutte), 'printify', tipo + ' (US)');
+console.log('\nI tipi gia\' in vendita non cambiano mai fornitore');
+
+// E' il motivo per cui i tipi _eu sono prodotti Shopify distinti: attivare
+// Printful non deve spostare un solo prodotto di quelli gia' online.
+prova('collare/bandana/cuccia/guinzaglio restano su Printify anche con Printful attivo', function () {
+  ['collare', 'bandana', 'cuccia', 'guinzaglio', 'ciotola', 'medaglietta', 'tappetino'].forEach(function (tipo) {
+    assert.strictEqual(router.chooseProviderName(tipo, ordineIT, conPrintful), 'printify', tipo + ' (IT)');
+    assert.strictEqual(router.chooseProviderName(tipo, ordineUS, conPrintful), 'printify', tipo + ' (US)');
   });
 });
 
 console.log('\nCasi limite');
 
 prova('tipo sconosciuto va su Printify', function () {
-  assert.strictEqual(router.chooseProviderName('qualcosa_di_nuovo', ordineIT, conTutte), 'printify');
+  assert.strictEqual(router.chooseProviderName('qualcosa_di_nuovo', ordineIT, conPrintful), 'printify');
 });
 
 prova('ordine senza indirizzo di spedizione non e\' EU', function () {
@@ -97,14 +74,9 @@ prova('ordine senza indirizzo di spedizione non e\' EU', function () {
   assert.strictEqual(router.chooseProviderName('collare_eu', ordineSenzaIndirizzo, conPrintful), 'printify');
 });
 
-// Anche senza indirizzo un _lux deve andare su Contrado: il paese non c'entra.
-prova('ordine senza indirizzo per un tipo _lux va comunque su Contrado', function () {
-  assert.strictEqual(router.chooseProviderName('bandana_lux', ordineSenzaIndirizzo, conContrado), 'contrado');
-});
-
 prova('chooseClient restituisce un client con fulfillOrder per ogni fornitore', function () {
-  ['cuccia_lux', 'collare_eu', 'collare'].forEach(function (tipo) {
-    const client = router.chooseClient(tipo, ordineIT, conTutte);
+  ['collare_eu', 'collare'].forEach(function (tipo) {
+    const client = router.chooseClient(tipo, ordineIT, conPrintful);
     assert.strictEqual(typeof client.fulfillOrder, 'function', tipo);
   });
 });

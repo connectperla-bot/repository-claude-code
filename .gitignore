@@ -28,8 +28,8 @@ Thumbs.db
 # Cloudinary (URL permanenti) e su Shopify; qui resterebbero 8 MB di duplicati.
 out-foto/
 
-# Uscita di scripts/perla-contrado-file-stampa.py: ~290 MB fra originali
+# Uscita di scripts/perla-file-stampa-motivi.py: ~290 MB fra originali
 # scaricati da Cloudinary e ritagli a piena risoluzione. Tutto rigenerabile con
 # un comando, e gli URL degli originali sono gia' versionati in
 # scripts/perla-eu-prodotti.json. In git ci va lo script, non la sua uscita.
-generated-designs/contrado/
+generated-designs/motivi-stampa/

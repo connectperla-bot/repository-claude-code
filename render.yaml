@@ -171,38 +171,6 @@ services:
         value: "80"
       - key: GUINZAGLIO_VARIANT_ID
         value: "150707"
-      # Contrado (linea premium _lux a design fisso, etichetta a marchio Perla
-      # configurata in Contrado Store Account). Vedi provider-router.js e
-      # providers/contrado-client.js.
-      #
-      # CONTRADO_INVIO_AUTOMATICO resta "false": l'API Contrado non ha uno
-      # stato di bozza come "Send to production" di Printify o "Draft orders"
-      # di Printful, quindi creare l'ordine vuol dire mandarlo in produzione.
-      # Finche' e' spento, le righe _lux vengono segnalate nei log per
-      # l'inserimento manuale invece di partire da sole. Va messo a "true"
-      # solo quando la titolare decide di fidarsi del flusso automatico.
-      - key: CONTRADO_API_KEY
-        sync: false
-      - key: CONTRADO_STORE_ID
-        sync: false
-      - key: CONTRADO_CULTURE_CODE
-        value: "it-IT"
-      - key: CONTRADO_INVIO_AUTOMATICO
-        value: "false"
-      # storeProductId dei prodotti creati nel negozio Contrado. Si leggono
-      # con: node scripts/contrado-catalog.js --prodotti
-      - key: CONTRADO_CUCCIA_LUX_PRODUCT_ID
-        sync: false
-      - key: CONTRADO_GUINZAGLIO_LUX_PRODUCT_ID
-        sync: false
-      - key: CONTRADO_BANDANA_LUX_PRODUCT_ID
-        sync: false
-      - key: CONTRADO_CIOTOLA_LUX_PRODUCT_ID
-        sync: false
-      - key: CONTRADO_TAPPETINO_LUX_PRODUCT_ID
-        sync: false
-      - key: CONTRADO_COPERTA_LUX_PRODUCT_ID
-        sync: false
 
   - type: web
     name: perla-assistant-bot

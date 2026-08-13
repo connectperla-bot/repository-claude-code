@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Prepara le immagini dei motivi Perla da caricare nello studio Contrado.
+"""Prepara le immagini dei motivi Perla nella proporzione di un prodotto.
 
 PERCHE' ESISTE
-I prodotti Contrado si creano a mano nel loro studio (l'API Helix e' di sola
-lettura sul catalogo: l'unico endpoint di scrittura e' la creazione ordine).
-Serve quindi, per ogni motivo, un'immagine gia' pronta nella proporzione
-giusta, alla massima risoluzione ricavabile dagli originali.
+Quasi tutti i fornitori di stampa su ordinazione vogliono, per ogni prodotto,
+un'immagine gia' nella proporzione giusta, da caricare a mano nel loro studio.
+Questo script la ricava dai motivi che vendiamo gia', alla massima risoluzione
+possibile, senza inventare pixel.
+
+Non dipende da nessun fornitore in particolare: si dichiara la proporzione
+che serve e lo script produce il ritaglio piu' grande che quella proporzione
+consente.
 
 DA DOVE ARRIVANO I MOTIVI
 Dai 66 pattern nativi su Cloudinary elencati in perla-eu-prodotti.json, gli
@@ -47,12 +51,12 @@ cuccia quasi quadrata vince la bandana, per un nastro lungo vince il
 guinzaglio.
 
 USO
-    python3 scripts/perla-contrado-file-stampa.py                  # motivi del nucleo
-    python3 scripts/perla-contrado-file-stampa.py --tutti          # tutti i 39
-    python3 scripts/perla-contrado-file-stampa.py --motivo Barocco --motivo Onda
-    python3 scripts/perla-contrado-file-stampa.py --elenco         # cosa esiste, senza scaricare
+    python3 scripts/perla-file-stampa-motivi.py                  # motivi del nucleo
+    python3 scripts/perla-file-stampa-motivi.py --tutti          # tutti i motivi
+    python3 scripts/perla-file-stampa-motivi.py --motivo Barocco --motivo Onda
+    python3 scripts/perla-file-stampa-motivi.py --elenco         # cosa esiste, senza scaricare
 
-Richiede Pillow. Scrive in generated-designs/contrado/.
+Richiede Pillow. Scrive in generated-designs/motivi-stampa/.
 """
 import argparse
 import json
@@ -69,17 +73,18 @@ Image.MAX_IMAGE_PIXELS = None
 
 RADICE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PRODOTTI = os.path.join(RADICE, "scripts", "perla-eu-prodotti.json")
-CACHE = os.path.join(RADICE, "generated-designs", "contrado", "_originali")
-USCITA = os.path.join(RADICE, "generated-designs", "contrado")
+CACHE = os.path.join(RADICE, "generated-designs", "motivi-stampa", "_originali")
+USCITA = os.path.join(RADICE, "generated-designs", "motivi-stampa")
 
 # I sette motivi presenti su tre o piu' tipi di prodotto: il nucleo gia'
 # collaudato del catalogo EU.
 NUCLEO = ["Barocco", "Damasco", "Floreale", "Geometrico", "Medaglioni", "Onda", "Paisley"]
 
-# Proporzioni da produrre, una per famiglia di prodotti Contrado.
-# Contrado non pubblica le misure delle aree di stampa (non sono nell'API),
-# quindi non si insegue una dimensione in pixel: si produce il ritaglio piu'
-# grande possibile per ogni proporzione, e il loro studio lo scala.
+# Proporzioni da produrre, una per famiglia di prodotti. Non si insegue una
+# dimensione in pixel: i fornitori raramente pubblicano le misure esatte delle
+# aree di stampa, e comunque il loro studio scala l'immagine. Si produce quindi
+# il ritaglio piu' grande che ogni proporzione consente, e la tabella finale
+# dice fino a che dimensione fisica regge.
 FORME = {
     "quadrato": (1, 1),      # bandana, coperta
     "cuccia":   (3, 2),      # cuccia, tappetino
@@ -111,7 +116,7 @@ def carica_indice():
             continue
         tipo, motivo = m.group(1), m.group(2)
         # "Crea il Tuo Design" e' la base neutra dello studio di
-        # personalizzazione, non un motivo: su Contrado non serve.
+        # personalizzazione, non un motivo: qui non serve.
         if motivo == "Crea il Tuo Design":
             continue
         indice.setdefault(motivo, {})[tipo] = voce["pattern"]
@@ -171,7 +176,7 @@ def pollici_a(dpi, pixel):
 
 
 def main():
-    p = argparse.ArgumentParser(description="Immagini dei motivi Perla per lo studio Contrado.")
+    p = argparse.ArgumentParser(description="Immagini dei motivi Perla nella proporzione di un prodotto.")
     p.add_argument("--motivo", action="append", default=[],
                    help="nome del motivo (ripetibile). Senza, usa i sette del nucleo.")
     p.add_argument("--tutti", action="store_true", help="tutti i motivi disponibili")
@@ -272,8 +277,8 @@ def main():
     print("Le colonne in pollici sono il lato lungo stampabile a quella densita'.")
     print("Una riga SCARSO vuol dire che per quella forma non esiste un originale")
     print("abbastanza grande: quel motivo va rigenerato, non caricato cosi'.")
-    print("Contrado non pubblica le misure delle sue aree di stampa: confrontale")
-    print("con quelle del prodotto nel loro studio prima di caricare.")
+    print("Confronta questi numeri con l'area di stampa reale del prodotto,")
+    print("nello studio del fornitore, prima di caricare.")
 
 
 if __name__ == "__main__":
