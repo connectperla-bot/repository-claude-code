@@ -7,6 +7,7 @@ config/*.local.env
 # Dipendenze
 node_modules/
 scripts/node_modules/
+__pycache__/
 
 # Stato locale claude-flow / tool interni, non serve nel repo di deploy
 .claude-flow/
@@ -26,3 +27,9 @@ Thumbs.db
 # essere appiattiti su bianco e caricati. Le copie che contano stanno su
 # Cloudinary (URL permanenti) e su Shopify; qui resterebbero 8 MB di duplicati.
 out-foto/
+
+# Uscita di scripts/perla-contrado-file-stampa.py: ~290 MB fra originali
+# scaricati da Cloudinary e ritagli a piena risoluzione. Tutto rigenerabile con
+# un comando, e gli URL degli originali sono gia' versionati in
+# scripts/perla-eu-prodotti.json. In git ci va lo script, non la sua uscita.
+generated-designs/contrado/
