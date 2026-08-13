@@ -58,6 +58,26 @@ def main():
         p.evaluate("()=>{const o=document.querySelector('.popup-overlay');if(o)o.remove();"
                    "document.documentElement.style.overflow='';document.body.style.overflow='';}")
         p.wait_for_timeout(400)
+        # ROUND 29. Da 1000px in su motion.js accende lo scorrimento morbido:
+        # mette body.smooth-scroll, e con quella classe base.css porta
+        # [data-scroll-wrap] a position: fixed traslandolo a mano. Tutto il
+        # contenuto finisce cosi' in un elemento fisso alto una schermata: una
+        # foto a pagina intera non lo raggiunge e viene fuori bianca sotto la
+        # prima videata (provato: .story, .quiz e il footer venivano vuoti).
+        #
+        # Si spegne il finto scorrimento e si restituisce alla pagina il suo,
+        # che e' anche la condizione in cui girano le comparse nuove legate a
+        # view(). Cambia il MECCANISMO della comparsa, non il layout: larghezze,
+        # ritmo verticale e corpo dei titoli sono identici nelle due modalita',
+        # ed e' quello che queste foto servono a giudicare.
+        p.evaluate("""()=>{
+          document.body.classList.remove('smooth-scroll');
+          document.body.classList.add('native-scroll');
+          document.body.style.height = '';
+          const w = document.querySelector('[data-scroll-wrap]');
+          if (w) { w.style.transform = ''; w.style.position = 'relative'; }
+        }""")
+        p.wait_for_timeout(400)
         # Le sezioni compaiono con un IntersectionObserver: senza scorrere,
         # una schermata a pagina intera le prende tutte a opacita' zero e
         # sembra che manchi meta' del sito. Si scorre fino in fondo e si torna su.
@@ -84,6 +104,32 @@ def main():
             .forEach(e => e.classList.add('is-in', 'in'));
           document.querySelectorAll('.stagger-item').forEach(e => e.classList.add('stagger-in'));
         }""")
+        # ROUND 29. Dal Round 29 una parte delle comparse non passa piu' da una
+        # classe ma da animation-timeline: view(), cioe' dalla posizione
+        # dell'elemento nello scorrevole. Nello specchio lo scorrimento non si
+        # muove (vedi il commento qui sopra), quindi quelle timeline restano a
+        # zero e tutto quello che sta sotto la prima schermata verrebbe
+        # fotografato trasparente: sembrerebbe mezza pagina mancante, e invece
+        # e' lo stesso limite di prima con un meccanismo nuovo.
+        #
+        # Riportando animation-timeline ad auto le stesse animazioni tornano
+        # legate al tempo; sono dichiarate senza durata, quindi 0s, e con
+        # `both` si fissano subito sull'ultimo fotogramma. E' esattamente lo
+        # stato finale che le classi forzate danno alle altre.
+        #
+        # Mirato, NON su tutto. Il primo tentativo era `*` e mentiva: si portava
+        # dietro le animazioni che il tema aveva gia' per conto suo — .page-fade
+        # diventava un velo grigio opaco sopra l'intera pagina — e spingeva
+        # l'hero al suo ultimo fotogramma, che e' lo stato "me ne sono andato"
+        # (opacita' .4). Le foto della prima videata venivano slavate e
+        # sembrava un difetto del sito: non lo era, era lo strumento.
+        #
+        # Quindi solo i selettori del Round 29 legati a view(), e l'hero resta
+        # fuori apposta: la sua timeline e' scroll(root), a pagina in cima vale
+        # zero, cioe' proprio l'inquadratura piena che si vuole fotografare.
+        p.add_style_tag(content=(
+            "[data-reveal], [data-rule]::after, [data-section-number], .read-progress i"
+            " { animation-timeline: auto !important; }"))
         p.wait_for_timeout(900)
         p.wait_for_timeout(800)
         p.screenshot(path="/tmp/shots/%s-%s-alto.png" % (suff, nome))
