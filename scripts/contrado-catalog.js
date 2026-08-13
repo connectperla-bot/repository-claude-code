@@ -133,7 +133,19 @@ async function tuttiIProdotti(cfg) {
   const tutti = [];
   let pagina = 1;
   for (;;) {
-    const dati = await chiama(cfg, '/stores/products?PageNumber=' + pagina + '&PageSize=50');
+    let dati;
+    try {
+      dati = await chiama(cfg, '/stores/products?PageNumber=' + pagina + '&PageSize=50');
+    } catch (err) {
+      // Un negozio senza prodotti non e' un errore, ma Contrado lo segnala
+      // come tale: success:false con "No Store Products Found , Please check
+      // your details or token". Il riferimento al token e' fuorviante -- se
+      // il token fosse sbagliato la risposta sarebbe 401, e /stores ha appena
+      // funzionato. E' lo stato normale finche' i prodotti non vengono creati
+      // nello studio Contrado, quindi qui vale come elenco vuoto.
+      if (/No Store Products Found/i.test(err.message)) return tutti;
+      throw err;
+    }
     const elenco = Array.isArray(dati) ? dati : (dati && (dati.items || dati.products || dati.data)) || [];
     tutti.push.apply(tutti, elenco);
     if (elenco.length < 50) break;
@@ -215,17 +227,51 @@ async function mostraVarianti(cfg, storeProductId) {
 // La domanda che conta per un negozio italiano: quanto costa spedire in
 // Italia e chi paga la dogana. Contrado produce nel Regno Unito, quindi la
 // risposta non e' scontata.
+// Il paese di destinazione si ricava dal codice cultura (it-IT -> IT). Serve
+// per mostrare la tariffa che riguarda davvero questo negozio invece
+// dell'elenco completo di tutte le zone del mondo.
+function paeseDaCultura(cultureCode) {
+  const m = String(cultureCode || '').match(/-([A-Z]{2})$/);
+  return m ? m[1] : null;
+}
+
 async function mostraSpedizioni(cfg) {
   console.log('\n=== SPEDIZIONI (' + cfg.cultureCode + ') ===');
   const dati = await chiama(cfg, '/shipping/' + encodeURIComponent(cfg.cultureCode));
-  const gruppi = Array.isArray(dati) ? dati : (dati && (dati.shippingPriceGroups || dati.items)) || [];
+  // Forma reale della risposta: priceGroups[].regions[].countries[]
+  const gruppi = (dati && (dati.priceGroups || dati.shippingPriceGroups)) || (Array.isArray(dati) ? dati : []);
+  const paese = paeseDaCultura(cfg.cultureCode);
+
+  console.log('  ' + gruppi.length + ' gruppi di prezzo. Ogni prodotto appartiene a uno di questi');
+  console.log('  (campo shippingPriceGroupId del prodotto), quindi la spedizione');
+  console.log('  dipende dal prodotto, non e\' una tariffa unica.\n');
+
+  // console.log di Node non fa il riempimento in stile printf ("%-8s" viene
+  // stampato alla lettera): le colonne si allineano a mano.
+  function sx(v, n) { return String(v).padEnd(n); }
+  function dx(v, n) { return String(v).padStart(n); }
+
+  if (paese) {
+    console.log('  Tariffe verso ' + paese + ':');
+    console.log('  ' + sx('gruppo', 8) + sx('zona', 18) + dx('1o pezzo', 11) +
+      dx('aggiuntivo', 12) + dx('tetto', 10));
+  }
+  let trovata = false;
   gruppi.forEach(function (g) {
-    console.log('  gruppo ' + (g.shippingPriceGroupId || g.id) + ': ' + (g.name || g.groupName || ''));
-    (g.regions || g.shippingRegions || []).forEach(function (r) {
-      console.log('    ' + (r.regionName || r.name || '?') + ' -> ' + (r.formattedPrice || r.price || '?') +
-        (r.deliveryTime ? ' | ' + r.deliveryTime : ''));
+    (g.regions || []).forEach(function (r) {
+      const codici = (r.countries || []).map(function (c) { return c.countryCode; });
+      if (!paese || codici.indexOf(paese) === -1) return;
+      trovata = true;
+      const val = r.currencyCode || '';
+      console.log('  ' + sx(g.shippingPriceGroupId, 8) + sx(r.regionName, 18) +
+        dx(r.price + ' ' + val, 11) + dx('+' + r.incrementValue, 12) +
+        dx(r.maxCapValue || '-', 10));
     });
   });
+  if (paese && !trovata) {
+    console.log('  Nessuna tariffa trovata per %s: Contrado potrebbe non servirlo.', paese);
+  }
+
   salva('spedizioni-' + cfg.cultureCode, dati);
   console.log('\n  La dogana NON e\' un dato di questa API: Contrado dichiara');
   console.log('  "customs duties paid to most countries" sul sito, ma per l\'Italia');

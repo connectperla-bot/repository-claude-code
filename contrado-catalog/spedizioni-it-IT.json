@@ -1,0 +1,4856 @@
+{
+  "priceGroups": [
+    {
+      "shippingPriceGroupId": 1,
+      "groupName": "Contrado-GroupName-1",
+      "regions": [
+        {
+          "regionName": "Contrado-Zone-1",
+          "price": 28,
+          "incrementValue": 0.5,
+          "maxCapValue": 52.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Australia",
+              "countryCode": "AU",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Japan",
+              "countryCode": "JP",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "New Zealand",
+              "countryCode": "NZ",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-2",
+          "price": 8.95,
+          "incrementValue": 0.5,
+          "maxCapValue": 24.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Isle of Man",
+              "countryCode": "IM",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Jersey",
+              "countryCode": "JE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "United Kingdom",
+              "countryCode": "GB",
+              "isHomeCountry": true
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-3",
+          "price": 56,
+          "incrementValue": 0.5,
+          "maxCapValue": 80.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Bahrain",
+              "countryCode": "BH",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Egypt",
+              "countryCode": "EG",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Iran (Islamic Republic of)",
+              "countryCode": "IR",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Iraq",
+              "countryCode": "IQ",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Israel",
+              "countryCode": "IL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Jordan",
+              "countryCode": "JO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Kuwait",
+              "countryCode": "KW",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Lebanon",
+              "countryCode": "LB",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Oman",
+              "countryCode": "OM",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Qatar",
+              "countryCode": "QA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Saudi Arabia",
+              "countryCode": "SA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Syrian Arab Republic",
+              "countryCode": "SY",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "United Arab Emirates",
+              "countryCode": "AE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Yemen",
+              "countryCode": "YE",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-4",
+          "price": 21,
+          "incrementValue": 0.5,
+          "maxCapValue": 45.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Canada",
+              "countryCode": "CA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "United States",
+              "countryCode": "US",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-5",
+          "price": 16.99,
+          "incrementValue": 0.5,
+          "maxCapValue": 41.94,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Albania",
+              "countryCode": "AL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Belarus",
+              "countryCode": "BY",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Bosnia and Herzegowina",
+              "countryCode": "BA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Croatia (local name: Hrvatska)",
+              "countryCode": "HR",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Gibraltar",
+              "countryCode": "GI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Greenland",
+              "countryCode": "GL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Iceland",
+              "countryCode": "IS",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Liechtenstein",
+              "countryCode": "LI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Macedonia, the former Yugoslav Republic of",
+              "countryCode": "MK",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Malta",
+              "countryCode": "MT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Moldova, Republic of",
+              "countryCode": "MD",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Montenegro",
+              "countryCode": "ME",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Norway",
+              "countryCode": "NO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Serbia",
+              "countryCode": "RS",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Switzerland",
+              "countryCode": "CH",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Ukraine",
+              "countryCode": "UA",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-6",
+          "price": 28,
+          "incrementValue": 0.5,
+          "maxCapValue": 52.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": []
+        },
+        {
+          "regionName": "Contrado-Zone-7",
+          "price": 14.99,
+          "incrementValue": 0.5,
+          "maxCapValue": 39.94,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Aland Islands",
+              "countryCode": "AX",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Andorra",
+              "countryCode": "AD",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Austria",
+              "countryCode": "AT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Belgium",
+              "countryCode": "BE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Bulgaria",
+              "countryCode": "BG",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "CANARY ISLANDS, THE",
+              "countryCode": "IC",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Czech Republic",
+              "countryCode": "CZ",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Denmark",
+              "countryCode": "DK",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Estonia",
+              "countryCode": "EE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Faroe Islands",
+              "countryCode": "FO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Finland",
+              "countryCode": "FI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "France",
+              "countryCode": "FR",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Germany",
+              "countryCode": "DE",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Greece",
+              "countryCode": "GR",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Guernsey",
+              "countryCode": "GG",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Hungary",
+              "countryCode": "HU",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Ireland",
+              "countryCode": "IE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Italy",
+              "countryCode": "IT",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Latvia",
+              "countryCode": "LV",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Lithuania",
+              "countryCode": "LT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Luxembourg",
+              "countryCode": "LU",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Monaco",
+              "countryCode": "MC",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Netherlands",
+              "countryCode": "NL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Poland",
+              "countryCode": "PL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Portugal",
+              "countryCode": "PT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Romania",
+              "countryCode": "RO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "San Marino",
+              "countryCode": "SM",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Slovakia (Slovak Republic)",
+              "countryCode": "SK",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Slovenia",
+              "countryCode": "SI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Spain",
+              "countryCode": "ES",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Sweden",
+              "countryCode": "SE",
+              "isHomeCountry": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "shippingPriceGroupId": 2,
+      "groupName": "Contrado-GroupName-2",
+      "regions": [
+        {
+          "regionName": "Contrado-Zone-1",
+          "price": 18,
+          "incrementValue": 0.75,
+          "maxCapValue": 36.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Australia",
+              "countryCode": "AU",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Japan",
+              "countryCode": "JP",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "New Zealand",
+              "countryCode": "NZ",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-2",
+          "price": 7.99,
+          "incrementValue": 0.75,
+          "maxCapValue": 18.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Isle of Man",
+              "countryCode": "IM",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Jersey",
+              "countryCode": "JE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "United Kingdom",
+              "countryCode": "GB",
+              "isHomeCountry": true
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-3",
+          "price": 36,
+          "incrementValue": 0.75,
+          "maxCapValue": 54.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Bahrain",
+              "countryCode": "BH",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Egypt",
+              "countryCode": "EG",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Iran (Islamic Republic of)",
+              "countryCode": "IR",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Iraq",
+              "countryCode": "IQ",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Israel",
+              "countryCode": "IL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Jordan",
+              "countryCode": "JO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Kuwait",
+              "countryCode": "KW",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Lebanon",
+              "countryCode": "LB",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Oman",
+              "countryCode": "OM",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Qatar",
+              "countryCode": "QA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Saudi Arabia",
+              "countryCode": "SA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Syrian Arab Republic",
+              "countryCode": "SY",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "United Arab Emirates",
+              "countryCode": "AE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Yemen",
+              "countryCode": "YE",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-4",
+          "price": 16,
+          "incrementValue": 0.75,
+          "maxCapValue": 34.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Canada",
+              "countryCode": "CA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "United States",
+              "countryCode": "US",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-5",
+          "price": 17,
+          "incrementValue": 0.75,
+          "maxCapValue": 35.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Albania",
+              "countryCode": "AL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Belarus",
+              "countryCode": "BY",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Bosnia and Herzegowina",
+              "countryCode": "BA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Croatia (local name: Hrvatska)",
+              "countryCode": "HR",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Gibraltar",
+              "countryCode": "GI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Greenland",
+              "countryCode": "GL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Iceland",
+              "countryCode": "IS",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Liechtenstein",
+              "countryCode": "LI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Macedonia, the former Yugoslav Republic of",
+              "countryCode": "MK",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Malta",
+              "countryCode": "MT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Moldova, Republic of",
+              "countryCode": "MD",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Montenegro",
+              "countryCode": "ME",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Norway",
+              "countryCode": "NO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Serbia",
+              "countryCode": "RS",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Switzerland",
+              "countryCode": "CH",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Ukraine",
+              "countryCode": "UA",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-6",
+          "price": 18,
+          "incrementValue": 0.75,
+          "maxCapValue": 36.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": []
+        },
+        {
+          "regionName": "Contrado-Zone-7",
+          "price": 13,
+          "incrementValue": 0.75,
+          "maxCapValue": 31.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Aland Islands",
+              "countryCode": "AX",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Andorra",
+              "countryCode": "AD",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Austria",
+              "countryCode": "AT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Belgium",
+              "countryCode": "BE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Bulgaria",
+              "countryCode": "BG",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "CANARY ISLANDS, THE",
+              "countryCode": "IC",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Czech Republic",
+              "countryCode": "CZ",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Denmark",
+              "countryCode": "DK",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Estonia",
+              "countryCode": "EE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Faroe Islands",
+              "countryCode": "FO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Finland",
+              "countryCode": "FI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "France",
+              "countryCode": "FR",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Germany",
+              "countryCode": "DE",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Greece",
+              "countryCode": "GR",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Guernsey",
+              "countryCode": "GG",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Hungary",
+              "countryCode": "HU",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Ireland",
+              "countryCode": "IE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Italy",
+              "countryCode": "IT",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Latvia",
+              "countryCode": "LV",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Lithuania",
+              "countryCode": "LT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Luxembourg",
+              "countryCode": "LU",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Monaco",
+              "countryCode": "MC",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Netherlands",
+              "countryCode": "NL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Poland",
+              "countryCode": "PL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Portugal",
+              "countryCode": "PT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Romania",
+              "countryCode": "RO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "San Marino",
+              "countryCode": "SM",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Slovakia (Slovak Republic)",
+              "countryCode": "SK",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Slovenia",
+              "countryCode": "SI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Spain",
+              "countryCode": "ES",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Sweden",
+              "countryCode": "SE",
+              "isHomeCountry": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "shippingPriceGroupId": 3,
+      "groupName": "Contrado-GroupName-3",
+      "regions": [
+        {
+          "regionName": "Contrado-Zone-1",
+          "price": 22,
+          "incrementValue": 0.5,
+          "maxCapValue": 41.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Australia",
+              "countryCode": "AU",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Japan",
+              "countryCode": "JP",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "New Zealand",
+              "countryCode": "NZ",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-2",
+          "price": 8.99,
+          "incrementValue": 0.5,
+          "maxCapValue": 19.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Isle of Man",
+              "countryCode": "IM",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Jersey",
+              "countryCode": "JE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "United Kingdom",
+              "countryCode": "GB",
+              "isHomeCountry": true
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-3",
+          "price": 44,
+          "incrementValue": 0.5,
+          "maxCapValue": 63.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Bahrain",
+              "countryCode": "BH",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Egypt",
+              "countryCode": "EG",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Iran (Islamic Republic of)",
+              "countryCode": "IR",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Iraq",
+              "countryCode": "IQ",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Israel",
+              "countryCode": "IL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Jordan",
+              "countryCode": "JO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Kuwait",
+              "countryCode": "KW",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Lebanon",
+              "countryCode": "LB",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Oman",
+              "countryCode": "OM",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Qatar",
+              "countryCode": "QA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Saudi Arabia",
+              "countryCode": "SA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Syrian Arab Republic",
+              "countryCode": "SY",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "United Arab Emirates",
+              "countryCode": "AE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Yemen",
+              "countryCode": "YE",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-4",
+          "price": 19,
+          "incrementValue": 0.5,
+          "maxCapValue": 38.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Canada",
+              "countryCode": "CA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "United States",
+              "countryCode": "US",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-5",
+          "price": 15.99,
+          "incrementValue": 0.5,
+          "maxCapValue": 35.94,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Albania",
+              "countryCode": "AL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Belarus",
+              "countryCode": "BY",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Bosnia and Herzegowina",
+              "countryCode": "BA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Croatia (local name: Hrvatska)",
+              "countryCode": "HR",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Gibraltar",
+              "countryCode": "GI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Greenland",
+              "countryCode": "GL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Iceland",
+              "countryCode": "IS",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Liechtenstein",
+              "countryCode": "LI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Macedonia, the former Yugoslav Republic of",
+              "countryCode": "MK",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Malta",
+              "countryCode": "MT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Moldova, Republic of",
+              "countryCode": "MD",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Montenegro",
+              "countryCode": "ME",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Norway",
+              "countryCode": "NO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Serbia",
+              "countryCode": "RS",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Switzerland",
+              "countryCode": "CH",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Ukraine",
+              "countryCode": "UA",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-6",
+          "price": 22,
+          "incrementValue": 0.5,
+          "maxCapValue": 41.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": []
+        },
+        {
+          "regionName": "Contrado-Zone-7",
+          "price": 14.99,
+          "incrementValue": 0.5,
+          "maxCapValue": 34.94,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Aland Islands",
+              "countryCode": "AX",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Andorra",
+              "countryCode": "AD",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Austria",
+              "countryCode": "AT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Belgium",
+              "countryCode": "BE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Bulgaria",
+              "countryCode": "BG",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "CANARY ISLANDS, THE",
+              "countryCode": "IC",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Czech Republic",
+              "countryCode": "CZ",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Denmark",
+              "countryCode": "DK",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Estonia",
+              "countryCode": "EE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Faroe Islands",
+              "countryCode": "FO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Finland",
+              "countryCode": "FI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "France",
+              "countryCode": "FR",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Germany",
+              "countryCode": "DE",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Greece",
+              "countryCode": "GR",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Guernsey",
+              "countryCode": "GG",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Hungary",
+              "countryCode": "HU",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Ireland",
+              "countryCode": "IE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Italy",
+              "countryCode": "IT",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Latvia",
+              "countryCode": "LV",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Lithuania",
+              "countryCode": "LT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Luxembourg",
+              "countryCode": "LU",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Monaco",
+              "countryCode": "MC",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Netherlands",
+              "countryCode": "NL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Poland",
+              "countryCode": "PL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Portugal",
+              "countryCode": "PT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Romania",
+              "countryCode": "RO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "San Marino",
+              "countryCode": "SM",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Slovakia (Slovak Republic)",
+              "countryCode": "SK",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Slovenia",
+              "countryCode": "SI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Spain",
+              "countryCode": "ES",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Sweden",
+              "countryCode": "SE",
+              "isHomeCountry": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "shippingPriceGroupId": 4,
+      "groupName": "Contrado-GroupName-4",
+      "regions": [
+        {
+          "regionName": "Contrado-Zone-1",
+          "price": 35,
+          "incrementValue": 4.25,
+          "maxCapValue": 69.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Australia",
+              "countryCode": "AU",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Japan",
+              "countryCode": "JP",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "New Zealand",
+              "countryCode": "NZ",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-2",
+          "price": 17.99,
+          "incrementValue": 4.25,
+          "maxCapValue": 34.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Isle of Man",
+              "countryCode": "IM",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Jersey",
+              "countryCode": "JE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "United Kingdom",
+              "countryCode": "GB",
+              "isHomeCountry": true
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-3",
+          "price": 70,
+          "incrementValue": 4.25,
+          "maxCapValue": 104.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Bahrain",
+              "countryCode": "BH",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Egypt",
+              "countryCode": "EG",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Iran (Islamic Republic of)",
+              "countryCode": "IR",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Iraq",
+              "countryCode": "IQ",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Israel",
+              "countryCode": "IL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Jordan",
+              "countryCode": "JO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Kuwait",
+              "countryCode": "KW",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Lebanon",
+              "countryCode": "LB",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Oman",
+              "countryCode": "OM",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Qatar",
+              "countryCode": "QA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Saudi Arabia",
+              "countryCode": "SA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Syrian Arab Republic",
+              "countryCode": "SY",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "United Arab Emirates",
+              "countryCode": "AE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Yemen",
+              "countryCode": "YE",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-4",
+          "price": 35,
+          "incrementValue": 4.25,
+          "maxCapValue": 69.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Canada",
+              "countryCode": "CA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "United States",
+              "countryCode": "US",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-5",
+          "price": 24.99,
+          "incrementValue": 4.25,
+          "maxCapValue": 59.94,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Albania",
+              "countryCode": "AL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Belarus",
+              "countryCode": "BY",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Bosnia and Herzegowina",
+              "countryCode": "BA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Croatia (local name: Hrvatska)",
+              "countryCode": "HR",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Gibraltar",
+              "countryCode": "GI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Greenland",
+              "countryCode": "GL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Iceland",
+              "countryCode": "IS",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Liechtenstein",
+              "countryCode": "LI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Macedonia, the former Yugoslav Republic of",
+              "countryCode": "MK",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Malta",
+              "countryCode": "MT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Moldova, Republic of",
+              "countryCode": "MD",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Montenegro",
+              "countryCode": "ME",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Norway",
+              "countryCode": "NO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Serbia",
+              "countryCode": "RS",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Switzerland",
+              "countryCode": "CH",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Ukraine",
+              "countryCode": "UA",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-6",
+          "price": 100,
+          "incrementValue": 4.25,
+          "maxCapValue": 134.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": []
+        },
+        {
+          "regionName": "Contrado-Zone-7",
+          "price": 19.99,
+          "incrementValue": 4.25,
+          "maxCapValue": 54.94,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Aland Islands",
+              "countryCode": "AX",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Andorra",
+              "countryCode": "AD",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Austria",
+              "countryCode": "AT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Belgium",
+              "countryCode": "BE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Bulgaria",
+              "countryCode": "BG",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "CANARY ISLANDS, THE",
+              "countryCode": "IC",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Czech Republic",
+              "countryCode": "CZ",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Denmark",
+              "countryCode": "DK",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Estonia",
+              "countryCode": "EE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Faroe Islands",
+              "countryCode": "FO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Finland",
+              "countryCode": "FI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "France",
+              "countryCode": "FR",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Germany",
+              "countryCode": "DE",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Greece",
+              "countryCode": "GR",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Guernsey",
+              "countryCode": "GG",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Hungary",
+              "countryCode": "HU",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Ireland",
+              "countryCode": "IE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Italy",
+              "countryCode": "IT",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Latvia",
+              "countryCode": "LV",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Lithuania",
+              "countryCode": "LT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Luxembourg",
+              "countryCode": "LU",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Monaco",
+              "countryCode": "MC",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Netherlands",
+              "countryCode": "NL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Poland",
+              "countryCode": "PL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Portugal",
+              "countryCode": "PT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Romania",
+              "countryCode": "RO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "San Marino",
+              "countryCode": "SM",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Slovakia (Slovak Republic)",
+              "countryCode": "SK",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Slovenia",
+              "countryCode": "SI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Spain",
+              "countryCode": "ES",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Sweden",
+              "countryCode": "SE",
+              "isHomeCountry": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "shippingPriceGroupId": 5,
+      "groupName": "Contrado-GroupName-5",
+      "regions": [
+        {
+          "regionName": "Contrado-Zone-1",
+          "price": 0,
+          "incrementValue": 0,
+          "maxCapValue": 0,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Australia",
+              "countryCode": "AU",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Japan",
+              "countryCode": "JP",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "New Zealand",
+              "countryCode": "NZ",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-2",
+          "price": 0,
+          "incrementValue": 0,
+          "maxCapValue": 0,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Isle of Man",
+              "countryCode": "IM",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Jersey",
+              "countryCode": "JE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "United Kingdom",
+              "countryCode": "GB",
+              "isHomeCountry": true
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-3",
+          "price": 0,
+          "incrementValue": 0,
+          "maxCapValue": 0,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Bahrain",
+              "countryCode": "BH",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Egypt",
+              "countryCode": "EG",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Iran (Islamic Republic of)",
+              "countryCode": "IR",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Iraq",
+              "countryCode": "IQ",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Israel",
+              "countryCode": "IL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Jordan",
+              "countryCode": "JO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Kuwait",
+              "countryCode": "KW",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Lebanon",
+              "countryCode": "LB",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Oman",
+              "countryCode": "OM",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Qatar",
+              "countryCode": "QA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Saudi Arabia",
+              "countryCode": "SA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Syrian Arab Republic",
+              "countryCode": "SY",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "United Arab Emirates",
+              "countryCode": "AE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Yemen",
+              "countryCode": "YE",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-4",
+          "price": 0,
+          "incrementValue": 0,
+          "maxCapValue": 0,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Canada",
+              "countryCode": "CA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "United States",
+              "countryCode": "US",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-5",
+          "price": 0,
+          "incrementValue": 0,
+          "maxCapValue": 0,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Albania",
+              "countryCode": "AL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Belarus",
+              "countryCode": "BY",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Bosnia and Herzegowina",
+              "countryCode": "BA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Croatia (local name: Hrvatska)",
+              "countryCode": "HR",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Gibraltar",
+              "countryCode": "GI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Greenland",
+              "countryCode": "GL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Iceland",
+              "countryCode": "IS",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Liechtenstein",
+              "countryCode": "LI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Macedonia, the former Yugoslav Republic of",
+              "countryCode": "MK",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Malta",
+              "countryCode": "MT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Moldova, Republic of",
+              "countryCode": "MD",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Montenegro",
+              "countryCode": "ME",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Norway",
+              "countryCode": "NO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Serbia",
+              "countryCode": "RS",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Switzerland",
+              "countryCode": "CH",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Ukraine",
+              "countryCode": "UA",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-6",
+          "price": 0,
+          "incrementValue": 0,
+          "maxCapValue": 0,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": []
+        },
+        {
+          "regionName": "Contrado-Zone-7",
+          "price": 0,
+          "incrementValue": 0,
+          "maxCapValue": 0,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Aland Islands",
+              "countryCode": "AX",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Andorra",
+              "countryCode": "AD",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Austria",
+              "countryCode": "AT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Belgium",
+              "countryCode": "BE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Bulgaria",
+              "countryCode": "BG",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "CANARY ISLANDS, THE",
+              "countryCode": "IC",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Czech Republic",
+              "countryCode": "CZ",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Denmark",
+              "countryCode": "DK",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Estonia",
+              "countryCode": "EE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Faroe Islands",
+              "countryCode": "FO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Finland",
+              "countryCode": "FI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "France",
+              "countryCode": "FR",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Germany",
+              "countryCode": "DE",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Greece",
+              "countryCode": "GR",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Guernsey",
+              "countryCode": "GG",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Hungary",
+              "countryCode": "HU",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Ireland",
+              "countryCode": "IE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Italy",
+              "countryCode": "IT",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Latvia",
+              "countryCode": "LV",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Lithuania",
+              "countryCode": "LT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Luxembourg",
+              "countryCode": "LU",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Monaco",
+              "countryCode": "MC",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Netherlands",
+              "countryCode": "NL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Poland",
+              "countryCode": "PL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Portugal",
+              "countryCode": "PT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Romania",
+              "countryCode": "RO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "San Marino",
+              "countryCode": "SM",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Slovakia (Slovak Republic)",
+              "countryCode": "SK",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Slovenia",
+              "countryCode": "SI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Spain",
+              "countryCode": "ES",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Sweden",
+              "countryCode": "SE",
+              "isHomeCountry": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "shippingPriceGroupId": 6,
+      "groupName": "Contrado-GroupName-6",
+      "regions": [
+        {
+          "regionName": "Contrado-Zone-1",
+          "price": 74,
+          "incrementValue": 9.95,
+          "maxCapValue": 143.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Australia",
+              "countryCode": "AU",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Japan",
+              "countryCode": "JP",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "New Zealand",
+              "countryCode": "NZ",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-2",
+          "price": 29.5,
+          "incrementValue": 9.95,
+          "maxCapValue": 69.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Isle of Man",
+              "countryCode": "IM",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Jersey",
+              "countryCode": "JE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "United Kingdom",
+              "countryCode": "GB",
+              "isHomeCountry": true
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-3",
+          "price": 148,
+          "incrementValue": 9.95,
+          "maxCapValue": 217.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Bahrain",
+              "countryCode": "BH",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Egypt",
+              "countryCode": "EG",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Iran (Islamic Republic of)",
+              "countryCode": "IR",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Iraq",
+              "countryCode": "IQ",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Israel",
+              "countryCode": "IL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Jordan",
+              "countryCode": "JO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Kuwait",
+              "countryCode": "KW",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Lebanon",
+              "countryCode": "LB",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Oman",
+              "countryCode": "OM",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Qatar",
+              "countryCode": "QA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Saudi Arabia",
+              "countryCode": "SA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Syrian Arab Republic",
+              "countryCode": "SY",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "United Arab Emirates",
+              "countryCode": "AE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Yemen",
+              "countryCode": "YE",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-4",
+          "price": 74,
+          "incrementValue": 9.95,
+          "maxCapValue": 143.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Canada",
+              "countryCode": "CA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "United States",
+              "countryCode": "US",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-5",
+          "price": 59,
+          "incrementValue": 9.95,
+          "maxCapValue": 128.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Albania",
+              "countryCode": "AL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Belarus",
+              "countryCode": "BY",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Bosnia and Herzegowina",
+              "countryCode": "BA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Croatia (local name: Hrvatska)",
+              "countryCode": "HR",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Gibraltar",
+              "countryCode": "GI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Greenland",
+              "countryCode": "GL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Iceland",
+              "countryCode": "IS",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Liechtenstein",
+              "countryCode": "LI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Macedonia, the former Yugoslav Republic of",
+              "countryCode": "MK",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Malta",
+              "countryCode": "MT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Moldova, Republic of",
+              "countryCode": "MD",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Montenegro",
+              "countryCode": "ME",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Norway",
+              "countryCode": "NO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Serbia",
+              "countryCode": "RS",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Switzerland",
+              "countryCode": "CH",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Ukraine",
+              "countryCode": "UA",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-6",
+          "price": 74,
+          "incrementValue": 9.95,
+          "maxCapValue": 143.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": []
+        },
+        {
+          "regionName": "Contrado-Zone-7",
+          "price": 39,
+          "incrementValue": 9.95,
+          "maxCapValue": 108.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Aland Islands",
+              "countryCode": "AX",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Andorra",
+              "countryCode": "AD",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Austria",
+              "countryCode": "AT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Belgium",
+              "countryCode": "BE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Bulgaria",
+              "countryCode": "BG",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "CANARY ISLANDS, THE",
+              "countryCode": "IC",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Czech Republic",
+              "countryCode": "CZ",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Denmark",
+              "countryCode": "DK",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Estonia",
+              "countryCode": "EE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Faroe Islands",
+              "countryCode": "FO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Finland",
+              "countryCode": "FI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "France",
+              "countryCode": "FR",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Germany",
+              "countryCode": "DE",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Greece",
+              "countryCode": "GR",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Guernsey",
+              "countryCode": "GG",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Hungary",
+              "countryCode": "HU",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Ireland",
+              "countryCode": "IE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Italy",
+              "countryCode": "IT",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Latvia",
+              "countryCode": "LV",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Lithuania",
+              "countryCode": "LT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Luxembourg",
+              "countryCode": "LU",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Monaco",
+              "countryCode": "MC",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Netherlands",
+              "countryCode": "NL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Poland",
+              "countryCode": "PL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Portugal",
+              "countryCode": "PT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Romania",
+              "countryCode": "RO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "San Marino",
+              "countryCode": "SM",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Slovakia (Slovak Republic)",
+              "countryCode": "SK",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Slovenia",
+              "countryCode": "SI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Spain",
+              "countryCode": "ES",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Sweden",
+              "countryCode": "SE",
+              "isHomeCountry": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "shippingPriceGroupId": 7,
+      "groupName": "Contrado-GroupName-7",
+      "regions": [
+        {
+          "regionName": "Contrado-Zone-1",
+          "price": 18,
+          "incrementValue": 0.25,
+          "maxCapValue": 0,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Australia",
+              "countryCode": "AU",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Japan",
+              "countryCode": "JP",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "New Zealand",
+              "countryCode": "NZ",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-2",
+          "price": 8.99,
+          "incrementValue": 0.25,
+          "maxCapValue": 0,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Isle of Man",
+              "countryCode": "IM",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Jersey",
+              "countryCode": "JE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "United Kingdom",
+              "countryCode": "GB",
+              "isHomeCountry": true
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-3",
+          "price": 36,
+          "incrementValue": 0,
+          "maxCapValue": 36,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Bahrain",
+              "countryCode": "BH",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Egypt",
+              "countryCode": "EG",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Iran (Islamic Republic of)",
+              "countryCode": "IR",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Iraq",
+              "countryCode": "IQ",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Israel",
+              "countryCode": "IL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Jordan",
+              "countryCode": "JO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Kuwait",
+              "countryCode": "KW",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Lebanon",
+              "countryCode": "LB",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Oman",
+              "countryCode": "OM",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Qatar",
+              "countryCode": "QA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Saudi Arabia",
+              "countryCode": "SA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Syrian Arab Republic",
+              "countryCode": "SY",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "United Arab Emirates",
+              "countryCode": "AE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Yemen",
+              "countryCode": "YE",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-4",
+          "price": 16,
+          "incrementValue": 0.25,
+          "maxCapValue": 0,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Canada",
+              "countryCode": "CA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "United States",
+              "countryCode": "US",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-5",
+          "price": 17,
+          "incrementValue": 0.25,
+          "maxCapValue": 0,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Albania",
+              "countryCode": "AL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Belarus",
+              "countryCode": "BY",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Bosnia and Herzegowina",
+              "countryCode": "BA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Croatia (local name: Hrvatska)",
+              "countryCode": "HR",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Gibraltar",
+              "countryCode": "GI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Greenland",
+              "countryCode": "GL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Iceland",
+              "countryCode": "IS",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Liechtenstein",
+              "countryCode": "LI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Macedonia, the former Yugoslav Republic of",
+              "countryCode": "MK",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Malta",
+              "countryCode": "MT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Moldova, Republic of",
+              "countryCode": "MD",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Montenegro",
+              "countryCode": "ME",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Norway",
+              "countryCode": "NO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Serbia",
+              "countryCode": "RS",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Switzerland",
+              "countryCode": "CH",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Ukraine",
+              "countryCode": "UA",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-6",
+          "price": 18,
+          "incrementValue": 0.25,
+          "maxCapValue": 0,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": []
+        },
+        {
+          "regionName": "Contrado-Zone-7",
+          "price": 13,
+          "incrementValue": 0.25,
+          "maxCapValue": 0,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Aland Islands",
+              "countryCode": "AX",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Andorra",
+              "countryCode": "AD",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Austria",
+              "countryCode": "AT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Belgium",
+              "countryCode": "BE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Bulgaria",
+              "countryCode": "BG",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "CANARY ISLANDS, THE",
+              "countryCode": "IC",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Czech Republic",
+              "countryCode": "CZ",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Denmark",
+              "countryCode": "DK",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Estonia",
+              "countryCode": "EE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Faroe Islands",
+              "countryCode": "FO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Finland",
+              "countryCode": "FI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "France",
+              "countryCode": "FR",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Germany",
+              "countryCode": "DE",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Greece",
+              "countryCode": "GR",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Guernsey",
+              "countryCode": "GG",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Hungary",
+              "countryCode": "HU",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Ireland",
+              "countryCode": "IE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Italy",
+              "countryCode": "IT",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Latvia",
+              "countryCode": "LV",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Lithuania",
+              "countryCode": "LT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Luxembourg",
+              "countryCode": "LU",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Monaco",
+              "countryCode": "MC",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Netherlands",
+              "countryCode": "NL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Poland",
+              "countryCode": "PL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Portugal",
+              "countryCode": "PT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Romania",
+              "countryCode": "RO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "San Marino",
+              "countryCode": "SM",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Slovakia (Slovak Republic)",
+              "countryCode": "SK",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Slovenia",
+              "countryCode": "SI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Spain",
+              "countryCode": "ES",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Sweden",
+              "countryCode": "SE",
+              "isHomeCountry": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "shippingPriceGroupId": 8,
+      "groupName": "Contrado-GroupName-8",
+      "regions": [
+        {
+          "regionName": "Contrado-Zone-1",
+          "price": 25,
+          "incrementValue": 1.5,
+          "maxCapValue": 40,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Australia",
+              "countryCode": "AU",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Japan",
+              "countryCode": "JP",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "New Zealand",
+              "countryCode": "NZ",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-2",
+          "price": 9.99,
+          "incrementValue": 1.5,
+          "maxCapValue": 15,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Isle of Man",
+              "countryCode": "IM",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Jersey",
+              "countryCode": "JE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "United Kingdom",
+              "countryCode": "GB",
+              "isHomeCountry": true
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-3",
+          "price": 50,
+          "incrementValue": 1.5,
+          "maxCapValue": 65,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Bahrain",
+              "countryCode": "BH",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Egypt",
+              "countryCode": "EG",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Iran (Islamic Republic of)",
+              "countryCode": "IR",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Iraq",
+              "countryCode": "IQ",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Israel",
+              "countryCode": "IL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Jordan",
+              "countryCode": "JO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Kuwait",
+              "countryCode": "KW",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Lebanon",
+              "countryCode": "LB",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Oman",
+              "countryCode": "OM",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Qatar",
+              "countryCode": "QA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Saudi Arabia",
+              "countryCode": "SA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Syrian Arab Republic",
+              "countryCode": "SY",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "United Arab Emirates",
+              "countryCode": "AE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Yemen",
+              "countryCode": "YE",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-4",
+          "price": 20,
+          "incrementValue": 1.5,
+          "maxCapValue": 35,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Canada",
+              "countryCode": "CA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "United States",
+              "countryCode": "US",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-5",
+          "price": 20,
+          "incrementValue": 1.5,
+          "maxCapValue": 35,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Albania",
+              "countryCode": "AL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Belarus",
+              "countryCode": "BY",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Bosnia and Herzegowina",
+              "countryCode": "BA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Croatia (local name: Hrvatska)",
+              "countryCode": "HR",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Gibraltar",
+              "countryCode": "GI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Greenland",
+              "countryCode": "GL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Iceland",
+              "countryCode": "IS",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Liechtenstein",
+              "countryCode": "LI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Macedonia, the former Yugoslav Republic of",
+              "countryCode": "MK",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Malta",
+              "countryCode": "MT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Moldova, Republic of",
+              "countryCode": "MD",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Montenegro",
+              "countryCode": "ME",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Norway",
+              "countryCode": "NO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Serbia",
+              "countryCode": "RS",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Switzerland",
+              "countryCode": "CH",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Ukraine",
+              "countryCode": "UA",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-6",
+          "price": 25,
+          "incrementValue": 1.5,
+          "maxCapValue": 40,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": []
+        },
+        {
+          "regionName": "Contrado-Zone-7",
+          "price": 20,
+          "incrementValue": 1.5,
+          "maxCapValue": 35,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Aland Islands",
+              "countryCode": "AX",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Andorra",
+              "countryCode": "AD",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Austria",
+              "countryCode": "AT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Belgium",
+              "countryCode": "BE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Bulgaria",
+              "countryCode": "BG",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "CANARY ISLANDS, THE",
+              "countryCode": "IC",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Czech Republic",
+              "countryCode": "CZ",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Denmark",
+              "countryCode": "DK",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Estonia",
+              "countryCode": "EE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Faroe Islands",
+              "countryCode": "FO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Finland",
+              "countryCode": "FI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "France",
+              "countryCode": "FR",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Germany",
+              "countryCode": "DE",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Greece",
+              "countryCode": "GR",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Guernsey",
+              "countryCode": "GG",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Hungary",
+              "countryCode": "HU",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Ireland",
+              "countryCode": "IE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Italy",
+              "countryCode": "IT",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Latvia",
+              "countryCode": "LV",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Lithuania",
+              "countryCode": "LT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Luxembourg",
+              "countryCode": "LU",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Monaco",
+              "countryCode": "MC",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Netherlands",
+              "countryCode": "NL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Poland",
+              "countryCode": "PL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Portugal",
+              "countryCode": "PT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Romania",
+              "countryCode": "RO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "San Marino",
+              "countryCode": "SM",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Slovakia (Slovak Republic)",
+              "countryCode": "SK",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Slovenia",
+              "countryCode": "SI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Spain",
+              "countryCode": "ES",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Sweden",
+              "countryCode": "SE",
+              "isHomeCountry": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "shippingPriceGroupId": 9,
+      "groupName": "Contrado-GroupName-9",
+      "regions": [
+        {
+          "regionName": "Contrado-Zone-1",
+          "price": 28,
+          "incrementValue": 4.99,
+          "maxCapValue": 106,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Australia",
+              "countryCode": "AU",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Japan",
+              "countryCode": "JP",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "New Zealand",
+              "countryCode": "NZ",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-2",
+          "price": 9.99,
+          "incrementValue": 4.99,
+          "maxCapValue": 78,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Isle of Man",
+              "countryCode": "IM",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Jersey",
+              "countryCode": "JE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "United Kingdom",
+              "countryCode": "GB",
+              "isHomeCountry": true
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-3",
+          "price": 56,
+          "incrementValue": 4.99,
+          "maxCapValue": 134,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Bahrain",
+              "countryCode": "BH",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Egypt",
+              "countryCode": "EG",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Iran (Islamic Republic of)",
+              "countryCode": "IR",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Iraq",
+              "countryCode": "IQ",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Israel",
+              "countryCode": "IL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Jordan",
+              "countryCode": "JO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Kuwait",
+              "countryCode": "KW",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Lebanon",
+              "countryCode": "LB",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Oman",
+              "countryCode": "OM",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Qatar",
+              "countryCode": "QA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Saudi Arabia",
+              "countryCode": "SA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Syrian Arab Republic",
+              "countryCode": "SY",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "United Arab Emirates",
+              "countryCode": "AE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Yemen",
+              "countryCode": "YE",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-4",
+          "price": 21,
+          "incrementValue": 4.99,
+          "maxCapValue": 99,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Canada",
+              "countryCode": "CA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "United States",
+              "countryCode": "US",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-5",
+          "price": 20,
+          "incrementValue": 4.99,
+          "maxCapValue": 98,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Albania",
+              "countryCode": "AL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Belarus",
+              "countryCode": "BY",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Bosnia and Herzegowina",
+              "countryCode": "BA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Croatia (local name: Hrvatska)",
+              "countryCode": "HR",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Gibraltar",
+              "countryCode": "GI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Greenland",
+              "countryCode": "GL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Iceland",
+              "countryCode": "IS",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Liechtenstein",
+              "countryCode": "LI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Macedonia, the former Yugoslav Republic of",
+              "countryCode": "MK",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Malta",
+              "countryCode": "MT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Moldova, Republic of",
+              "countryCode": "MD",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Montenegro",
+              "countryCode": "ME",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Norway",
+              "countryCode": "NO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Serbia",
+              "countryCode": "RS",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Switzerland",
+              "countryCode": "CH",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Ukraine",
+              "countryCode": "UA",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-6",
+          "price": 28,
+          "incrementValue": 4.99,
+          "maxCapValue": 106,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": []
+        },
+        {
+          "regionName": "Contrado-Zone-7",
+          "price": 15.99,
+          "incrementValue": 4.99,
+          "maxCapValue": 93.99,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Aland Islands",
+              "countryCode": "AX",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Andorra",
+              "countryCode": "AD",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Austria",
+              "countryCode": "AT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Belgium",
+              "countryCode": "BE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Bulgaria",
+              "countryCode": "BG",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "CANARY ISLANDS, THE",
+              "countryCode": "IC",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Czech Republic",
+              "countryCode": "CZ",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Denmark",
+              "countryCode": "DK",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Estonia",
+              "countryCode": "EE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Faroe Islands",
+              "countryCode": "FO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Finland",
+              "countryCode": "FI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "France",
+              "countryCode": "FR",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Germany",
+              "countryCode": "DE",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Greece",
+              "countryCode": "GR",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Guernsey",
+              "countryCode": "GG",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Hungary",
+              "countryCode": "HU",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Ireland",
+              "countryCode": "IE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Italy",
+              "countryCode": "IT",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Latvia",
+              "countryCode": "LV",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Lithuania",
+              "countryCode": "LT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Luxembourg",
+              "countryCode": "LU",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Monaco",
+              "countryCode": "MC",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Netherlands",
+              "countryCode": "NL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Poland",
+              "countryCode": "PL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Portugal",
+              "countryCode": "PT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Romania",
+              "countryCode": "RO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "San Marino",
+              "countryCode": "SM",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Slovakia (Slovak Republic)",
+              "countryCode": "SK",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Slovenia",
+              "countryCode": "SI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Spain",
+              "countryCode": "ES",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Sweden",
+              "countryCode": "SE",
+              "isHomeCountry": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "shippingPriceGroupId": 10,
+      "groupName": "Contrado-GroupName-10",
+      "regions": [
+        {
+          "regionName": "Contrado-Zone-1",
+          "price": 9,
+          "incrementValue": 0.75,
+          "maxCapValue": 24,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Australia",
+              "countryCode": "AU",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Japan",
+              "countryCode": "JP",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "New Zealand",
+              "countryCode": "NZ",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-2",
+          "price": 10,
+          "incrementValue": 0.75,
+          "maxCapValue": 15,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Isle of Man",
+              "countryCode": "IM",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Jersey",
+              "countryCode": "JE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "United Kingdom",
+              "countryCode": "GB",
+              "isHomeCountry": true
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-3",
+          "price": 18,
+          "incrementValue": 0.49,
+          "maxCapValue": 33,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Bahrain",
+              "countryCode": "BH",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Egypt",
+              "countryCode": "EG",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Iran (Islamic Republic of)",
+              "countryCode": "IR",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Iraq",
+              "countryCode": "IQ",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Israel",
+              "countryCode": "IL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Jordan",
+              "countryCode": "JO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Kuwait",
+              "countryCode": "KW",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Lebanon",
+              "countryCode": "LB",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Oman",
+              "countryCode": "OM",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Qatar",
+              "countryCode": "QA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Saudi Arabia",
+              "countryCode": "SA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Syrian Arab Republic",
+              "countryCode": "SY",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "United Arab Emirates",
+              "countryCode": "AE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Yemen",
+              "countryCode": "YE",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-4",
+          "price": 9,
+          "incrementValue": 0.75,
+          "maxCapValue": 24,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Canada",
+              "countryCode": "CA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "United States",
+              "countryCode": "US",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-5",
+          "price": 9,
+          "incrementValue": 0.75,
+          "maxCapValue": 24,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Albania",
+              "countryCode": "AL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Belarus",
+              "countryCode": "BY",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Bosnia and Herzegowina",
+              "countryCode": "BA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Croatia (local name: Hrvatska)",
+              "countryCode": "HR",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Gibraltar",
+              "countryCode": "GI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Greenland",
+              "countryCode": "GL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Iceland",
+              "countryCode": "IS",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Liechtenstein",
+              "countryCode": "LI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Macedonia, the former Yugoslav Republic of",
+              "countryCode": "MK",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Malta",
+              "countryCode": "MT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Moldova, Republic of",
+              "countryCode": "MD",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Montenegro",
+              "countryCode": "ME",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Norway",
+              "countryCode": "NO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Serbia",
+              "countryCode": "RS",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Switzerland",
+              "countryCode": "CH",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Ukraine",
+              "countryCode": "UA",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-6",
+          "price": 9,
+          "incrementValue": 0.75,
+          "maxCapValue": 24,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": []
+        },
+        {
+          "regionName": "Contrado-Zone-7",
+          "price": 9,
+          "incrementValue": 0.75,
+          "maxCapValue": 24,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Aland Islands",
+              "countryCode": "AX",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Andorra",
+              "countryCode": "AD",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Austria",
+              "countryCode": "AT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Belgium",
+              "countryCode": "BE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Bulgaria",
+              "countryCode": "BG",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "CANARY ISLANDS, THE",
+              "countryCode": "IC",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Czech Republic",
+              "countryCode": "CZ",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Denmark",
+              "countryCode": "DK",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Estonia",
+              "countryCode": "EE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Faroe Islands",
+              "countryCode": "FO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Finland",
+              "countryCode": "FI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "France",
+              "countryCode": "FR",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Germany",
+              "countryCode": "DE",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Greece",
+              "countryCode": "GR",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Guernsey",
+              "countryCode": "GG",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Hungary",
+              "countryCode": "HU",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Ireland",
+              "countryCode": "IE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Italy",
+              "countryCode": "IT",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Latvia",
+              "countryCode": "LV",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Lithuania",
+              "countryCode": "LT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Luxembourg",
+              "countryCode": "LU",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Monaco",
+              "countryCode": "MC",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Netherlands",
+              "countryCode": "NL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Poland",
+              "countryCode": "PL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Portugal",
+              "countryCode": "PT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Romania",
+              "countryCode": "RO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "San Marino",
+              "countryCode": "SM",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Slovakia (Slovak Republic)",
+              "countryCode": "SK",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Slovenia",
+              "countryCode": "SI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Spain",
+              "countryCode": "ES",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Sweden",
+              "countryCode": "SE",
+              "isHomeCountry": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "shippingPriceGroupId": 11,
+      "groupName": "Contrado-GroupName-11",
+      "regions": [
+        {
+          "regionName": "Contrado-Zone-1",
+          "price": 49,
+          "incrementValue": 0.1,
+          "maxCapValue": 118.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Australia",
+              "countryCode": "AU",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Japan",
+              "countryCode": "JP",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "New Zealand",
+              "countryCode": "NZ",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-2",
+          "price": 49,
+          "incrementValue": 0.1,
+          "maxCapValue": 69.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Isle of Man",
+              "countryCode": "IM",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Jersey",
+              "countryCode": "JE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "United Kingdom",
+              "countryCode": "GB",
+              "isHomeCountry": true
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-3",
+          "price": 98,
+          "incrementValue": 0.1,
+          "maxCapValue": 167.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Bahrain",
+              "countryCode": "BH",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Egypt",
+              "countryCode": "EG",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Iran (Islamic Republic of)",
+              "countryCode": "IR",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Iraq",
+              "countryCode": "IQ",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Israel",
+              "countryCode": "IL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Jordan",
+              "countryCode": "JO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Kuwait",
+              "countryCode": "KW",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Lebanon",
+              "countryCode": "LB",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Oman",
+              "countryCode": "OM",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Qatar",
+              "countryCode": "QA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Saudi Arabia",
+              "countryCode": "SA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Syrian Arab Republic",
+              "countryCode": "SY",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "United Arab Emirates",
+              "countryCode": "AE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Yemen",
+              "countryCode": "YE",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-4",
+          "price": 49,
+          "incrementValue": 0.1,
+          "maxCapValue": 118.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Canada",
+              "countryCode": "CA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "United States",
+              "countryCode": "US",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-5",
+          "price": 49,
+          "incrementValue": 0.1,
+          "maxCapValue": 118.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Albania",
+              "countryCode": "AL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Belarus",
+              "countryCode": "BY",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Bosnia and Herzegowina",
+              "countryCode": "BA",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Croatia (local name: Hrvatska)",
+              "countryCode": "HR",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Gibraltar",
+              "countryCode": "GI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Greenland",
+              "countryCode": "GL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Iceland",
+              "countryCode": "IS",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Liechtenstein",
+              "countryCode": "LI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Macedonia, the former Yugoslav Republic of",
+              "countryCode": "MK",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Malta",
+              "countryCode": "MT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Moldova, Republic of",
+              "countryCode": "MD",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Montenegro",
+              "countryCode": "ME",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Norway",
+              "countryCode": "NO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Serbia",
+              "countryCode": "RS",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Switzerland",
+              "countryCode": "CH",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Ukraine",
+              "countryCode": "UA",
+              "isHomeCountry": false
+            }
+          ]
+        },
+        {
+          "regionName": "Contrado-Zone-6",
+          "price": 49,
+          "incrementValue": 0.1,
+          "maxCapValue": 118.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": []
+        },
+        {
+          "regionName": "Contrado-Zone-7",
+          "price": 49,
+          "incrementValue": 0.1,
+          "maxCapValue": 118.95,
+          "cultureCode": "it-IT",
+          "currencyCode": "EUR",
+          "countries": [
+            {
+              "countryName": "Aland Islands",
+              "countryCode": "AX",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Andorra",
+              "countryCode": "AD",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Austria",
+              "countryCode": "AT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Belgium",
+              "countryCode": "BE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Bulgaria",
+              "countryCode": "BG",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "CANARY ISLANDS, THE",
+              "countryCode": "IC",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Czech Republic",
+              "countryCode": "CZ",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Denmark",
+              "countryCode": "DK",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Estonia",
+              "countryCode": "EE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Faroe Islands",
+              "countryCode": "FO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Finland",
+              "countryCode": "FI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "France",
+              "countryCode": "FR",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Germany",
+              "countryCode": "DE",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Greece",
+              "countryCode": "GR",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Guernsey",
+              "countryCode": "GG",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Hungary",
+              "countryCode": "HU",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Ireland",
+              "countryCode": "IE",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Italy",
+              "countryCode": "IT",
+              "isHomeCountry": true
+            },
+            {
+              "countryName": "Latvia",
+              "countryCode": "LV",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Lithuania",
+              "countryCode": "LT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Luxembourg",
+              "countryCode": "LU",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Monaco",
+              "countryCode": "MC",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Netherlands",
+              "countryCode": "NL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Poland",
+              "countryCode": "PL",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Portugal",
+              "countryCode": "PT",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Romania",
+              "countryCode": "RO",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "San Marino",
+              "countryCode": "SM",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Slovakia (Slovak Republic)",
+              "countryCode": "SK",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Slovenia",
+              "countryCode": "SI",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Spain",
+              "countryCode": "ES",
+              "isHomeCountry": false
+            },
+            {
+              "countryName": "Sweden",
+              "countryCode": "SE",
+              "isHomeCountry": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "homeCountries": [
+    {
+      "cultureCode": "ar-AE",
+      "countryCode": "AE",
+      "countryName": "United Arab Emirates"
+    },
+    {
+      "cultureCode": "ar-AE",
+      "countryCode": "GB",
+      "countryName": "United Kingdom"
+    },
+    {
+      "cultureCode": "de-DE",
+      "countryCode": "AT",
+      "countryName": "Austria"
+    },
+    {
+      "cultureCode": "de-DE",
+      "countryCode": "DE",
+      "countryName": "Germany"
+    },
+    {
+      "cultureCode": "de-DE",
+      "countryCode": "CH",
+      "countryName": "Switzerland"
+    },
+    {
+      "cultureCode": "de-DE",
+      "countryCode": "GB",
+      "countryName": "United Kingdom"
+    },
+    {
+      "cultureCode": "en-AU",
+      "countryCode": "AU",
+      "countryName": "Australia"
+    },
+    {
+      "cultureCode": "en-AU",
+      "countryCode": "GB",
+      "countryName": "United Kingdom"
+    },
+    {
+      "cultureCode": "en-CA",
+      "countryCode": "CA",
+      "countryName": "Canada"
+    },
+    {
+      "cultureCode": "en-CA",
+      "countryCode": "FR",
+      "countryName": "France"
+    },
+    {
+      "cultureCode": "en-CA",
+      "countryCode": "GB",
+      "countryName": "United Kingdom"
+    },
+    {
+      "cultureCode": "en-CA",
+      "countryCode": "US",
+      "countryName": "United States"
+    },
+    {
+      "cultureCode": "en-GB",
+      "countryCode": "GB",
+      "countryName": "United Kingdom"
+    },
+    {
+      "cultureCode": "en-IE",
+      "countryCode": "IE",
+      "countryName": "Ireland"
+    },
+    {
+      "cultureCode": "en-IE",
+      "countryCode": "GB",
+      "countryName": "United Kingdom"
+    },
+    {
+      "cultureCode": "en-IN",
+      "countryCode": "IN",
+      "countryName": "India"
+    },
+    {
+      "cultureCode": "en-IN",
+      "countryCode": "GB",
+      "countryName": "United Kingdom"
+    },
+    {
+      "cultureCode": "en-NZ",
+      "countryCode": "NZ",
+      "countryName": "New Zealand"
+    },
+    {
+      "cultureCode": "en-NZ",
+      "countryCode": "GB",
+      "countryName": "United Kingdom"
+    },
+    {
+      "cultureCode": "en-US",
+      "countryCode": "CA",
+      "countryName": "Canada"
+    },
+    {
+      "cultureCode": "en-US",
+      "countryCode": "GB",
+      "countryName": "United Kingdom"
+    },
+    {
+      "cultureCode": "en-US",
+      "countryCode": "US",
+      "countryName": "United States"
+    },
+    {
+      "cultureCode": "es-ES",
+      "countryCode": "AD",
+      "countryName": "Andorra"
+    },
+    {
+      "cultureCode": "es-ES",
+      "countryCode": "ES",
+      "countryName": "Spain"
+    },
+    {
+      "cultureCode": "es-ES",
+      "countryCode": "GB",
+      "countryName": "United Kingdom"
+    },
+    {
+      "cultureCode": "fr-FR",
+      "countryCode": "BE",
+      "countryName": "Belgium"
+    },
+    {
+      "cultureCode": "fr-FR",
+      "countryCode": "FR",
+      "countryName": "France"
+    },
+    {
+      "cultureCode": "fr-FR",
+      "countryCode": "LU",
+      "countryName": "Luxembourg"
+    },
+    {
+      "cultureCode": "fr-FR",
+      "countryCode": "CH",
+      "countryName": "Switzerland"
+    },
+    {
+      "cultureCode": "fr-FR",
+      "countryCode": "GB",
+      "countryName": "United Kingdom"
+    },
+    {
+      "cultureCode": "it-IT",
+      "countryCode": "FR",
+      "countryName": "France"
+    },
+    {
+      "cultureCode": "it-IT",
+      "countryCode": "DE",
+      "countryName": "Germany"
+    },
+    {
+      "cultureCode": "it-IT",
+      "countryCode": "IT",
+      "countryName": "Italy"
+    },
+    {
+      "cultureCode": "it-IT",
+      "countryCode": "CH",
+      "countryName": "Switzerland"
+    },
+    {
+      "cultureCode": "it-IT",
+      "countryCode": "GB",
+      "countryName": "United Kingdom"
+    },
+    {
+      "cultureCode": "ja-JP",
+      "countryCode": "JP",
+      "countryName": "Japan"
+    },
+    {
+      "cultureCode": "ja-JP",
+      "countryCode": "GB",
+      "countryName": "United Kingdom"
+    },
+    {
+      "cultureCode": "nl-NL",
+      "countryCode": "NL",
+      "countryName": "Netherlands"
+    },
+    {
+      "cultureCode": "nl-NL",
+      "countryCode": "GB",
+      "countryName": "United Kingdom"
+    },
+    {
+      "cultureCode": "sv-SE",
+      "countryCode": "DK",
+      "countryName": "Denmark"
+    },
+    {
+      "cultureCode": "sv-SE",
+      "countryCode": "FI",
+      "countryName": "Finland"
+    },
+    {
+      "cultureCode": "sv-SE",
+      "countryCode": "NO",
+      "countryName": "Norway"
+    },
+    {
+      "cultureCode": "sv-SE",
+      "countryCode": "SE",
+      "countryName": "Sweden"
+    },
+    {
+      "cultureCode": "sv-SE",
+      "countryCode": "GB",
+      "countryName": "United Kingdom"
+    },
+    {
+      "cultureCode": "zh-CN",
+      "countryCode": "CN",
+      "countryName": "China"
+    },
+    {
+      "cultureCode": "zh-CN",
+      "countryCode": "GB",
+      "countryName": "United Kingdom"
+    }
+  ]
+}
