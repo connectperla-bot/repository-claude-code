@@ -26,3 +26,7 @@ Thumbs.db
 # essere appiattiti su bianco e caricati. Le copie che contano stanno su
 # Cloudinary (URL permanenti) e su Shopify; qui resterebbero 8 MB di duplicati.
 out-foto/
+
+# cache di Python generata dalle skill locali
+__pycache__/
+*.pyc
