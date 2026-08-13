@@ -42,6 +42,7 @@
 // funzionare: annullare e' una funzione in piu', non una dipendenza.
 
 const express = require('express');
+const rete = require('./perla-rete');
 
 const VERSIONE_API_SHOPIFY = '2025-07';
 
@@ -95,7 +96,7 @@ function emailPulita(valore) {
 // --- Shopify ----------------------------------------------------------------
 
 async function shopifyGraphQL(query, variables, env) {
-  const risposta = await fetch(
+  const risposta = await rete.scrivi(
     'https://' + env.SHOPIFY_SHOP_DOMAIN + '/admin/api/' + VERSIONE_API_SHOPIFY + '/graphql.json',
     {
       method: 'POST',
@@ -165,7 +166,7 @@ async function annullaOrdineShopify(idOrdine, env) {
 
 async function printfulOrdine(idShopify, env) {
   if (!env.PRINTFUL_API_KEY) return null;
-  const risposta = await fetch('https://api.printful.com/orders/@' + encodeURIComponent(idShopify), {
+  const risposta = await rete.chiedi('https://api.printful.com/orders/@' + encodeURIComponent(idShopify), {
     headers: { Authorization: 'Bearer ' + env.PRINTFUL_API_KEY },
   });
   if (risposta.status === 404) return null;
@@ -179,7 +180,7 @@ async function printfulOrdine(idShopify, env) {
 }
 
 async function printfulAnnulla(idShopify, env) {
-  const risposta = await fetch('https://api.printful.com/orders/@' + encodeURIComponent(idShopify), {
+  const risposta = await rete.scrivi('https://api.printful.com/orders/@' + encodeURIComponent(idShopify), {
     method: 'DELETE',
     headers: { Authorization: 'Bearer ' + env.PRINTFUL_API_KEY },
   });
@@ -200,7 +201,7 @@ const PAGINE_PRINTIFY = 3;
 async function printifyOrdine(idShopify, env) {
   if (!env.PRINTIFY_API_KEY || !env.PRINTIFY_SHOP_ID) return null;
   for (let pagina = 1; pagina <= PAGINE_PRINTIFY; pagina++) {
-    const risposta = await fetch(
+    const risposta = await rete.chiedi(
       'https://api.printify.com/v1/shops/' + env.PRINTIFY_SHOP_ID + '/orders.json?page=' + pagina + '&limit=50',
       { headers: { Authorization: 'Bearer ' + env.PRINTIFY_API_KEY } }
     );
@@ -223,7 +224,7 @@ async function printifyOrdine(idShopify, env) {
 }
 
 async function printifyAnnulla(idPrintify, env) {
-  const risposta = await fetch(
+  const risposta = await rete.scrivi(
     'https://api.printify.com/v1/shops/' + env.PRINTIFY_SHOP_ID + '/orders/' + idPrintify + '/cancel.json',
     { method: 'POST', headers: { Authorization: 'Bearer ' + env.PRINTIFY_API_KEY } }
   );

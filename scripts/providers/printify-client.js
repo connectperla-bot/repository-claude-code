@@ -1,5 +1,7 @@
 'use strict';
 
+const rete = require('../perla-rete');
+
 // Client Printify — logica identica a quella gia' in produzione in
 // perla-printify-order-sync.js, solo estratta in un modulo separato cosi'
 // il file principale puo' scegliere il fornitore giusto per ogni ordine
@@ -30,7 +32,7 @@ async function createProduct(order, item, front, back, config, apiKey, shopId) {
   if (front && front.printify_image_id) placeholders.push(buildPlaceholder(front, 'front'));
   if (back && back.printify_image_id) placeholders.push(buildPlaceholder(back, 'back'));
 
-  const response = await fetch('https://api.printify.com/v1/shops/' + shopId + '/products.json', {
+  const response = await rete.scrivi('https://api.printify.com/v1/shops/' + shopId + '/products.json', {
     method: 'POST',
     headers: { Authorization: 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -51,7 +53,7 @@ async function createProduct(order, item, front, back, config, apiKey, shopId) {
 }
 
 async function createOrderOnPrintify(order, productId, variantId, quantity, apiKey, shopId) {
-  const response = await fetch('https://api.printify.com/v1/shops/' + shopId + '/orders.json', {
+  const response = await rete.scrivi('https://api.printify.com/v1/shops/' + shopId + '/orders.json', {
     method: 'POST',
     headers: { Authorization: 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -86,7 +88,7 @@ async function createOrderOnPrintify(order, productId, variantId, quantity, apiK
 // di default: resta qui pronta (non cancellata) per quando vorra' passare
 // all'invio automatico, dietro l'env var PRINTIFY_AUTO_SEND_TO_PRODUCTION.
 async function sendToProduction(orderId, apiKey, shopId) {
-  const response = await fetch(
+  const response = await rete.scrivi(
     'https://api.printify.com/v1/shops/' + shopId + '/orders/' + orderId + '/send_to_production.json',
     { method: 'POST', headers: { Authorization: 'Bearer ' + apiKey } }
   );

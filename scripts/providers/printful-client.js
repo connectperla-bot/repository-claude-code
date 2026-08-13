@@ -1,5 +1,7 @@
 'use strict';
 
+const rete = require('../perla-rete');
+
 // Client Printful — account reale collegato dal 2026-07-29 (store "Personal
 // orders"), variantId per ogni tipo EU in config/printify.local.env. Scritto
 // seguendo la documentazione ufficiale dell'API Printful (POST /orders).
@@ -40,10 +42,30 @@ function idPubblicoCloudinary(url) {
 function componiConMotivo(urlCliente, urlMotivo) {
   const idCliente = idPubblicoCloudinary(urlCliente);
   const idMotivo = idPubblicoCloudinary(urlMotivo);
-  // Se uno dei due non e' su Cloudinary (ordini vecchi, prodotti neutri che
-  // non hanno un motivo) si torna al comportamento di prima: meglio il file
-  // di oggi che un file di stampa costruito male.
-  if (!idCliente || !idMotivo) return urlCliente;
+  // Se uno dei due non e' su Cloudinary si torna al file del cliente da solo:
+  // meglio quello che un file di stampa costruito male.
+  //
+  // MA VA DETTO AD ALTA VOCE, e questa e' una correzione. Prima ripiegava in
+  // silenzio, e c'e' un caso in cui il silenzio costa: se il MOTIVO non e'
+  // Cloudinary (per esempio perche' e' stato ospitato su Shopify Files, cosa
+  // che stiamo iniziando a fare) il cliente riceve il suo nome stampato su
+  // fondo vuoto, senza il damasco sotto, e nessuno se ne accorge finche' non
+  // arriva il pacco. Casi legittimi: i prodotti neutri, che un motivo non ce
+  // l'hanno proprio. Quelli si riconoscono perche' urlMotivo e' vuoto.
+  if (!idCliente || !idMotivo) {
+    if (urlMotivo && !idMotivo) {
+      console.error(
+        'MOTIVO NON COMPOSTO: il file di stampa uscira' + "'" + ' SENZA il motivo sotto. ' +
+        'componiConMotivo() sa comporre solo da Cloudinary, e questo motivo sta altrove: ' +
+        String(urlMotivo).slice(0, 120)
+      );
+    }
+    if (!idCliente && urlCliente) {
+      console.error('Design del cliente non su Cloudinary, composizione saltata: ' +
+                    String(urlCliente).slice(0, 120));
+    }
+    return urlCliente;
+  }
   const base = String(urlMotivo).split('/image/upload/')[0] + '/image/upload';
   // w_1.0/h_1.0 + fl_relative = "grande quanto il motivo", c_fit non deforma.
   return base + '/l_' + idCliente + ',w_1.0,h_1.0,c_fit,fl_relative/fl_layer_apply/' + idMotivo + '.jpg';
@@ -61,7 +83,7 @@ async function createOrderOnPrintful(order, item, front, back, config, apiKey, a
     throw new Error('Nessuna URL immagine disponibile per Printful (printify_image_url mancante — il cliente ha personalizzato prima di questo aggiornamento del sito?).');
   }
 
-  const response = await fetch('https://api.printful.com/orders', {
+  const response = await rete.scrivi('https://api.printful.com/orders', {
     method: 'POST',
     headers: {
       Authorization: 'Bearer ' + apiKey,
