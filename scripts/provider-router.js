@@ -41,12 +41,44 @@ const EU_CAPABLE_TYPES = {
   guinzaglio_eu: 'printful',
 };
 
+// ROUND 36 -- Contrado, linea premium a design fisso con etichetta a marchio
+// Perla (l'etichetta si configura in Contrado Store Account e vale per tutti
+// gli ordini: non e' un campo dell'ordine). Fabbrica a Londra, spedizione in
+// tutto il mondo.
+//
+// Due differenze rispetto ai tipi _eu qui sopra, ed e' il motivo per cui
+// serve una mappa separata invece di aggiungerli a EU_CAPABLE_TYPES:
+//
+//  * NIENTE VINCOLO DI PAESE. I tipi _eu vanno su Printful solo se la
+//    spedizione e' in EU, perche' quel fornitore esiste per evitare la dogana
+//    ai clienti europei. Contrado invece e' l'unico posto dove questi
+//    prodotti esistono: un ordine dagli Stati Uniti per una cuccia_lux deve
+//    andare comunque su Contrado, non su Printify.
+//  * NIENTE RIPIEGO SU PRINTIFY. Per i tipi _eu il ripiego e' sicuro: il
+//    collare Printify esiste ed e' un prodotto sensato. Per i tipi _lux no:
+//    ripiegare vorrebbe dire evadere l'ordine di una cuccia premium con la
+//    cuccia Printify da 64,99 euro -- prodotto diverso, qualita' diversa,
+//    senza l'etichetta a marchio per cui il cliente ha pagato. Qui si
+//    restituisce 'contrado' anche senza chiave configurata, cosi' il client
+//    solleva un errore esplicito che il sync ordini registra per un
+//    controllo manuale (vedi providers/contrado-client.js).
+const CONTRADO_TYPES = {
+  cuccia_lux: 'contrado',
+  guinzaglio_lux: 'contrado',
+  bandana_lux: 'contrado',
+  ciotola_lux: 'contrado',
+  tappetino_lux: 'contrado',
+  coperta_lux: 'contrado',
+};
+
 const printifyClient = require('./providers/printify-client');
 const printfulClient = require('./providers/printful-client');
+const contradoClient = require('./providers/contrado-client');
 
 const CLIENTS = {
   printify: printifyClient,
   printful: printfulClient,
+  contrado: contradoClient,
 };
 
 function isEuShipping(order) {
@@ -58,6 +90,11 @@ function isEuShipping(order) {
 // per i test, separato da chooseClient cosi' si puo' verificare la regola
 // senza dover chiamare API vere.
 function chooseProviderName(productType, order, env) {
+  // Prima di tutto il resto: i tipi _lux esistono solo su Contrado, in
+  // qualunque paese e con o senza chiave configurata (vedi CONTRADO_TYPES).
+  if (CONTRADO_TYPES[productType]) {
+    return CONTRADO_TYPES[productType];
+  }
   const euProvider = EU_CAPABLE_TYPES[productType];
   if (euProvider && isEuShipping(order) && env[euProvider.toUpperCase() + '_API_KEY']) {
     return euProvider;
@@ -69,4 +106,4 @@ function chooseClient(productType, order, env) {
   return CLIENTS[chooseProviderName(productType, order, env)];
 }
 
-module.exports = { chooseClient, chooseProviderName, isEuShipping, PERLA_EU_COUNTRIES, EU_CAPABLE_TYPES };
+module.exports = { chooseClient, chooseProviderName, isEuShipping, PERLA_EU_COUNTRIES, EU_CAPABLE_TYPES, CONTRADO_TYPES };

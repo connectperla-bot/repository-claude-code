@@ -6,7 +6,8 @@
   "scripts": {
     "start:upload": "node perla-upload-endpoint.js",
     "start:printify": "node perla-printify-order-sync.js",
-    "start:assistant": "node perla-assistant-bot.js"
+    "start:assistant": "node perla-assistant-bot.js",
+    "test": "node ../tests/provider-router.test.js && node ../tests/contrado-client.test.js"
   },
   "dependencies": {
     "express": "^4.19.2",

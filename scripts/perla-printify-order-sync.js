@@ -152,6 +152,31 @@ const PRODUCT_TYPE_CONFIG = {
       variantId: Number(process.env.PRINTFUL_GUINZAGLIO_EU_VARIANT_ID || 0),
     },
   },
+  // ROUND 36 -- Contrado, linea premium a DESIGN FISSO (vedi
+  // provider-router.js e providers/contrado-client.js). Qui serve solo lo
+  // storeProductId del prodotto gia' creato nel negozio Contrado: la variante
+  // arriva dalla SKU della variante Shopify, come per i prodotti Printify di
+  // questo negozio.
+  //
+  // ATTENZIONE, questi tipi non passano di qui oggi. Questo handler evade
+  // solo le righe con la proprieta' "_Personalizzazione" (vedi il filtro
+  // customItems piu' sotto), e i prodotti Contrado non ce l'hanno mai:
+  // l'API Contrado non trasporta file di stampa, quindi sono a design fisso
+  // per forza. La configurazione e' pronta, ma perche' un ordine _lux arrivi
+  // fin qui serve prima decidere COME si evadono i prodotti a design fisso:
+  // con l'app Shopify di Contrado (che li sincronizza da sola, e allora
+  // questo blocco resta inutilizzato), oppure allargando il filtro ai soli
+  // tipi _lux. Il filtro NON va allargato a tutte le righe: i prodotti
+  // Printify a design fisso sono gia' evasi dall'app Shopify di Printify, e
+  // rievaderli qui creerebbe ordini doppi.
+  contrado: {
+    cuccia_lux: { productId: Number(process.env.CONTRADO_CUCCIA_LUX_PRODUCT_ID || 0) },
+    guinzaglio_lux: { productId: Number(process.env.CONTRADO_GUINZAGLIO_LUX_PRODUCT_ID || 0) },
+    bandana_lux: { productId: Number(process.env.CONTRADO_BANDANA_LUX_PRODUCT_ID || 0) },
+    ciotola_lux: { productId: Number(process.env.CONTRADO_CIOTOLA_LUX_PRODUCT_ID || 0) },
+    tappetino_lux: { productId: Number(process.env.CONTRADO_TAPPETINO_LUX_PRODUCT_ID || 0) },
+    coperta_lux: { productId: Number(process.env.CONTRADO_COPERTA_LUX_PRODUCT_ID || 0) },
+  },
 };
 
 const app = express();
