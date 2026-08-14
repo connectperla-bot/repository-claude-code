@@ -108,15 +108,40 @@ prova('ogni id nella mappa esiste davvero nel blueprint di Printify', function (
       const id = mappa[titolo];
       assert.ok(perId[id],
         tipo + ': l\'id ' + id + ' (' + titolo + ') non esiste in ' + file[tipo]);
-      assert.strictEqual(
-        varianti.normalizza(perId[id]), varianti.normalizza(titolo),
-        tipo + ': l\'id ' + id + ' e\' "' + perId[id] + '" nel blueprint ma "' +
-        titolo + '" nella mappa');
     }
-    assert.strictEqual(Object.keys(mappa).length, (dati.variants || []).length,
-      tipo + ': la mappa ha ' + Object.keys(mappa).length + ' varianti, il blueprint ' +
-      (dati.variants || []).length + ' -- una taglia in vendita senza mappatura ' +
-      'fermerebbe l\'ordine');
+
+    // Ogni variante del blueprint deve avere ALMENO una chiave. Non si pretende
+    // piu' che i titoli coincidano, ne' che il conto torni: da quando la mappa
+    // porta anche i nomi italiani ci sono due chiavi per id, e il titolo
+    // italiano per definizione non e' quello inglese del blueprint. Quello che
+    // conta e' che nessuna taglia in vendita resti senza mappatura, perche'
+    // quella fermerebbe l'ordine.
+    const mappati = new Set(Object.values(mappa));
+    for (const v of dati.variants || []) {
+      assert.ok(mappati.has(v.id),
+        tipo + ': la variante "' + v.title + '" (id ' + v.id + ') e\' nel blueprint ' +
+        'ma nessuna chiave della mappa la raggiunge -- un ordine su quella taglia ' +
+        'si fermerebbe');
+    }
+  }
+});
+
+prova('i nomi italiani portano allo stesso id di quelli inglesi', function () {
+  const c = { variantId: 0 };
+  const coppie = [
+    ['cuccia', '28" × 18"', 'Piccola (71 x 46 cm)'],
+    ['cuccia', '50" × 40"', 'Grande (127 x 102 cm)'],
+    ['bandana', '20" × 10"', 'Piccola (51 x 25 cm)'],
+    ['medaglietta', '1"', 'Unica (2,5 cm)'],
+    ['collare', 'M / Gun Metal / TPU', 'M / Canna di fucile'],
+    ['collare', 'XL / Vintage Brass / TPU', 'XL / Ottone anticato'],
+  ];
+  for (const [tipo, inglese, italiano] of coppie) {
+    assert.strictEqual(
+      varianti.scegliVariante(tipo, italiano, c),
+      varianti.scegliVariante(tipo, inglese, c),
+      tipo + ': "' + italiano + '" e "' + inglese + '" devono dare lo stesso id, ' +
+      'altrimenti tradurre le opzioni su Shopify cambierebbe la taglia spedita');
   }
 });
 

@@ -30,38 +30,46 @@
 // elabora ogni riga nel suo try/catch, quindi si ferma solo quella riga.
 
 // tipo prodotto -> titolo variante Shopify -> id variante dello stampatore
+//
+// DUE TITOLI PER LO STESSO ID
+// I titoli su Shopify sono ancora quelli inglesi in pollici ereditati da
+// Printify ('28" x 18"', 'S / Black Onyx / TPU'). Vanno tradotti in italiano e
+// in centimetri, ma il giorno che si cambiano gli ordini gia' in carrello
+// arrivano ancora col titolo vecchio: se la mappa conoscesse solo i nuovi,
+// quegli ordini si fermerebbero. Elencando entrambi la traduzione si puo' fare
+// senza finestre di rischio, e i vecchi si potranno togliere piu' avanti.
 const VARIANTI = {
   // printify-blueprints/784_93.json (Dog Collar, provider C4)
   collare: {
-    'S / Black Onyx / TPU': 74897,
-    'S / Gun Metal / TPU': 74898,
-    'S / Vintage Brass / TPU': 74900,
-    'M / Black Onyx / TPU': 74901,
-    'M / Gun Metal / TPU': 74902,
-    'M / Vintage Brass / TPU': 74904,
-    'L / Black Onyx / TPU': 74905,
-    'L / Gun Metal / TPU': 74906,
-    'L / Vintage Brass / TPU': 74908,
-    'XL / Black Onyx / TPU': 74909,
-    'XL / Gun Metal / TPU': 74910,
-    'XL / Vintage Brass / TPU': 74912,
+    'S / Black Onyx / TPU': 74897,   'S / Onice': 74897,
+    'S / Gun Metal / TPU': 74898,    'S / Canna di fucile': 74898,
+    'S / Vintage Brass / TPU': 74900, 'S / Ottone anticato': 74900,
+    'M / Black Onyx / TPU': 74901,   'M / Onice': 74901,
+    'M / Gun Metal / TPU': 74902,    'M / Canna di fucile': 74902,
+    'M / Vintage Brass / TPU': 74904, 'M / Ottone anticato': 74904,
+    'L / Black Onyx / TPU': 74905,   'L / Onice': 74905,
+    'L / Gun Metal / TPU': 74906,    'L / Canna di fucile': 74906,
+    'L / Vintage Brass / TPU': 74908, 'L / Ottone anticato': 74908,
+    'XL / Black Onyx / TPU': 74909,  'XL / Onice': 74909,
+    'XL / Gun Metal / TPU': 74910,   'XL / Canna di fucile': 74910,
+    'XL / Vintage Brass / TPU': 74912, 'XL / Ottone anticato': 74912,
   },
   // printify-blueprints/419_10.json (Pet Bed, provider MWW On Demand)
   cuccia: {
-    '28" x 18"': 61436,
-    '40" x 30"': 61437,
-    '50" x 40"': 61435,
+    '28" x 18"': 61436, 'Piccola (71 x 46 cm)': 61436,
+    '40" x 30"': 61437, 'Media (102 x 76 cm)': 61437,
+    '50" x 40"': 61435, 'Grande (127 x 102 cm)': 61435,
   },
   // printify-blueprints/562_70.json (Pet Bandana, provider Printed Mint)
   bandana: {
-    '20" x 10"': 101403,
-    '27" x 13"': 101404,
+    '20" x 10"': 101403, 'Piccola (51 x 25 cm)': 101403,
+    '27" x 13"': 101404, 'Grande (69 x 33 cm)': 101404,
   },
   // printify-blueprints/566_70.json (Pet Tag, provider Printed Mint) -- una
   // sola variante, ma elencata lo stesso: se domani ne aggiungono un'altra,
   // il controllo esiste gia'
   medaglietta: {
-    '1"': 70870,
+    '1"': 70870, 'Unica (2,5 cm)': 70870,
   },
 };
 
