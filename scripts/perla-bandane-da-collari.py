@@ -63,7 +63,7 @@ import json
 import os
 import sys
 
-from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageStat
+from PIL import Image, ImageChops, ImageStat
 
 Image.MAX_IMAGE_PIXELS = None
 
@@ -83,14 +83,19 @@ MARCHIO = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 SENZA_MARCHIO = {"Lino", "Tartan", "Terracotta", "Marinara",
                  "Art Deco Rosa", "Diamanti", "Onde Dorate", "Paisley Cammeo"}
 
-# Il cartiglio chiaro sotto al marchio non e' un vezzo: "Italia" e' scritto in
-# nero e su Tartan (verde scuro) o Marinara (navy) sparirebbe. E' ovale e con
-# i bordi sfumati, non un rettangolo pieno: il primo giro usava un rettangolo
-# netto e sul provino sembrava un adesivo appiccicato sopra al tessuto, non
-# un'etichetta tessuta. L'ovale morbido e' il trattamento gia' in catalogo
-# (Bandana "Emblema", Ciotola "Paisley").
-CARTIGLIO = (242, 237, 225)
-CARTIGLIO_OPACITA = 232
+# UN marchio solo, in basso a destra, rientrato dal bordo.
+#
+# I due tentativi precedenti sono stati bocciati e per lo stesso motivo: erano
+# elementi appiccicati sopra al tessuto invece che parte del disegno. Prima una
+# griglia di rettangoli bianchi, poi una griglia di cammei ovali -- piu' bella,
+# ma sempre ripetuta e sempre "incollata".
+#
+# Un solo marchio discreto in un angolo e' come firma un foulard vero.
+# Rientrato dell'11% perche' il bordo viene orlato in produzione: e' esattamente
+# li' che il marchio delle medagliette viene tranciato via, e qui si evita.
+MARCHIO_LARGHEZZA = 0.13     # frazione del lato: si legge da vicino, non domina
+MARCHIO_MARGINE = 0.11       # rientro da destra e dal basso
+CREMA = (238, 232, 218)      # per "Italia" quando il fondo e' scuro
 
 # bandana -> motivo del collare da cui prenderla
 ABBINAMENTI = {
@@ -144,54 +149,40 @@ def ritaglia_marchio():
     return logo.crop(alpha.getbbox())
 
 
-def applica_marchio(motivo, logo, colonne=3, righe=4):
-    """Ripete il marchio su un cartiglio chiaro, sfalsato riga per riga."""
+def applica_marchio(motivo, logo):
+    """Compone UN marchio in basso a destra, direttamente sul tessuto.
+
+    Niente pannello e niente ripetizione: i due tentativi precedenti mettevano
+    una griglia di etichette sovrapposte, e su un foulard si leggevano come
+    adesivi appiccicati sopra al disegno invece che come una firma.
+
+    Su fondo scuro la scritta "Italia", che nel file originale e' nera,
+    sparirebbe: si misura la luminanza del riquadro dove cade il marchio e, se
+    e' scuro, i pixel quasi neri passano a crema. Il medaglione dorato e la
+    scritta "Perla" restano come sono, perche' funzionano su entrambi i fondi.
+    """
     larghezza, altezza = motivo.size
-    passo_x = larghezza // colonne
-    passo_y = altezza // righe
+    scala = (larghezza * MARCHIO_LARGHEZZA) / logo.width
+    marchio = logo.resize((max(1, round(logo.width * scala)),
+                           max(1, round(logo.height * scala))), Image.LANCZOS)
 
-    # il marchio occupa poco piu' di meta' della cella, cosi' il motivo respira
-    scala = min(passo_x * 0.52 / logo.width, passo_y * 0.52 / logo.height)
-    marchio = logo.resize((max(1, int(logo.width * scala)),
-                           max(1, int(logo.height * scala))), Image.LANCZOS)
+    x = larghezza - marchio.width - round(larghezza * MARCHIO_MARGINE)
+    y = altezza - marchio.height - round(altezza * MARCHIO_MARGINE)
 
-    # ovale sfumato: si disegna la maschera al doppio della misura e la si
-    # riduce, cosi' il bordo non e' scalettato, poi una sfocatura leggera che
-    # lo fa sedere sul tessuto invece di stargli sopra
-    bordo = int(marchio.width * 0.30)
-    larghezza_p = marchio.width + bordo * 2
-    altezza_p = marchio.height + int(bordo * 1.2)
-    maschera = Image.new("L", (larghezza_p * 2, altezza_p * 2), 0)
-    ImageDraw.Draw(maschera).ellipse(
-        (0, 0, larghezza_p * 2 - 1, altezza_p * 2 - 1), fill=CARTIGLIO_OPACITA)
-    maschera = maschera.resize((larghezza_p, altezza_p), Image.LANCZOS)
-    maschera = maschera.filter(ImageFilter.GaussianBlur(max(2, bordo // 6)))
-
-    pannello = Image.new("RGBA", (larghezza_p, altezza_p), CARTIGLIO + (0,))
-    pannello.putalpha(maschera)
-    pannello.alpha_composite(marchio, (bordo, (altezza_p - marchio.height) // 2))
+    riquadro = motivo.crop((x, y, x + marchio.width, y + marchio.height))
+    if ImageStat.Stat(riquadro.convert("L")).mean[0] < 110:
+        canali = marchio.split()
+        alpha = canali[3]
+        # solo i pixel scuri E opachi: la trasparenza intorno alle lettere non
+        # va colorata, o si vedrebbe un alone crema attorno al medaglione
+        scuri = marchio.convert("L").point(lambda v: 255 if v < 90 else 0)
+        scuri = ImageChops.multiply(scuri, alpha)
+        tinta = Image.new("RGBA", marchio.size, CREMA + (255,))
+        marchio = Image.composite(tinta, marchio, scuri)
+        marchio.putalpha(alpha)
 
     fuori = motivo.convert("RGBA")
-    for riga in range(righe):
-        # mezzo passo di sfalsamento sulle righe dispari: una griglia dritta
-        # su un tessuto si legge come un errore di stampa
-        scarto = passo_x // 2 if riga % 2 else 0
-        for colonna in range(colonne + 1):
-            x = colonna * passo_x + scarto + (passo_x - pannello.width) // 2
-            y = riga * passo_y + (passo_y - pannello.height) // 2
-            if y + pannello.height > altezza:
-                continue
-            # il cammeo che sborda rientra dall'altro lato invece di restare
-            # tagliato a meta': un marchio tranciato sul bordo e' esattamente
-            # il difetto delle medagliette, e qui si puo' evitare
-            if x >= larghezza:
-                x -= larghezza
-            if x < 0:
-                fuori.alpha_composite(pannello, (x + larghezza, y))
-                continue
-            if x + pannello.width > larghezza:
-                fuori.alpha_composite(pannello, (x - larghezza, y))
-            fuori.alpha_composite(pannello, (x, y))
+    fuori.alpha_composite(marchio, (x, y))
     return fuori.convert("RGB")
 
 
