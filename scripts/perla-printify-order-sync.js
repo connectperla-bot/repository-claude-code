@@ -32,6 +32,7 @@
 const crypto = require('crypto');
 const express = require('express');
 const providerRouter = require('./provider-router');
+const variantiFornitore = require('./varianti-fornitore');
 
 const {
   SHOPIFY_WEBHOOK_SECRET,
@@ -271,7 +272,13 @@ async function handleCustomItem(order, item, custom, customBack) {
     );
     return;
   }
-  if (providerName === 'printify' && !config.variantId) {
+  // ROUND 42 -- i tipi elencati in varianti-fornitore.js prendono l'id dalla
+  // taglia scelta dal cliente, non da una variabile d'ambiente: per quelli
+  // *_VARIANT_ID non serve piu' e non va preteso. Il controllo resta per i
+  // tipi a variante unica (la linea EU), dove la configurazione e' l'unica
+  // fonte.
+  const daTaglia = Object.prototype.hasOwnProperty.call(variantiFornitore.VARIANTI, productType);
+  if (providerName === 'printify' && !daTaglia && !config.variantId) {
     console.error(
       'Variante Printify non configurata per "' + productType + '". ' +
       'Imposta ' + String(productType).toUpperCase() + '_VARIANT_ID in config/printify.local.env ' +
@@ -281,9 +288,23 @@ async function handleCustomItem(order, item, custom, customBack) {
     return;
   }
 
+  // ROUND 42 -- la taglia che il cliente ha scelto arriva finalmente allo
+  // stampatore. Prima config.variantId era un valore fisso per tipo prodotto,
+  // uguale per ogni ordine: chi comprava una cuccia 50"x40" a 119,99 EUR
+  // riceveva la variante configurata, e sul collare si perdevano taglia E
+  // finitura (dodici varianti). Vedi varianti-fornitore.js.
+  //
+  // Se il titolo non e' fra quelli previsti scegliVariante solleva, la riga
+  // finisce nel try/catch del chiamante e resta da controllare a mano: molto
+  // meglio di una spedizione nella taglia sbagliata.
+  const configConTaglia = Object.assign({}, config, {
+    variantId: variantiFornitore.scegliVariante(productType, item.variant_title, config),
+  });
+
   const client = providerRouter.chooseClient(productType, order, process.env);
   const result = await client.fulfillOrder({
-    order, item, front, back, config,
+    order, item, front, back,
+    config: configConTaglia,
     env: process.env,
   });
   // ROUND 35 -- approvazione manuale voluta dalla titolare "all'inizio":
