@@ -155,6 +155,17 @@ const PRODUCT_TYPE_CONFIG = {
 };
 
 const app = express();
+// ROUND 40 -- intestazioni di sicurezza. Questo servizio riceve solo webhook
+// da Shopify, quindi non ha CORS da configurare, ma le intestazioni valgono
+// comunque: e' un indirizzo pubblico e risponde a chiunque lo trovi.
+app.disable('x-powered-by');
+app.use(function (req, res, next) {
+  res.header('X-Content-Type-Options', 'nosniff');
+  res.header('X-Frame-Options', 'DENY');
+  res.header('Referrer-Policy', 'no-referrer');
+  next();
+});
+
 app.use(express.raw({ type: 'application/json' }));
 
 function verifyShopifyWebhook(req) {

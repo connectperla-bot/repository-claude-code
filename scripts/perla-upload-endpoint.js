@@ -86,10 +86,26 @@ const app = express();
 // solo -- bloccando il negozio intero al primo che supera la soglia.
 app.set('trust proxy', 1);
 
+// Express annuncia se stesso in ogni risposta con X-Powered-By. Non e' una
+// falla, ma e' informazione gratis per chi cerca bersagli con una certa
+// versione: si toglie e basta.
+app.disable('x-powered-by');
+
 app.use(function (req, res, next) {
   res.header('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
   res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
+  // ROUND 40 -- intestazioni di sicurezza.
+  //   nosniff      il browser non prova a indovinare il tipo di un file: senza,
+  //                una risposta manipolata puo' essere eseguita come script
+  //   DENY         questo servizio non va mai dentro un iframe. Impedisce che
+  //                qualcuno lo incornici per far cliccare un cliente su
+  //                qualcosa che non vede (clickjacking)
+  //   no-referrer  gli indirizzi delle nostre rotte, con i loro parametri, non
+  //                finiscono nei log dei siti verso cui si esce
+  res.header('X-Content-Type-Options', 'nosniff');
+  res.header('X-Frame-Options', 'DENY');
+  res.header('Referrer-Policy', 'no-referrer');
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
 });

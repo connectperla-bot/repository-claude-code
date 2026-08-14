@@ -40,10 +40,18 @@ app.use(express.json({ limit: '10kb' }));
 // il limitatore conterebbe tutti i visitatori come uno solo.
 app.set('trust proxy', 1);
 
+// Express annuncia se stesso in ogni risposta con X-Powered-By: informazione
+// gratis per chi cerca bersagli con una certa versione.
+app.disable('x-powered-by');
+
 app.use(function (req, res, next) {
   res.header('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
   res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
+  // ROUND 40 -- vedi il commento esteso in perla-upload-endpoint.js
+  res.header('X-Content-Type-Options', 'nosniff');
+  res.header('X-Frame-Options', 'DENY');
+  res.header('Referrer-Policy', 'no-referrer');
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
 });

@@ -125,6 +125,23 @@ async function main() {
       assert.strictEqual(r.headers.get('access-control-allow-origin'), 'https://perlaitaly.com');
     });
 
+    console.log('\nIntestazioni di sicurezza');
+
+    // Si guardano le intestazioni della risposta VERA, non il codice: e' l'unico
+    // modo di accorgersi se un middleware smette di essere applicato.
+    await prova('nosniff, DENY e no-referrer sono presenti', async function () {
+      const r = await fetch(BASE + '/pattern-source?printify_product_id=1');
+      assert.strictEqual(r.headers.get('x-content-type-options'), 'nosniff');
+      assert.strictEqual(r.headers.get('x-frame-options'), 'DENY');
+      assert.strictEqual(r.headers.get('referrer-policy'), 'no-referrer');
+    });
+
+    await prova('il servizio non annuncia piu\' Express', async function () {
+      const r = await fetch(BASE + '/pattern-source?printify_product_id=1');
+      assert.strictEqual(r.headers.get('x-powered-by'), null,
+        'X-Powered-By c\'e\' ancora: app.disable non e\' stato applicato');
+    });
+
     console.log('\nLimite di richieste');
 
     // RATE_MAX_AL_MINUTO=5 in questo test: la sesta deve essere respinta.
