@@ -33,6 +33,7 @@ const crypto = require('crypto');
 const express = require('express');
 const providerRouter = require('./provider-router');
 const variantiFornitore = require('./varianti-fornitore');
+const { segnalaRigheSenzaPersonalizzazione } = require('./righe-senza-personalizzazione');
 
 const {
   SHOPIFY_WEBHOOK_SECRET,
@@ -198,6 +199,24 @@ app.post('/webhooks/orders-create', async function (req, res) {
         return (p.name === '_Personalizzazione' || p.name === '_Personalizzazione_Retro') && p.value;
       });
     });
+
+    // ROUND 43 -- righe senza personalizzazione arrivate da un canale dove lo
+    // studio non puo' girare.
+    //
+    // Da quando i prodotti sono pubblicati su Facebook, Instagram e Shop, un
+    // cliente puo' comprare senza passare dalla scheda prodotto del sito --
+    // ed e' li' che vive lo studio di personalizzazione. La riga arriva senza
+    // _Personalizzazione, il filtro qui sopra la scarta, e sparisce in
+    // silenzio: nessun errore, nessun log. Il cliente paga un prodotto
+    // personalizzato e nessuno se ne accorge finche' non scrive lui.
+    //
+    // Non si prova a evaderla: senza disegno non c'e' niente da stampare, e
+    // inventare un ripiego significherebbe spedire una cosa che il cliente non
+    // ha scelto. La si rende visibile, che e' l'unica cosa utile.
+    //
+    // La vera correzione sta nel pannello del canale: mettere il checkout su
+    // "negozio online" invece che dentro Meta. Questo e' il paracadute.
+    segnalaRigheSenzaPersonalizzazione(order, customItems);
 
     // ROUND 33 -- ogni riga viene elaborata nel proprio try/catch: prima, un
     // errore su UNA riga (es. variante non configurata) mandava in eccezione
