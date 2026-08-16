@@ -49,8 +49,15 @@ mentre in stampa partiva quello nuovo: il cliente vedeva una cosa e ne
 riceveva un'altra. Con --rifai il segnaposto viene ignorato e la foto si
 rigenera dal pattern che c'e' adesso nel manifest.
 
+--solo restringe a handle precisi (per sottostringa), cosi' si rigenerano le
+poche foto rimaste indietro invece di tutta la famiglia: dei ventidue fra
+ciotole e guinzagli, solo dodici hanno il file di stampa piu' recente della
+foto, e le altre dieci sarebbero mezz'ora di chiamate a Printful per riavere
+la stessa immagine.
+
     python3 scripts/perla-eu-foto-mockup.py [--tipi collare_eu,bandana_eu] [--max 8]
     python3 scripts/perla-eu-foto-mockup.py --tipi bandana_eu --rifai
+    python3 scripts/perla-eu-foto-mockup.py --tipi ciotola_eu --rifai --solo onda,smeraldo
 """
 import json
 import os
@@ -124,6 +131,9 @@ def main():
     tipi = None
     massimo = 999
     rifai = "--rifai" in args
+    solo = None
+    if "--solo" in args:
+        solo = [s for s in args[args.index("--solo") + 1].split(",") if s]
     if "--tipi" in args:
         tipi = set(args[args.index("--tipi") + 1].split(","))
     if "--max" in args:
@@ -139,7 +149,10 @@ def main():
 
     coda = [p for p in prodotti
             if (rifai or (not p["gia_fatta"] and p["handle"] not in ospitate))
-            and (tipi is None or tipo_di(p["handle"]) in tipi)][:massimo]
+            and (tipi is None or tipo_di(p["handle"]) in tipi)
+            and (solo is None or any(s in p["handle"] for s in solo))][:massimo]
+    if solo is not None and not coda:
+        raise SystemExit("--solo non ha selezionato niente: controlla le sottostringhe")
     print("%d da fare adesso (%d gia' ospitate, %d gia' live)%s\n"
           % (len(coda), len(ospitate), sum(1 for p in prodotti if p["gia_fatta"]),
              "  [--rifai: si rigenera anche cio' che risultava gia' fatto]" if rifai else ""))
