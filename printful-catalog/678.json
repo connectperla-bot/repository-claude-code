@@ -1,0 +1,18 @@
+{
+ "id": 678,
+ "title": "Pet Bowl",
+ "variants": [
+  {
+   "id": 16785,
+   "size": "18 oz",
+   "name": "Pet Bowl (White / 18 oz)",
+   "price": "21.49"
+  },
+  {
+   "id": 16786,
+   "size": "32 oz",
+   "name": "Pet Bowl (White / 32 oz)",
+   "price": "24.49"
+  }
+ ]
+}

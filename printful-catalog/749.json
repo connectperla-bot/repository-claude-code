@@ -1,0 +1,24 @@
+{
+ "id": 749,
+ "title": "Pet Collar",
+ "variants": [
+  {
+   "id": 19188,
+   "size": "L",
+   "name": "Pet Collar (White / L)",
+   "price": "17.23"
+  },
+  {
+   "id": 19187,
+   "size": "M",
+   "name": "Pet Collar (White / M)",
+   "price": "17.23"
+  },
+  {
+   "id": 19186,
+   "size": "S",
+   "name": "Pet Collar (White / S)",
+   "price": "17.23"
+  }
+ ]
+}

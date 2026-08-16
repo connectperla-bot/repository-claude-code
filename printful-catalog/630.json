@@ -1,0 +1,24 @@
+{
+ "id": 630,
+ "title": "All-Over Print Bandana",
+ "variants": [
+  {
+   "id": 16033,
+   "size": "L",
+   "name": "All-Over Print Bandana (White / L)",
+   "price": "10.15"
+  },
+  {
+   "id": 16032,
+   "size": "M",
+   "name": "All-Over Print Bandana (White / M)",
+   "price": "10.15"
+  },
+  {
+   "id": 16031,
+   "size": "S",
+   "name": "All-Over Print Bandana (White / S)",
+   "price": "10.15"
+  }
+ ]
+}

@@ -71,6 +71,40 @@ const VARIANTI = {
   medaglietta: {
     '1"': 70870, 'Unica (2,5 cm)': 70870,
   },
+
+  // ---- linea EU, fornitore Printful (printful-catalog/*.json) -------------
+  //
+  // ROUND 44 -- fino a ieri questi tipi non erano qui dentro, e finivano nel
+  // ramo "variante unica" di scegliVariante(): un solo id preso da variabile
+  // d'ambiente, uguale per ogni ordine. Andava bene finche' si vendeva una
+  // taglia sola. Nel momento in cui si aggiungono M e L, senza queste mappe
+  // ogni ordine partirebbe come S -- lo stesso difetto di ROUND 42, spostato
+  // sulla linea europea.
+  //
+  // Le tre misure costano identiche allo stampatore (bandana 10,15 EUR,
+  // collare 17,23 EUR), quindi si vendono allo stesso prezzo: il titolo della
+  // variante e' l'unica cosa che cambia, ed e' esattamente cio' che qui si
+  // traduce in id.
+
+  // printful-catalog/630.json -- S 44x44, M 54x54, L 64x64 cm
+  bandana_eu: {
+    'S': 16031, 'S / Piccola (44 cm)': 16031, 'Piccola (44 cm)': 16031,
+    'M': 16032, 'M / Media (54 cm)': 16032,   'Media (54 cm)': 16032,
+    'L': 16033, 'L / Grande (64 cm)': 16033,  'Grande (64 cm)': 16033,
+  },
+  // printful-catalog/749.json -- collo S 30-45, M 35-52, L 38-60 cm
+  collare_eu: {
+    'S': 19186, 'S / Collo 30-45 cm': 19186, 'Collo 30-45 cm': 19186,
+    'M': 19187, 'M / Collo 35-52 cm': 19187, 'Collo 35-52 cm': 19187,
+    'L': 19188, 'L / Collo 38-60 cm': 19188, 'Collo 38-60 cm': 19188,
+  },
+  // printful-catalog/678.json -- 530 ml e 950 ml
+  ciotola_eu: {
+    '18 oz': 16785, '530 ml': 16785, 'Piccola (530 ml)': 16785,
+    '32 oz': 16786, '950 ml': 16786, 'Grande (950 ml)': 16786,
+  },
+  // guinzaglio_eu resta fuori di proposito: Printful lo fa in una misura sola
+  // (1,83 m), quindi non c'e' niente da scegliere e vale la configurazione.
 };
 
 // I titoli veri contengono il segno di moltiplicazione (U+00D7), le virgolette

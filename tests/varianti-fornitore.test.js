@@ -83,9 +83,73 @@ prova('un titolo sconosciuto ferma la riga invece di spedire la taglia sbagliata
 });
 
 prova('i tipi a variante unica usano la configurazione, senza mappa', function () {
-  // tutta la linea EU: un solo prodotto Shopify, una sola variante
-  assert.strictEqual(varianti.scegliVariante('collare_eu', null, { variantId: 4012 }), 4012);
-  assert.strictEqual(varianti.scegliVariante('bandana_eu', '', { variantId: 630 }), 630);
+  // Il guinzaglio EU esiste in una misura sola: non c'e' niente da scegliere.
+  assert.strictEqual(varianti.scegliVariante('guinzaglio_eu', null, { variantId: 4012 }), 4012);
+  assert.strictEqual(varianti.scegliVariante('guinzaglio_eu', '', { variantId: 745 }), 745);
+});
+
+console.log('\nLa linea EU adesso ha piu\' di una taglia');
+
+prova('la bandana EU grande non parte come piccola', function () {
+  // Il difetto che questo coglie: prima bandana_eu non era in VARIANTI, quindi
+  // scegliVariante ripiegava sul singolo id configurato e un cliente con un
+  // cane da 35 kg riceveva la taglia per gatti.
+  const config = { variantId: 16031 };  // la S, il vecchio valore fisso
+  const id = varianti.scegliVariante('bandana_eu', 'L', config);
+  assert.strictEqual(id, 16033, 'la L deve ordinare 16033, non ' + id);
+  assert.notStrictEqual(id, config.variantId,
+    'ha ripiegato sulla variante fissa: e\' esattamente il difetto');
+});
+
+prova('ogni taglia EU ha il suo id, bandana e collare', function () {
+  const c = { variantId: 0 };
+  assert.strictEqual(varianti.scegliVariante('bandana_eu', 'S', c), 16031);
+  assert.strictEqual(varianti.scegliVariante('bandana_eu', 'M', c), 16032);
+  assert.strictEqual(varianti.scegliVariante('bandana_eu', 'L', c), 16033);
+  assert.strictEqual(varianti.scegliVariante('collare_eu', 'S', c), 19186);
+  assert.strictEqual(varianti.scegliVariante('collare_eu', 'M', c), 19187);
+  assert.strictEqual(varianti.scegliVariante('collare_eu', 'L', c), 19188);
+  assert.strictEqual(varianti.scegliVariante('ciotola_eu', '32 oz', c), 16786);
+});
+
+prova('i titoli descrittivi portano allo stesso id della sigla', function () {
+  // Su Shopify le opzioni saranno scritte per esteso, perche' "S" da sola non
+  // dice a nessuno se il cane ci sta dentro.
+  const c = { variantId: 0 };
+  const coppie = [
+    ['bandana_eu', 'L', 'L / Grande (64 cm)'],
+    ['bandana_eu', 'M', 'Media (54 cm)'],
+    ['collare_eu', 'L', 'L / Collo 38-60 cm'],
+    ['ciotola_eu', '32 oz', 'Grande (950 ml)'],
+  ];
+  for (const [tipo, sigla, esteso] of coppie) {
+    assert.strictEqual(varianti.scegliVariante(tipo, esteso, c),
+      varianti.scegliVariante(tipo, sigla, c),
+      tipo + ': "' + esteso + '" e "' + sigla + '" devono dare lo stesso id');
+  }
+});
+
+prova('gli id EU esistono davvero nel catalogo Printful', function () {
+  const file = { bandana_eu: '630.json', collare_eu: '749.json', ciotola_eu: '678.json' };
+  for (const tipo of Object.keys(file)) {
+    const percorso = path.join(__dirname, '..', 'printful-catalog', file[tipo]);
+    const dati = JSON.parse(fs.readFileSync(percorso, 'utf8'));
+    const esistenti = new Set(dati.variants.map(function (v) { return v.id; }));
+
+    const mappa = varianti.VARIANTI[tipo];
+    for (const titolo of Object.keys(mappa)) {
+      assert.ok(esistenti.has(mappa[titolo]),
+        tipo + ': l\'id ' + mappa[titolo] + ' (' + titolo + ') non esiste in ' + file[tipo]);
+    }
+    // E nessuna misura in catalogo deve restare senza mappatura, altrimenti
+    // quella taglia si potrebbe mettere in vendita e poi fermerebbe l'ordine.
+    const mappati = new Set(Object.values(mappa));
+    for (const v of dati.variants) {
+      assert.ok(mappati.has(v.id),
+        tipo + ': la misura "' + v.size + '" (id ' + v.id + ') e\' in catalogo ' +
+        'ma nessuna chiave la raggiunge');
+    }
+  }
 });
 
 console.log('\nGli id combaciano con i blueprint salvati');
