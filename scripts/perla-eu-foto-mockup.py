@@ -39,7 +39,18 @@ featuredMedia.image.altText che finisce con "— Perla Italia" (campo gia_fatta
 nel manifest), e su Cloudinary, che tiene le URL per sempre. out-foto/ e' solo
 un'area di transito.
 
+RIFARE UNA FOTO GIA' FATTA
+Il segnaposto gia_fatta serve a non ripetere il lavoro dopo un riavvio, ma
+diventa un ostacolo quando il DISEGNO cambia: e' successo alle venti bandane,
+sostituite con i file ricavati dai motivi nativi dei collari
+(perla-bandane-da-collari.py). Le foto sul sito continuavano a mostrare il
+disegno vecchio -- su nove delle diciannove nemmeno il colore corrispondeva --
+mentre in stampa partiva quello nuovo: il cliente vedeva una cosa e ne
+riceveva un'altra. Con --rifai il segnaposto viene ignorato e la foto si
+rigenera dal pattern che c'e' adesso nel manifest.
+
     python3 scripts/perla-eu-foto-mockup.py [--tipi collare_eu,bandana_eu] [--max 8]
+    python3 scripts/perla-eu-foto-mockup.py --tipi bandana_eu --rifai
 """
 import json
 import os
@@ -112,10 +123,14 @@ def main():
     args = sys.argv[1:]
     tipi = None
     massimo = 999
+    rifai = "--rifai" in args
     if "--tipi" in args:
         tipi = set(args[args.index("--tipi") + 1].split(","))
     if "--max" in args:
         massimo = int(args[args.index("--max") + 1])
+    if rifai and tipi is None:
+        raise SystemExit("--rifai va usato insieme a --tipi: rifare tutto il "
+                         "catalogo per sbaglio costa un'ora di chiamate a Printful")
 
     os.makedirs(OUT, exist_ok=True)
     prodotti = json.load(open(os.path.join(QUI, "perla-eu-prodotti.json")))
@@ -123,10 +138,11 @@ def main():
     ospitate = json.load(open(p_out)) if os.path.exists(p_out) else {}
 
     coda = [p for p in prodotti
-            if not p["gia_fatta"] and p["handle"] not in ospitate
+            if (rifai or (not p["gia_fatta"] and p["handle"] not in ospitate))
             and (tipi is None or tipo_di(p["handle"]) in tipi)][:massimo]
-    print("%d da fare adesso (%d gia' ospitate, %d gia' live)\n"
-          % (len(coda), len(ospitate), sum(1 for p in prodotti if p["gia_fatta"])))
+    print("%d da fare adesso (%d gia' ospitate, %d gia' live)%s\n"
+          % (len(coda), len(ospitate), sum(1 for p in prodotti if p["gia_fatta"]),
+             "  [--rifai: si rigenera anche cio' che risultava gia' fatto]" if rifai else ""))
 
     for i, p in enumerate(coda, 1):
         tipo = tipo_di(p["handle"])

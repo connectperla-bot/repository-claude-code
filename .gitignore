@@ -33,3 +33,4 @@ out-foto/
 # un comando, e gli URL degli originali sono gia' versionati in
 # scripts/perla-eu-prodotti.json. In git ci va lo script, non la sua uscita.
 generated-designs/motivi-stampa/
+out-foto/
