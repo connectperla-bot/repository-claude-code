@@ -13,52 +13,70 @@
 // printify_image_url (oltre a printify_image_id) nella proprieta'
 // _Personalizzazione — vedi quel file, funzione writePropData.
 
-// ROUND 22 -- il motivo non finiva nel file di stampa.
+// ROUND 22/44 -- il motivo non finiva nel file di stampa.
 //
-// buildComposite() in assets/global.js esporta SOLO il canvas Fabric: il nome
-// del cliente su fondo trasparente, niente motivo (in global.js non esiste
-// nessun setBackgroundImage). Sui prodotti Printify il motivo arriva a parte,
-// come base_image_id preso da /pattern-source; ma /pattern-source lavora sul
-// printify_product_id, che i prodotti Printful non hanno. Risultato: un ordine
-// EU stampava il nome su un accessorio BIANCO, non sul damascato della foto.
+// buildComposite() nel tema esporta SOLO il canvas Fabric: il nome del cliente
+// su fondo trasparente, niente motivo. Sui prodotti Printify il motivo arriva
+// a parte, come base_image_id preso da /pattern-source; ma /pattern-source
+// lavora sul printify_product_id, che i prodotti Printful non hanno.
 //
-// Qui i due livelli vengono uniti prima di mandarli a Printful, con una
-// sovrapposizione Cloudinary: motivo sotto (a piena risoluzione nativa, la
-// stessa dell'area di stampa), livello cliente sopra. Il risultato esce
-// automaticamente alla misura del motivo, quindi non serve nessuna tabella di
-// misure da tenere allineata: e' la stessa formula per collare, bandana,
-// ciotola e guinzaglio (verificato su tutti e quattro).
+// ROUND 22 aveva provato a unire i due livelli QUI, leggendo front.pattern_url
+// e front.printify_image_url dalla proprieta' _Personalizzazione. Quella
+// correzione non ha mai funzionato: il tema pubblicato e' fermo al Round 17 e
+// quei due campi non li scrive nessuno. Il risultato non era nemmeno una
+// stampa bianca -- era un'eccezione qui sotto, e l'ordine EU non partiva
+// affatto.
 //
-// Non si tocca il percorso Printify: la' il motivo c'e' gia', e sovrapporlo
-// una seconda volta lo stamperebbe doppio.
-function idPubblicoCloudinary(url) {
-  // https://res.cloudinary.com/<cloud>/image/upload/v123/<id>.<est>
-  const m = String(url || '').match(/\/image\/upload\/(?:[^/]+\/)*?([^/.]+)\.[a-z0-9]+$/i);
-  return m ? m[1] : null;
+// ROUND 44 sposta l'unione dove i dati ci sono davvero: in /upload
+// (perla-upload-endpoint.js), prima del caricamento su Printify. Quindi
+// l'immagine dietro printify_image_id e' GIA' completa, e qui non c'e' piu'
+// niente da sovrapporre -- rifarlo stamperebbe il motivo due volte.
+//
+// Resta un problema di sola URL: Printful vuole un indirizzo pubblico, il tema
+// manda solo un id, e la preview_url di Printify tronca il lato lungo a
+// 1200px. Per questo /upload ripubblica il composito su Cloudinary con un nome
+// derivato dall'id, e qui lo si ricostruisce (vedi motivo-di-base.js).
+const motivoDiBase = require('../motivo-di-base');
+
+async function urlDelComposito(lato, env) {
+  if (!lato) return null;
+  // Se un tema futuro tornera' a mandare la URL, quella ha la precedenza.
+  if (lato.printify_image_url) return lato.printify_image_url;
+
+  const ricostruita = motivoDiBase.urlCompositoDaId(
+    lato.printify_image_id, env && env.CLOUDINARY_CLOUD_NAME);
+  if (ricostruita) {
+    // Se il composito non fosse mai stato ripubblicato con quel nome
+    // (upload precedenti a ROUND 44) Cloudinary risponde 404: meglio
+    // accorgersene qui che far rifiutare l'ordine da Printful.
+    try {
+      const res = await fetch(ricostruita, { method: 'HEAD' });
+      if (res.ok) return ricostruita;
+      console.error('Composito a piena risoluzione non trovato (' + res.status +
+        ') per ' + lato.printify_image_id + ': si ripiega sulla copia Printify a 1200px.');
+    } catch (err) {
+      console.error('Composito a piena risoluzione non raggiungibile:', err.message);
+    }
+  }
+
+  // Ripiego: la copia su Printify. Perde risoluzione ma l'ordine parte.
+  if (!lato.printify_image_id || !env || !env.PRINTIFY_API_KEY) return null;
+  const res = await fetch('https://api.printify.com/v1/uploads/' + lato.printify_image_id + '.json', {
+    headers: { Authorization: 'Bearer ' + env.PRINTIFY_API_KEY },
+  });
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.preview_url || null;
 }
 
-function componiConMotivo(urlCliente, urlMotivo) {
-  const idCliente = idPubblicoCloudinary(urlCliente);
-  const idMotivo = idPubblicoCloudinary(urlMotivo);
-  // Se uno dei due non e' su Cloudinary (ordini vecchi, prodotti neutri che
-  // non hanno un motivo) si torna al comportamento di prima: meglio il file
-  // di oggi che un file di stampa costruito male.
-  if (!idCliente || !idMotivo) return urlCliente;
-  const base = String(urlMotivo).split('/image/upload/')[0] + '/image/upload';
-  // w_1.0/h_1.0 + fl_relative = "grande quanto il motivo", c_fit non deforma.
-  return base + '/l_' + idCliente + ',w_1.0,h_1.0,c_fit,fl_relative/fl_layer_apply/' + idMotivo + '.jpg';
-}
-
-async function createOrderOnPrintful(order, item, front, back, config, apiKey, autoConfirm) {
+async function createOrderOnPrintful(order, item, front, back, config, apiKey, autoConfirm, env) {
   const files = [];
-  if (front && front.printify_image_url) {
-    files.push({ type: 'default', url: componiConMotivo(front.printify_image_url, front.pattern_url) });
-  }
-  if (back && back.printify_image_url) {
-    files.push({ type: 'back', url: componiConMotivo(back.printify_image_url, back.pattern_url) });
-  }
+  const urlFronte = await urlDelComposito(front, env);
+  if (urlFronte) files.push({ type: 'default', url: urlFronte });
+  const urlRetro = await urlDelComposito(back, env);
+  if (urlRetro) files.push({ type: 'back', url: urlRetro });
   if (!files.length) {
-    throw new Error('Nessuna URL immagine disponibile per Printful (printify_image_url mancante — il cliente ha personalizzato prima di questo aggiornamento del sito?).');
+    throw new Error('Nessuna URL immagine disponibile per Printful: ne\' printify_image_url, ne\' il composito su Cloudinary, ne\' la copia su Printify.');
   }
 
   const response = await fetch('https://api.printful.com/orders', {
@@ -124,7 +142,7 @@ async function fulfillOrder(ctx) {
     );
   }
   const autoConfirm = env.PRINTFUL_AUTO_CONFIRM === 'true';
-  const printfulOrder = await createOrderOnPrintful(order, item, front, back, config, env.PRINTFUL_API_KEY, autoConfirm);
+  const printfulOrder = await createOrderOnPrintful(order, item, front, back, config, env.PRINTFUL_API_KEY, autoConfirm, env);
   return { provider: 'printful', orderId: printfulOrder.result && printfulOrder.result.id, sentToProduction: autoConfirm };
 }
 

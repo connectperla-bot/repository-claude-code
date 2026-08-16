@@ -10,6 +10,7 @@
 const express = require('express');
 const multer = require('multer');
 const crypto = require('crypto');
+const motivoDiBase = require('./motivo-di-base');
 
 const {
   PRINTIFY_API_KEY, PRINTIFY_SHOP_ID, PRINTFUL_API_KEY, PRINTFUL_STORE_ID,
@@ -43,15 +44,19 @@ if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
   console.warn('Variabili CLOUDINARY_* mancanti: /upload restituira\' l\'URL Printify (1200px) invece della piena risoluzione.');
 }
 
-async function uploadToCloudinary(buffer, fileName) {
+async function uploadToCloudinary(buffer, fileName, publicId) {
   const timestamp = Math.round(Date.now() / 1000);
+  // La firma copre i parametri in ordine alfabetico: public_id prima di
+  // timestamp. Sbagliare l'ordine fa rispondere 401 a Cloudinary.
+  const daFirmare = (publicId ? 'public_id=' + publicId + '&' : '') + 'timestamp=' + timestamp;
   const signature = crypto
     .createHash('sha1')
-    .update('timestamp=' + timestamp + CLOUDINARY_API_SECRET)
+    .update(daFirmare + CLOUDINARY_API_SECRET)
     .digest('hex');
   const form = new FormData();
   form.append('file', new Blob([buffer]), fileName);
   form.append('api_key', CLOUDINARY_API_KEY);
+  if (publicId) form.append('public_id', publicId);
   form.append('timestamp', String(timestamp));
   form.append('signature', signature);
   const res = await fetch('https://api.cloudinary.com/v1_1/' + CLOUDINARY_CLOUD_NAME + '/image/upload', {
@@ -64,6 +69,47 @@ async function uploadToCloudinary(buffer, fileName) {
   }
   const data = await res.json();
   return data.secure_url;
+}
+
+// ROUND 44 -- il motivo del prodotto non finiva nel file di stampa.
+//
+// L'editor esporta solo la tela: nome e foto su fondo trasparente. Sui
+// prodotti Printify il motivo arriva a parte (/pattern-source -> base_image_id
+// -> sovrapposizione lato fornitore). Sui prodotti Printful, cioe' tutta la
+// linea EU, quella strada non esiste, e il tema pubblicato -- fermo al Round
+// 17 -- non manda ne' printify_image_url ne' pattern_url, quindi nemmeno la
+// correzione ROUND 22 in providers/printful-client.js poteva funzionare:
+// leggeva due campi che nessuno scrive.
+//
+// Conseguenza vista dalla titolare: "premo genera anteprima e appare solo la
+// scritta su una bandana bianca". L'anteprima diceva la verita'.
+//
+// Qui i due livelli vengono uniti PRIMA di caricare su Printify, cosi' l'id
+// restituito al tema punta gia' all'immagine completa. Da quel punto in poi
+// anteprima e ordine usano la stessa immagine senza sapere niente di questa
+// logica -- ed e' l'unico punto dove si poteva intervenire senza
+// ripubblicare il tema.
+async function unisciAlMotivo(buffer, fileName, productId) {
+  const urlMotivo = motivoDiBase.motivoPerProdotto(productId);
+  if (!urlMotivo) return null;   // non e' un prodotto EU: non si tocca niente
+  if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
+    console.error('Motivo non unito per il prodotto ' + productId +
+      ': servono le variabili CLOUDINARY_* per sovrapporre i livelli.');
+    return null;
+  }
+  const urlCliente = await uploadToCloudinary(buffer, fileName);
+  const urlUnita = motivoDiBase.componiConMotivo(urlCliente, urlMotivo);
+  if (urlUnita === urlCliente) return null;   // niente da unire
+
+  // Cloudinary applica la trasformazione alla prima richiesta: qui si scarica
+  // il risultato, perche' su Printify deve finire l'immagine gia' unita e non
+  // una URL che un domani potrebbe cambiare.
+  const res = await fetch(urlUnita);
+  if (!res.ok) {
+    throw new Error('Sovrapposizione Cloudinary non riuscita (' + res.status + ')');
+  }
+  const unita = Buffer.from(await res.arrayBuffer());
+  return { buffer: unita, url: urlUnita };
 }
 
 const ALLOWED_MIME = new Set(['image/png', 'image/jpeg', 'image/webp']);
@@ -151,6 +197,24 @@ app.post('/upload', limitePerIp, upload.single('photo'), async function (req, re
     return res.status(400).json({ error: 'Nessun file ricevuto' });
   }
   try {
+    // ROUND 44 -- sui prodotti EU il motivo va unito al livello del cliente
+    // prima di tutto il resto: quello che sale su Printify deve gia' essere
+    // il file di stampa finito. Se l'unione non riesce si prosegue col solo
+    // livello cliente, come prima: un'anteprima incompleta e' meglio di un
+    // caricamento fallito, e l'errore resta nei log.
+    let daCaricare = req.file.buffer;
+    let urlUnita = null;
+    try {
+      const unita = await unisciAlMotivo(
+        req.file.buffer, req.file.originalname, req.body && req.body.product_id);
+      if (unita) {
+        daCaricare = unita.buffer;
+        urlUnita = unita.url;
+      }
+    } catch (motivoErr) {
+      console.error('Motivo non unito, si procede col solo livello cliente:', motivoErr.message);
+    }
+
     const response = await fetch('https://api.printify.com/v1/uploads/images.json', {
       method: 'POST',
       headers: {
@@ -159,7 +223,7 @@ app.post('/upload', limitePerIp, upload.single('photo'), async function (req, re
       },
       body: JSON.stringify({
         file_name: req.file.originalname,
-        contents: req.file.buffer.toString('base64'),
+        contents: daCaricare.toString('base64'),
       }),
     });
 
@@ -170,7 +234,20 @@ app.post('/upload', limitePerIp, upload.single('photo'), async function (req, re
 
     const data = await response.json();
     var previewUrl = data.preview_url;
-    if (CLOUDINARY_CLOUD_NAME && CLOUDINARY_API_KEY && CLOUDINARY_API_SECRET) {
+    if (urlUnita) {
+      previewUrl = urlUnita;
+      // L'immagine unita torna su Cloudinary con un nome derivato dall'id
+      // Printify: e' cosi' che chi evade l'ordine ritrova il file di stampa a
+      // piena risoluzione, senza che il tema debba mandare nulla di nuovo
+      // (vedi il commento in motivo-di-base.js). Se fallisce, l'anteprima
+      // funziona lo stesso e l'ordine ricadra' sulla preview_url Printify.
+      try {
+        const nome = motivoDiBase.nomeCompositoCloudinary(data.id);
+        if (nome) previewUrl = await uploadToCloudinary(daCaricare, req.file.originalname, nome);
+      } catch (nomeErr) {
+        console.error('Composito non ripubblicato con nome derivato (' + data.id + '):', nomeErr.message);
+      }
+    } else if (CLOUDINARY_CLOUD_NAME && CLOUDINARY_API_KEY && CLOUDINARY_API_SECRET) {
       try {
         previewUrl = await uploadToCloudinary(req.file.buffer, req.file.originalname);
       } catch (cloudErr) {
