@@ -1,0 +1,52 @@
+{%- comment -%}
+  Popup sconto di benvenuto (ritardo + exit-intent). Apertura, chiusura e
+  memoria del "gia' visto" stanno in assets/global.js; data-delay e' il
+  ritardo in secondi.
+
+  ROUND 18 — tolti i tre style= inline che stavano qui (griglia sulla colonna
+  emblema, larghezza dell'immagine, margine del form): litigavano con base.css
+  al punto che in assets/perla-studio.css era servita una regola con tre
+  !important per rimediare. Ora sono regole vere e quella pezza e' sparita.
+  Aggiunte le classi .popup__title e .popup__text: prima il titolo era un <h3>
+  nudo, che ereditava dallo stile generico dei titoli e non si poteva toccare
+  senza toccare tutti gli h3 del sito.
+{%- endcomment -%}
+<div class="popup-overlay" data-delay="12" aria-hidden="true">
+  <div class="popup" role="dialog" aria-modal="true" aria-label="{{ 'popup.title' | t }}">
+    <button class="popup__close" data-popup-close aria-label="{{ 'accessibility.close' | t }}">{% render 'icon', icon: 'close' %}</button>
+    <div class="popup__media">
+      <img src="{{ 'emblem-mark.png' | asset_url }}" alt="Perla Italia" width="230" height="230" loading="lazy">
+    </div>
+    <div class="popup__body">
+      <span class="eyebrow">{{ 'popup.eyebrow' | t }}</span>
+      <div class="popup__offer">{{ 'popup.offer' | t }}</div>
+      <h3 class="popup__title">{{ 'popup.title' | t }}</h3>
+      <p class="popup__text">{{ 'popup.text' | t }}</p>
+      {%- form 'customer', class: 'newsletter__form' -%}
+        <input type="hidden" name="contact[tags]" value="newsletter, popup, prospect">
+        <input type="email" name="contact[email]" placeholder="{{ 'popup.placeholder' | t }}" required aria-label="Email">
+        <button type="submit" class="btn btn--gold">{{ 'popup.button' | t }}</button>
+        {%- if form.posted_successfully? -%}<p class="form-note form-note--success" style="grid-column:1/-1">{{ 'popup.success' | t }}</p>{%- endif -%}
+      {%- endform -%}
+      <button class="popup__decline" data-popup-decline>{{ 'popup.decline' | t }}</button>
+    </div>
+  </div>
+</div>
+
+{%- comment -%}
+  ROUND 45 — LA GUARDIA SUL CARRELLO.
+
+  Sta qui, e non in layout/theme.liquid, solo perche' questo snippet e' gia'
+  reso su ogni pagina (e' incluso in fondo al body da layout/theme.liquid)
+  ed e' il file piu' piccolo che lo sia: aggiungerla qui e'
+  una riga, metterla nel layout avrebbe voluto dire riscrivere 25 kB.
+
+  Cosa fa: impedisce che un prodotto personalizzabile finisca in carrello
+  quando il design NON e' stato caricato per un guasto. Prima succedeva in
+  silenzio -- il cliente pagava e non si stampava niente. Il perche' e il
+  come stanno scritti per esteso dentro il file.
+
+  Stesso schema di perla-studio-ui.js: file separato, si aggancia solo agli
+  hook data-* che esistono gia', nessuna riga di global.js toccata.
+{%- endcomment -%}
+<script src="{{ 'perla-guardia-carrello.js' | asset_url }}" defer></script>
