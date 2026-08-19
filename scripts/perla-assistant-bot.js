@@ -11,7 +11,7 @@
 
 const express = require('express');
 
-const { GEMINI_API_KEY, PORT = 3002, ALLOWED_ORIGIN = '*' } = process.env;
+const { GEMINI_API_KEY, PORT = 3002, ALLOWED_ORIGIN = 'https://perlaitaly.com' } = process.env;
 
 if (!GEMINI_API_KEY) {
   console.error('Variabile GEMINI_API_KEY mancante. Ottieni una chiave gratuita su https://aistudio.google.com/apikey');
@@ -36,15 +36,56 @@ Regole:
 const app = express();
 app.use(express.json({ limit: '10kb' }));
 
+// Render sta dietro un proxy: senza questo req.ip e' l'indirizzo del proxy e
+// il limitatore conterebbe tutti i visitatori come uno solo.
+app.set('trust proxy', 1);
+
+// Express annuncia se stesso in ogni risposta con X-Powered-By: informazione
+// gratis per chi cerca bersagli con una certa versione.
+app.disable('x-powered-by');
+
 app.use(function (req, res, next) {
   res.header('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
   res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
+  // ROUND 40 -- vedi il commento esteso in perla-upload-endpoint.js
+  res.header('X-Content-Type-Options', 'nosniff');
+  res.header('X-Frame-Options', 'DENY');
+  res.header('Referrer-Policy', 'no-referrer');
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
 });
 
-app.post('/assistant/ask', async function (req, res) {
+// ROUND 39 -- LIMITE DI RICHIESTE PER INDIRIZZO.
+//
+// Questa rotta inoltra a Gemini: ogni chiamata consuma quota dell'account.
+// Era pubblica, con CORS aperto a chiunque e nessun limite -- un ciclo da
+// qualsiasi sito bastava a esaurirla, e l'assistente sul negozio smetteva di
+// rispondere ai clienti veri. Dieci domande al minuto sono piu' di quante ne
+// faccia una persona; chi ne fa di piu' non e' una persona.
+const RATE_FINESTRA_MS = 60 * 1000;
+const RATE_MAX = Number(process.env.RATE_MAX_AL_MINUTO || 10);
+const rateVisite = new Map();
+
+function limitePerIp(req, res, next) {
+  const ora = Date.now();
+  const ip = req.ip || 'sconosciuto';
+  const recenti = (rateVisite.get(ip) || []).filter(function (t) { return ora - t < RATE_FINESTRA_MS; });
+  if (recenti.length >= RATE_MAX) {
+    res.set('Retry-After', String(Math.ceil(RATE_FINESTRA_MS / 1000)));
+    return res.status(429).json({ error: 'Troppe domande di fila, riprova fra un minuto' });
+  }
+  recenti.push(ora);
+  rateVisite.set(ip, recenti);
+  if (rateVisite.size > 5000) {
+    for (const [chiave, tempi] of rateVisite) {
+      if (!tempi.length || ora - tempi[tempi.length - 1] > RATE_FINESTRA_MS) rateVisite.delete(chiave);
+    }
+  }
+  next();
+}
+
+app.post('/assistant/ask', limitePerIp, async function (req, res) {
   const message = (req.body && req.body.message || '').toString().trim().slice(0, 500);
   if (!message) {
     return res.status(400).json({ error: 'Messaggio mancante' });

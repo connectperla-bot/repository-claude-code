@@ -11,8 +11,11 @@ services:
         sync: false
       - key: PRINTIFY_SHOP_ID
         value: "27790439"
+      # ROUND 39 -- era "*", cioe' chiunque da qualunque sito.
       - key: ALLOWED_ORIGIN
-        value: "*"
+        value: "https://perlaitaly.com"
+      - key: RATE_MAX_AL_MINUTO
+        value: "20"
       - key: MAX_UPLOAD_MB
         value: "10"
       # Printful (fornitore EU per collare_eu/bandana_eu/ciotola_eu/
@@ -31,14 +34,6 @@ services:
         value: "16785"
       - key: PRINTFUL_GUINZAGLIO_EU_VARIANT_ID
         value: "19126"
-      # TEMPORANEO (2026-08-03): callback OAuth per ottenere un token Admin
-      # API Shopify con scope di scrittura reale, vedi /oauth/callback in
-      # perla-upload-endpoint.js e la memoria perla-shopify-app-scope-gotcha.
-      # App "perla-files" sul Dev Dashboard. Rimuovere a token ottenuto.
-      - key: OAUTH_CLIENT_ID
-        value: "25a61c89c45d4498ae8d92a0c081ed58"
-      - key: OAUTH_CLIENT_SECRET
-        sync: false
       # Cloudinary: ospita il composito finale a piena risoluzione (Printify
       # preview_url tronca a 1200px, che diventava anche il file usato per
       # la stampa reale su Printful). Se mancano, /upload ricade sul preview
@@ -182,5 +177,9 @@ services:
     envVars:
       - key: GEMINI_API_KEY
         sync: false
+      # ROUND 39 -- era "*", cioe' chiunque da qualunque sito.
       - key: ALLOWED_ORIGIN
-        value: "*"
+        value: "https://perlaitaly.com"
+      # dieci domande al minuto sono piu' di quante ne faccia una persona
+      - key: RATE_MAX_AL_MINUTO
+        value: "10"

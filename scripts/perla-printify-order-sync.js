@@ -32,6 +32,8 @@
 const crypto = require('crypto');
 const express = require('express');
 const providerRouter = require('./provider-router');
+const variantiFornitore = require('./varianti-fornitore');
+const { segnalaRigheSenzaPersonalizzazione } = require('./righe-senza-personalizzazione');
 
 const {
   SHOPIFY_WEBHOOK_SECRET,
@@ -155,6 +157,17 @@ const PRODUCT_TYPE_CONFIG = {
 };
 
 const app = express();
+// ROUND 40 -- intestazioni di sicurezza. Questo servizio riceve solo webhook
+// da Shopify, quindi non ha CORS da configurare, ma le intestazioni valgono
+// comunque: e' un indirizzo pubblico e risponde a chiunque lo trovi.
+app.disable('x-powered-by');
+app.use(function (req, res, next) {
+  res.header('X-Content-Type-Options', 'nosniff');
+  res.header('X-Frame-Options', 'DENY');
+  res.header('Referrer-Policy', 'no-referrer');
+  next();
+});
+
 app.use(express.raw({ type: 'application/json' }));
 
 function verifyShopifyWebhook(req) {
@@ -186,6 +199,24 @@ app.post('/webhooks/orders-create', async function (req, res) {
         return (p.name === '_Personalizzazione' || p.name === '_Personalizzazione_Retro') && p.value;
       });
     });
+
+    // ROUND 43 -- righe senza personalizzazione arrivate da un canale dove lo
+    // studio non puo' girare.
+    //
+    // Da quando i prodotti sono pubblicati su Facebook, Instagram e Shop, un
+    // cliente puo' comprare senza passare dalla scheda prodotto del sito --
+    // ed e' li' che vive lo studio di personalizzazione. La riga arriva senza
+    // _Personalizzazione, il filtro qui sopra la scarta, e sparisce in
+    // silenzio: nessun errore, nessun log. Il cliente paga un prodotto
+    // personalizzato e nessuno se ne accorge finche' non scrive lui.
+    //
+    // Non si prova a evaderla: senza disegno non c'e' niente da stampare, e
+    // inventare un ripiego significherebbe spedire una cosa che il cliente non
+    // ha scelto. La si rende visibile, che e' l'unica cosa utile.
+    //
+    // La vera correzione sta nel pannello del canale: mettere il checkout su
+    // "negozio online" invece che dentro Meta. Questo e' il paracadute.
+    segnalaRigheSenzaPersonalizzazione(order, customItems);
 
     // ROUND 33 -- ogni riga viene elaborata nel proprio try/catch: prima, un
     // errore su UNA riga (es. variante non configurata) mandava in eccezione
@@ -260,7 +291,13 @@ async function handleCustomItem(order, item, custom, customBack) {
     );
     return;
   }
-  if (providerName === 'printify' && !config.variantId) {
+  // ROUND 42 -- i tipi elencati in varianti-fornitore.js prendono l'id dalla
+  // taglia scelta dal cliente, non da una variabile d'ambiente: per quelli
+  // *_VARIANT_ID non serve piu' e non va preteso. Il controllo resta per i
+  // tipi a variante unica (la linea EU), dove la configurazione e' l'unica
+  // fonte.
+  const daTaglia = Object.prototype.hasOwnProperty.call(variantiFornitore.VARIANTI, productType);
+  if (providerName === 'printify' && !daTaglia && !config.variantId) {
     console.error(
       'Variante Printify non configurata per "' + productType + '". ' +
       'Imposta ' + String(productType).toUpperCase() + '_VARIANT_ID in config/printify.local.env ' +
@@ -270,9 +307,23 @@ async function handleCustomItem(order, item, custom, customBack) {
     return;
   }
 
+  // ROUND 42 -- la taglia che il cliente ha scelto arriva finalmente allo
+  // stampatore. Prima config.variantId era un valore fisso per tipo prodotto,
+  // uguale per ogni ordine: chi comprava una cuccia 50"x40" a 119,99 EUR
+  // riceveva la variante configurata, e sul collare si perdevano taglia E
+  // finitura (dodici varianti). Vedi varianti-fornitore.js.
+  //
+  // Se il titolo non e' fra quelli previsti scegliVariante solleva, la riga
+  // finisce nel try/catch del chiamante e resta da controllare a mano: molto
+  // meglio di una spedizione nella taglia sbagliata.
+  const configConTaglia = Object.assign({}, config, {
+    variantId: variantiFornitore.scegliVariante(productType, item.variant_title, config),
+  });
+
   const client = providerRouter.chooseClient(productType, order, process.env);
   const result = await client.fulfillOrder({
-    order, item, front, back, config,
+    order, item, front, back,
+    config: configConTaglia,
     env: process.env,
   });
   // ROUND 35 -- approvazione manuale voluta dalla titolare "all'inizio":

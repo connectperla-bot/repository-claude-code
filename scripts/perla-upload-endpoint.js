@@ -10,11 +10,12 @@
 const express = require('express');
 const multer = require('multer');
 const crypto = require('crypto');
+const motivoDiBase = require('./motivo-di-base');
 
 const {
   PRINTIFY_API_KEY, PRINTIFY_SHOP_ID, PRINTFUL_API_KEY, PRINTFUL_STORE_ID,
   CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET,
-  PORT = 3001, MAX_UPLOAD_MB = 10, ALLOWED_ORIGIN = '*',
+  PORT = 3001, MAX_UPLOAD_MB = 10, ALLOWED_ORIGIN = 'https://perlaitaly.com',
 } = process.env;
 
 if (!PRINTIFY_API_KEY) {
@@ -43,15 +44,19 @@ if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
   console.warn('Variabili CLOUDINARY_* mancanti: /upload restituira\' l\'URL Printify (1200px) invece della piena risoluzione.');
 }
 
-async function uploadToCloudinary(buffer, fileName) {
+async function uploadToCloudinary(buffer, fileName, publicId) {
   const timestamp = Math.round(Date.now() / 1000);
+  // La firma copre i parametri in ordine alfabetico: public_id prima di
+  // timestamp. Sbagliare l'ordine fa rispondere 401 a Cloudinary.
+  const daFirmare = (publicId ? 'public_id=' + publicId + '&' : '') + 'timestamp=' + timestamp;
   const signature = crypto
     .createHash('sha1')
-    .update('timestamp=' + timestamp + CLOUDINARY_API_SECRET)
+    .update(daFirmare + CLOUDINARY_API_SECRET)
     .digest('hex');
   const form = new FormData();
   form.append('file', new Blob([buffer]), fileName);
   form.append('api_key', CLOUDINARY_API_KEY);
+  if (publicId) form.append('public_id', publicId);
   form.append('timestamp', String(timestamp));
   form.append('signature', signature);
   const res = await fetch('https://api.cloudinary.com/v1_1/' + CLOUDINARY_CLOUD_NAME + '/image/upload', {
@@ -64,6 +69,47 @@ async function uploadToCloudinary(buffer, fileName) {
   }
   const data = await res.json();
   return data.secure_url;
+}
+
+// ROUND 44 -- il motivo del prodotto non finiva nel file di stampa.
+//
+// L'editor esporta solo la tela: nome e foto su fondo trasparente. Sui
+// prodotti Printify il motivo arriva a parte (/pattern-source -> base_image_id
+// -> sovrapposizione lato fornitore). Sui prodotti Printful, cioe' tutta la
+// linea EU, quella strada non esiste, e il tema pubblicato -- fermo al Round
+// 17 -- non manda ne' printify_image_url ne' pattern_url, quindi nemmeno la
+// correzione ROUND 22 in providers/printful-client.js poteva funzionare:
+// leggeva due campi che nessuno scrive.
+//
+// Conseguenza vista dalla titolare: "premo genera anteprima e appare solo la
+// scritta su una bandana bianca". L'anteprima diceva la verita'.
+//
+// Qui i due livelli vengono uniti PRIMA di caricare su Printify, cosi' l'id
+// restituito al tema punta gia' all'immagine completa. Da quel punto in poi
+// anteprima e ordine usano la stessa immagine senza sapere niente di questa
+// logica -- ed e' l'unico punto dove si poteva intervenire senza
+// ripubblicare il tema.
+async function unisciAlMotivo(buffer, fileName, productId) {
+  const urlMotivo = motivoDiBase.motivoPerProdotto(productId);
+  if (!urlMotivo) return null;   // non e' un prodotto EU: non si tocca niente
+  if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
+    console.error('Motivo non unito per il prodotto ' + productId +
+      ': servono le variabili CLOUDINARY_* per sovrapporre i livelli.');
+    return null;
+  }
+  const urlCliente = await uploadToCloudinary(buffer, fileName);
+  const urlUnita = motivoDiBase.componiConMotivo(urlCliente, urlMotivo);
+  if (urlUnita === urlCliente) return null;   // niente da unire
+
+  // Cloudinary applica la trasformazione alla prima richiesta: qui si scarica
+  // il risultato, perche' su Printify deve finire l'immagine gia' unita e non
+  // una URL che un domani potrebbe cambiare.
+  const res = await fetch(urlUnita);
+  if (!res.ok) {
+    throw new Error('Sovrapposizione Cloudinary non riuscita (' + res.status + ')');
+  }
+  const unita = Buffer.from(await res.arrayBuffer());
+  return { buffer: unita, url: urlUnita };
 }
 
 const ALLOWED_MIME = new Set(['image/png', 'image/jpeg', 'image/webp']);
@@ -81,19 +127,94 @@ const upload = multer({
 
 const app = express();
 
+// Render sta dietro un proxy: senza questo req.ip e' sempre l'indirizzo del
+// proxy, e il limitatore qui sotto conterebbe tutti i visitatori come uno
+// solo -- bloccando il negozio intero al primo che supera la soglia.
+app.set('trust proxy', 1);
+
+// Express annuncia se stesso in ogni risposta con X-Powered-By. Non e' una
+// falla, ma e' informazione gratis per chi cerca bersagli con una certa
+// versione: si toglie e basta.
+app.disable('x-powered-by');
+
 app.use(function (req, res, next) {
   res.header('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
   res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
+  // ROUND 40 -- intestazioni di sicurezza.
+  //   nosniff      il browser non prova a indovinare il tipo di un file: senza,
+  //                una risposta manipolata puo' essere eseguita come script
+  //   DENY         questo servizio non va mai dentro un iframe. Impedisce che
+  //                qualcuno lo incornici per far cliccare un cliente su
+  //                qualcosa che non vede (clickjacking)
+  //   no-referrer  gli indirizzi delle nostre rotte, con i loro parametri, non
+  //                finiscono nei log dei siti verso cui si esce
+  res.header('X-Content-Type-Options', 'nosniff');
+  res.header('X-Frame-Options', 'DENY');
+  res.header('Referrer-Policy', 'no-referrer');
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
 });
 
-app.post('/upload', upload.single('photo'), async function (req, res) {
+// ROUND 39 -- LIMITE DI RICHIESTE PER INDIRIZZO.
+//
+// Le rotte di questo servizio spendono soldi veri a ogni chiamata: /upload
+// carica su Cloudinary, /generate-mockup CREA UN PRODOTTO su Printify. Erano
+// pubbliche, senza autenticazione e senza limite: bastava un ciclo da
+// qualunque sito per riempire l'account Printify di spazzatura e consumare la
+// quota Cloudinary.
+//
+// Finestra scorrevole in memoria, senza dipendenze nuove: il servizio gira in
+// un solo processo e un limitatore con Redis sarebbe piu' infrastruttura di
+// quanta ne serva. Se un domani i processi diventano due, questo conta per
+// processo -- va saputo, ma il doppio del limite e' comunque un limite.
+const RATE_FINESTRA_MS = 60 * 1000;
+const RATE_MAX = Number(process.env.RATE_MAX_AL_MINUTO || 20);
+const rateVisite = new Map();
+
+function limitePerIp(req, res, next) {
+  const ora = Date.now();
+  const ip = req.ip || 'sconosciuto';
+  const recenti = (rateVisite.get(ip) || []).filter(function (t) { return ora - t < RATE_FINESTRA_MS; });
+  if (recenti.length >= RATE_MAX) {
+    res.set('Retry-After', String(Math.ceil(RATE_FINESTRA_MS / 1000)));
+    return res.status(429).json({ error: 'Troppe richieste, riprova fra un minuto' });
+  }
+  recenti.push(ora);
+  rateVisite.set(ip, recenti);
+  // La mappa non deve crescere all'infinito: ogni tanto si buttano via gli
+  // indirizzi fermi da piu' di una finestra.
+  if (rateVisite.size > 5000) {
+    for (const [chiave, tempi] of rateVisite) {
+      if (!tempi.length || ora - tempi[tempi.length - 1] > RATE_FINESTRA_MS) rateVisite.delete(chiave);
+    }
+  }
+  next();
+}
+
+app.post('/upload', limitePerIp, upload.single('photo'), async function (req, res) {
   if (!req.file) {
     return res.status(400).json({ error: 'Nessun file ricevuto' });
   }
   try {
+    // ROUND 44 -- sui prodotti EU il motivo va unito al livello del cliente
+    // prima di tutto il resto: quello che sale su Printify deve gia' essere
+    // il file di stampa finito. Se l'unione non riesce si prosegue col solo
+    // livello cliente, come prima: un'anteprima incompleta e' meglio di un
+    // caricamento fallito, e l'errore resta nei log.
+    let daCaricare = req.file.buffer;
+    let urlUnita = null;
+    try {
+      const unita = await unisciAlMotivo(
+        req.file.buffer, req.file.originalname, req.body && req.body.product_id);
+      if (unita) {
+        daCaricare = unita.buffer;
+        urlUnita = unita.url;
+      }
+    } catch (motivoErr) {
+      console.error('Motivo non unito, si procede col solo livello cliente:', motivoErr.message);
+    }
+
     const response = await fetch('https://api.printify.com/v1/uploads/images.json', {
       method: 'POST',
       headers: {
@@ -102,7 +223,7 @@ app.post('/upload', upload.single('photo'), async function (req, res) {
       },
       body: JSON.stringify({
         file_name: req.file.originalname,
-        contents: req.file.buffer.toString('base64'),
+        contents: daCaricare.toString('base64'),
       }),
     });
 
@@ -113,7 +234,20 @@ app.post('/upload', upload.single('photo'), async function (req, res) {
 
     const data = await response.json();
     var previewUrl = data.preview_url;
-    if (CLOUDINARY_CLOUD_NAME && CLOUDINARY_API_KEY && CLOUDINARY_API_SECRET) {
+    if (urlUnita) {
+      previewUrl = urlUnita;
+      // L'immagine unita torna su Cloudinary con un nome derivato dall'id
+      // Printify: e' cosi' che chi evade l'ordine ritrova il file di stampa a
+      // piena risoluzione, senza che il tema debba mandare nulla di nuovo
+      // (vedi il commento in motivo-di-base.js). Se fallisce, l'anteprima
+      // funziona lo stesso e l'ordine ricadra' sulla preview_url Printify.
+      try {
+        const nome = motivoDiBase.nomeCompositoCloudinary(data.id);
+        if (nome) previewUrl = await uploadToCloudinary(daCaricare, req.file.originalname, nome);
+      } catch (nomeErr) {
+        console.error('Composito non ripubblicato con nome derivato (' + data.id + '):', nomeErr.message);
+      }
+    } else if (CLOUDINARY_CLOUD_NAME && CLOUDINARY_API_KEY && CLOUDINARY_API_SECRET) {
       try {
         previewUrl = await uploadToCloudinary(req.file.buffer, req.file.originalname);
       } catch (cloudErr) {
@@ -137,10 +271,21 @@ app.post('/upload', upload.single('photo'), async function (req, res) {
 const patternSourceCache = new Map(); // productId -> { data, expires }
 const PATTERN_SOURCE_TTL_MS = 10 * 60 * 1000;
 
-app.get('/pattern-source', async function (req, res) {
+app.get('/pattern-source', limitePerIp, async function (req, res) {
   const productId = String(req.query.printify_product_id || '').trim();
   if (!productId) {
     return res.status(400).json({ error: 'printify_product_id mancante' });
+  }
+  // ROUND 39 -- solo cifre, e il controllo non e' formale.
+  //
+  // Questo valore finiva dritto dentro l'URL chiamato a Printify:
+  //   .../v1/shops/<SHOP_ID>/products/<productId>.json
+  // Un id come "../../../uploads" si normalizza in un endpoint Printify
+  // completamente diverso, chiamato con la NOSTRA chiave API. Bastava la
+  // barra degli indirizzi per farsi restituire dati dell'account.
+  // Gli id Printify sono numerici: tutto il resto si rifiuta e basta.
+  if (!/^[0-9]+$/.test(productId)) {
+    return res.status(400).json({ error: 'printify_product_id non valido' });
   }
   if (!PRINTIFY_SHOP_ID) {
     return res.status(500).json({ error: 'PRINTIFY_SHOP_ID non configurato sul server' });
@@ -367,7 +512,7 @@ async function generatePrintfulMockup(config, compositeImageId, res, compositeIm
   }
 }
 
-app.post('/generate-mockup', express.json(), async function (req, res) {
+app.post('/generate-mockup', limitePerIp, express.json(), async function (req, res) {
   const body = req.body || {};
   const type = String(body.product_type || '').toUpperCase();
   const baseImageId = body.base_image_id;
@@ -486,61 +631,39 @@ app.post('/generate-mockup', express.json(), async function (req, res) {
   }
 });
 
-// TEMPORANEO (2026-08-03): handshake App Bridge / token exchange per
-// ottenere UNA VOLTA un token Admin API con scope reale (write_products,
-// write_inventory), vedi memoria perla-shopify-app-scope-gotcha -- il
-// classico redirect OAuth (/oauth/callback, ora rimosso) non funziona per
-// questo tipo di app su questo negozio, Shopify salta dritto al token
-// exchange basato su session token. Il token offline risultante non scade:
-// va copiato una sola volta come SHOPIFY_ADMIN_TOKEN su Render, poi questa
-// route puo' essere rimossa.
-const OAUTH_CLIENT_ID = process.env.OAUTH_CLIENT_ID;
-const OAUTH_CLIENT_SECRET = process.env.OAUTH_CLIENT_SECRET;
-const EMBEDDED_SHOP = 'perlaitaly-store.myshopify.com';
-app.get('/embedded', function (req, res) {
-  res.send(
-    '<!doctype html><html><head><meta name="shopify-api-key" content="' + OAUTH_CLIENT_ID + '">' +
-    '<script src="https://cdn.shopify.com/shopifycloud/app-bridge.js"></script></head>' +
-    '<body>In corso...<pre id="out"></pre>' +
-    '<script>(async function(){' +
-    'try{' +
-    'var token = await window.shopify.idToken();' +
-    'var r = await fetch("/session-exchange",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({session_token:token})});' +
-    'var d = await r.json();' +
-    'document.getElementById("out").textContent = JSON.stringify(d,null,2);' +
-    '}catch(e){document.getElementById("out").textContent = String(e);}' +
-    '})();</script></body></html>'
-  );
-});
-app.post('/session-exchange', express.json(), async function (req, res) {
-  try {
-    var sessionToken = req.body.session_token;
-    if (!sessionToken || !OAUTH_CLIENT_ID || !OAUTH_CLIENT_SECRET) {
-      return res.status(400).json({ error: 'missing session_token or server not configured' });
-    }
-    var tokenRes = await fetch('https://' + EMBEDDED_SHOP + '/admin/oauth/access_token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        client_id: OAUTH_CLIENT_ID,
-        client_secret: OAUTH_CLIENT_SECRET,
-        grant_type: 'urn:ietf:params:oauth:grant-type:token-exchange',
-        subject_token: sessionToken,
-        subject_token_type: 'urn:ietf:params:oauth:token-type:id_token',
-        requested_token_type: 'urn:shopify:params:oauth:token-type:offline-access-token'
-      })
-    });
-    var data = await tokenRes.json();
-    console.log('TOKEN EXCHANGE RESULT', JSON.stringify(data));
-    res.json(data);
-  } catch (e) {
-    res.status(500).json({ error: String(e && e.message) });
-  }
-});
+// ROUND 39 -- RIMOSSO il blocco OAuth temporaneo (/embedded e
+// /session-exchange, piu' le costanti OAUTH_CLIENT_ID/OAUTH_CLIENT_SECRET).
+//
+// Serviva a ottenere UNA VOLTA, il 2026-08-03, un token Admin API con scope di
+// scrittura. Il commento originale diceva "Rimuovere a token ottenuto": dieci
+// giorni dopo era ancora online, e faceva due cose gravi.
+//
+//   console.log('TOKEN EXCHANGE RESULT', JSON.stringify(data));
+//   res.json(data);
+//
+// Il token Admin -- che per ammissione dello stesso commento NON SCADE --
+// finiva scritto nei log di Render e restituito nella risposta HTTP. Chiunque
+// avesse accesso ai log lo leggeva, per sempre.
+//
+// Se un domani serve rifare il giro, si fa in locale e una volta sola, non da
+// una rotta pubblica lasciata accesa. E il token passato di qui va considerato
+// bruciato: va rigenerato dal pannello Shopify.
 
 app.use(function (err, req, res, next) {
   console.error('Errore upload:', err.message);
-  res.status(400).json({ error: err.message });
+  // ROUND 39 -- il dettaglio resta nei log, al cliente va un messaggio
+  // generico. Prima usciva err.message grezzo, che nei casi peggiori conteneva
+  // nomi di variabili d'ambiente e risposte intere dei fornitori.
+  //
+  // Due eccezioni: sono errori che il cliente PUO' correggere da solo, e
+  // nasconderli lo lascerebbe a fissare un fallimento senza spiegazione.
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(400).json({ error: 'Immagine troppo grande (massimo ' + MAX_UPLOAD_MB + ' MB)' });
+  }
+  if (err.message === 'Formato non supportato') {
+    return res.status(400).json({ error: 'Formato non supportato: usa JPG, PNG o WebP' });
+  }
+  res.status(400).json({ error: 'Richiesta non valida' });
 });
 
 app.listen(PORT, function () {
