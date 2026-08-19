@@ -27,11 +27,26 @@
 // canale nuovo che comparisse domani verrebbe segnalato invece che ignorato,
 // che e' il verso giusto in cui sbagliare.
 //
-// 'web'                 -> negozio online
 // 'shopify_draft_order' -> ordine compilato a mano dalla titolare
 // 'pos'                 -> vendita di persona, la personalizzazione si
 //                          concorda col cliente davanti
-const CANALI_CON_STUDIO = ['web', 'shopify_draft_order', 'pos'];
+//
+// ROUND 45 -- 'web' NON e' piu' qui dentro, ed e' la correzione piu'
+// importante di questo giro.
+//
+// Il ragionamento di prima era: dal sito lo studio c'e', quindi se manca la
+// personalizzazione e' una scelta del cliente. Falso. Nel tema, quando il
+// caricamento su /upload fallisce, il .catch SVUOTA il dato
+// (bakedImageId = "" -> propData.value = ""), e il gestore di "aggiungi al
+// carrello" non controlla mai se il caricamento e' riuscito: la riga entra in
+// carrello con _Personalizzazione vuota. Il filtro in
+// perla-printify-order-sync.js la scarta perche' il valore e' vuoto, e questo
+// paracadute la ignorava perche' il canale era 'web'.
+//
+// Risultato: ordine pagato, niente da stampare, zero tracce. Proprio sul
+// canale che fa piu' volume. Ora anche il sito viene guardato: un ordine web
+// senza personalizzazione e' quasi sempre un guasto, non una scelta.
+const CANALI_CON_STUDIO = ['shopify_draft_order', 'pos'];
 
 // Perche' TUTTE le righe senza personalizzazione e non solo quelle dei
 // prodotti personalizzabili: il payload del webhook non porta i tag del

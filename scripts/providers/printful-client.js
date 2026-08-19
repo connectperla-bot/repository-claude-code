@@ -21,11 +21,15 @@
 // lavora sul printify_product_id, che i prodotti Printful non hanno.
 //
 // ROUND 22 aveva provato a unire i due livelli QUI, leggendo front.pattern_url
-// e front.printify_image_url dalla proprieta' _Personalizzazione. Quella
-// correzione non ha mai funzionato: il tema pubblicato e' fermo al Round 17 e
-// quei due campi non li scrive nessuno. Il risultato non era nemmeno una
-// stampa bianca -- era un'eccezione qui sotto, e l'ordine EU non partiva
-// affatto.
+// e front.printify_image_url dalla proprieta' _Personalizzazione.
+//
+// ROUND 45 -- CORREZIONE a quanto scritto qui prima. Il commento diceva che
+// "il tema pubblicato e' fermo al Round 17 e quei due campi non li scrive
+// nessuno". E' falso: riletto assets/global.js del tema vivo, writePropData()
+// scrive SIA printify_image_url SIA pattern_url. Quel campo quindi arriva
+// davvero, e arriva dal browser del cliente -- vedi la nota su urlNostra piu'
+// sotto, che e' esattamente il motivo per cui ora va validato invece che
+// creduto sulla parola.
 //
 // ROUND 44 sposta l'unione dove i dati ci sono davvero: in /upload
 // (perla-upload-endpoint.js), prima del caricamento su Printify. Quindi
@@ -38,13 +42,37 @@
 // derivato dall'id, e qui lo si ricostruisce (vedi motivo-di-base.js).
 const motivoDiBase = require('../motivo-di-base');
 
+// ROUND 45 -- le proprieta' della riga d'ordine (_Personalizzazione) sono
+// compilate dal FORM DEL CARRELLO, cioe' dal browser del cliente. La firma
+// HMAC del webhook garantisce che il messaggio venga davvero da Shopify, NON
+// che il contenuto sia onesto: chi modifica il carrello prima di pagare
+// sceglie cosa stampi.
+//
+// "if (lato.printify_image_url) return lato.printify_image_url" prendeva
+// quella URL e la mandava a Printful come FILE DI STAMPA. Un cliente poteva
+// far produrre e spedire, a nome della titolare, qualunque immagine.
+//
+// Ora quel campo si accetta solo se e' sul nostro account Cloudinary. Se non
+// lo e', si ignora e si passa alla ricostruzione dall'id, che e' la strada
+// che il servizio usa comunque.
+function urlNostra(url, cloudName) {
+  if (typeof url !== 'string' || !cloudName || url.length >= 2048) return false;
+  if (/l_fetch:|\/image\/fetch\//.test(url)) return false;
+  return new RegExp('^https://res\\.cloudinary\\.com/' +
+    String(cloudName).replace(/[^A-Za-z0-9_-]/g, '') + '/image/upload/').test(url);
+}
+
 async function urlDelComposito(lato, env) {
   if (!lato) return null;
-  // Se un tema futuro tornera' a mandare la URL, quella ha la precedenza.
-  if (lato.printify_image_url) return lato.printify_image_url;
+  const cloudName = env && env.CLOUDINARY_CLOUD_NAME;
+  if (lato.printify_image_url) {
+    if (urlNostra(lato.printify_image_url, cloudName)) return lato.printify_image_url;
+    console.error('printify_image_url ignorata (non e\' sul nostro Cloudinary): ' +
+      String(lato.printify_image_url).slice(0, 120));
+  }
 
   const ricostruita = motivoDiBase.urlCompositoDaId(
-    lato.printify_image_id, env && env.CLOUDINARY_CLOUD_NAME);
+    lato.printify_image_id, cloudName);
   if (ricostruita) {
     // Se il composito non fosse mai stato ripubblicato con quel nome
     // (upload precedenti a ROUND 44) Cloudinary risponde 404: meglio
@@ -60,7 +88,17 @@ async function urlDelComposito(lato, env) {
   }
 
   // Ripiego: la copia su Printify. Perde risoluzione ma l'ordine parte.
+  //
+  // ROUND 45 -- anche questo id arriva dalle proprieta' del carrello, quindi
+  // dal cliente, e finisce dentro una URL chiamata con la chiave Printify
+  // della titolare. Senza controllo, "../shops/<id>/orders" veniva
+  // normalizzato in un endpoint completamente diverso. Stessa regola di
+  // perla-upload-endpoint.js.
   if (!lato.printify_image_id || !env || !env.PRINTIFY_API_KEY) return null;
+  if (!/^[A-Za-z0-9_-]{1,64}$/.test(String(lato.printify_image_id))) {
+    console.error('printify_image_id non valido, ripiego Printify saltato.');
+    return null;
+  }
   const res = await fetch('https://api.printify.com/v1/uploads/' + lato.printify_image_id + '.json', {
     headers: { Authorization: 'Bearer ' + env.PRINTIFY_API_KEY },
   });
@@ -147,3 +185,7 @@ async function fulfillOrder(ctx) {
 }
 
 module.exports = { fulfillOrder };
+// Esposto solo per tests/ingressi-non-fidati.test.js: e' il punto dove
+// l'input del cliente decide che immagine va in stampa, quindi va coperto.
+module.exports.__test = { urlDelComposito, urlNostra };
+

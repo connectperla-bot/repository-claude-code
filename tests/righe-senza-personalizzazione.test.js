@@ -72,18 +72,31 @@ prova('un ordine web personalizzato non produce rumore', function () {
   assert.strictEqual(log.righe.length, 0, 'nessun messaggio atteso');
 });
 
-prova('dal sito anche una riga senza personalizzazione resta silenziosa', function () {
-  // Sul sito lo studio c'e': se il cliente non ha personalizzato e' una sua
-  // scelta, non un buco del canale. Segnalarla sarebbe rumore su ogni ordine.
+prova('dal sito una riga senza personalizzazione VIENE segnalata', function () {
+  // ROUND 45 -- questa verifica prima pretendeva il silenzio, col ragionamento
+  // "sul sito lo studio c'e', quindi se manca la personalizzazione e' una
+  // scelta del cliente".
+  //
+  // Quel ragionamento era sbagliato, ed e' costato il difetto peggiore del
+  // sistema: nel tema, se il caricamento su /upload fallisce, il .catch svuota
+  // il dato e "aggiungi al carrello" prosegue lo stesso. La riga arriva con
+  // _Personalizzazione vuota, il filtro degli ordini la scarta, e questo
+  // paracadute la ignorava perche' il canale era 'web'. Ordine pagato, niente
+  // stampato, nessuna traccia.
+  //
+  // Meglio una segnalazione di troppo su un ordine strano che un ordine perso
+  // in silenzio: e' lo stesso principio con cui il modulo tratta i canali
+  // sconosciuti.
   const order = {
     id: 1002,
     source_name: 'web',
     line_items: [riga(1, 'Ciotola Marinara', false)],
   };
   const log = raccoglitore();
-  assert.deepStrictEqual(
-    modulo.segnalaRigheSenzaPersonalizzazione(order, personalizzate(order), log), []);
-  assert.strictEqual(log.righe.length, 0);
+  const orfane = modulo.segnalaRigheSenzaPersonalizzazione(order, personalizzate(order), log);
+  assert.strictEqual(orfane.length, 1, 'la riga orfana dal sito va segnalata');
+  assert.strictEqual(orfane[0].title, 'Ciotola Marinara');
+  assert.strictEqual(log.righe.length, 1, 'e deve lasciare un messaggio');
 });
 
 prova('l\'ordine compilato a mano e la vendita di persona non si segnalano', function () {

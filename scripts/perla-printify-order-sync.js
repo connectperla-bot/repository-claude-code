@@ -168,7 +168,13 @@ app.use(function (req, res, next) {
   next();
 });
 
-app.use(express.raw({ type: 'application/json' }));
+// ROUND 45 -- express.raw ha un limite predefinito di 100 kB. Un ordine con
+// piu' righe personalizzate (ogni riga porta uno o due JSON _Personalizzazione)
+// lo supera: il parser rispondeva 413, questo servizio non ha un error handler,
+// e Shopify ritentava per 48 ore a vuoto. L'ordine non veniva MAI evaso e non
+// compariva in nessun log applicativo. Il limite alzato copre gli ordini veri
+// senza aprire la porta a corpi arbitrari.
+app.use(express.raw({ type: 'application/json', limit: '2mb' }));
 
 function verifyShopifyWebhook(req) {
   const hmacHeader = req.get('X-Shopify-Hmac-Sha256') || '';

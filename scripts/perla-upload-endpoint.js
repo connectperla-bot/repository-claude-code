@@ -402,10 +402,28 @@ const PRINTFUL_POLL_DELAY_MS = 1500;
 //
 // Solo Cloudinary, e solo https: e' l'unico host su cui scriviamo noi, e questa
 // URL finisce dentro una richiesta autenticata al nostro account Printful.
-const CLOUDINARY_HOST_RE = /^https:\/\/res\.cloudinary\.com\/[A-Za-z0-9_-]+\/image\/upload\//;
+// ROUND 45 -- il cloud name era [A-Za-z0-9_-]+, cioe' UN account Cloudinary
+// QUALUNQUE. Il commento diceva "e' l'unico host su cui scriviamo noi": vero
+// per l'host, falso per l'account, e un account Cloudinary gratuito si apre in
+// due minuti. Chiunque poteva quindi far generare a Printful -- con la chiave
+// della titolare -- un mockup di un'immagine sua. Ora l'account e' fissato a
+// quello nostro. Se CLOUDINARY_CLOUD_NAME non e' configurato non si accetta
+// nessuna URL: si ricade sul lookup per id, che e' il comportamento di prima
+// che questo campo esistesse.
+function cloudinaryHostRe() {
+  if (!CLOUDINARY_CLOUD_NAME) return null;
+  return new RegExp('^https://res\\.cloudinary\\.com/' +
+    CLOUDINARY_CLOUD_NAME.replace(/[^A-Za-z0-9_-]/g, '') + '/image/upload/');
+}
 
 function urlCompositoValida(url) {
-  return typeof url === 'string' && url.length < 2048 && CLOUDINARY_HOST_RE.test(url);
+  const re = cloudinaryHostRe();
+  if (!re || typeof url !== 'string' || url.length >= 2048) return false;
+  // /image/upload/ accetta trasformazioni, e l_fetch:/image/fetch fanno
+  // scaricare a Cloudinary una risorsa remota qualsiasi: sarebbe un modo per
+  // rientrare con un'immagine di fuori passando dal nostro account.
+  if (/l_fetch:|\/image\/fetch\//.test(url)) return false;
+  return re.test(url);
 }
 
 // Il client manda sempre un id di un'immagine gia' caricata su Printify
@@ -413,7 +431,24 @@ function urlCompositoValida(url) {
 // compositi destinati a Printful) -- qui si risolve quell'id nella sua URL
 // pubblica (stesso identico lookup di /pattern-source sopra), perche' il
 // Mockup Generator di Printful vuole una URL fetchabile, non un id Printify.
+//
+// ROUND 45 -- l'id finiva dentro l'URL senza nessun controllo, e arriva dal
+// corpo JSON di /generate-mockup, che e' pubblico. Un id tipo
+// "../shops/27790439/orders" veniva normalizzato da Node in
+// https://api.printify.com/v1/shops/27790439/orders.json e chiamato CON LA
+// CHIAVE della titolare: un estraneo pilotava quella chiave su qualunque
+// endpoint GET dell'API. /pattern-source lo validava gia' (^[0-9]+$), questa
+// rotta gemella no -- la correzione era stata applicata a una sola delle due.
+const ID_IMMAGINE_RE = /^[A-Za-z0-9_-]+$/;
+
+function idImmagineValido(id) {
+  return typeof id === 'string' && id.length > 0 && id.length <= 64 && ID_IMMAGINE_RE.test(id);
+}
+
 async function resolvePrintifyImageUrl(imageId) {
+  if (!idImmagineValido(imageId)) {
+    throw new Error('Id immagine non valido');
+  }
   const res = await fetch('https://api.printify.com/v1/uploads/' + imageId + '.json', {
     headers: { Authorization: 'Bearer ' + PRINTIFY_API_KEY },
   });
@@ -497,17 +532,17 @@ async function generatePrintfulMockup(config, compositeImageId, res, compositeIm
     }
     res.json({ images: mockups.slice(0, 4) });
   } catch (err) {
-    // Il messaggio per il cliente resta quello, generico e in italiano: e'
-    // quello che il tema mostra. "detail" e' in piu', per chi guarda la
-    // risposta con gli strumenti da sviluppatore -- prima il motivo vero
-    // esisteva solo nei log di Render, e per capire perche' il guinzaglio non
-    // generava mockup e' servito ricostruirlo dal catalogo pubblico. Sono
-    // messaggi di Printful tipo "Placement 'front' is not valid": nessun
-    // segreto, nessuna chiave, tagliati a 300 caratteri.
+    // ROUND 45 -- "detail" rimandava al client i 300 caratteri di err.message.
+    // Il ragionamento di prima ("sono messaggi di Printful tipo Placement
+    // 'front' is not valid, nessun segreto") valeva finche' err.message
+    // conteneva solo errori nostri. Non valeva piu' una volta che
+    // resolvePrintifyImageUrl ci infilava dentro il CORPO GREZZO della
+    // risposta di un endpoint Printify scelto dal chiamante: il traversal
+    // qui sopra e questo canale di uscita si potenziavano a vicenda.
+    // Il motivo vero resta nei log di Render, dove serviva davvero.
     console.error('Errore generate-mockup (Printful):', err.message);
     res.status(502).json({
       error: 'Impossibile generare l\'anteprima da Printful',
-      detail: String(err.message || '').slice(0, 300),
     });
   }
 }
@@ -530,6 +565,14 @@ app.post('/generate-mockup', limitePerIp, express.json(), async function (req, r
 
   if (!compositeImageId) {
     return res.status(400).json({ error: 'composite_image_id mancante' });
+  }
+  // ROUND 45 -- ogni id che puo' finire dentro una URL verso i fornitori viene
+  // validato qui, all'ingresso, e non solo nella funzione che lo usa: cosi' la
+  // regola sta in un punto solo e vale per tutti e quattro i campi.
+  for (const id of [compositeImageId, baseImageId, backBaseImageId, backCompositeImageId]) {
+    if (id !== undefined && id !== null && id !== '' && !idImmagineValido(String(id))) {
+      return res.status(400).json({ error: 'Id immagine non valido' });
+    }
   }
   // Tipi EU (fornitore Printful): stesso payload del client, ma un flusso di
   // generazione mockup completamente diverso (vedi PRINTFUL_MOCKUP_CONFIG

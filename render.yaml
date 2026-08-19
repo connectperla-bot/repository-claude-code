@@ -103,6 +103,14 @@ services:
         value: "27790439"
       - key: PERLA_LOGO_IMAGE_ID
         sync: false
+      # ROUND 45 -- mancava su QUESTO servizio (era solo sul gemello
+      # perla-upload-endpoint). providers/printful-client.js la usa per
+      # ricostruire l'URL del composito a piena risoluzione: senza, ripiegava
+      # sulla copia Printify TRONCATA A 1200px, e il file di stampa EU usciva
+      # a un settimo dei pixel nativi -- esattamente il difetto che ROUND 23 e
+      # ROUND 44 dovevano chiudere, e senza nemmeno un log che lo dicesse.
+      - key: CLOUDINARY_CLOUD_NAME
+        value: "qarb7ouo"
       # Printful (collare_eu/bandana_eu, prodotti nuovi e distinti dal
       # collare/bandana Printify — vedi scripts/provider-router.js e
       # scripts/providers/printful-client.js). Senza PRINTFUL_API_KEY il
