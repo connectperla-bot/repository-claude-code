@@ -97,6 +97,18 @@ services:
     envVars:
       - key: SHOPIFY_WEBHOOK_SECRET
         sync: false
+      # ROUND 45 -- opzionali, ma sono l'unico modo perche' un'evasione
+      # fallita si veda. Senza, l'unica traccia e' un console.error su un
+      # servizio di piano gratuito i cui log non sono conservati: l'ordine
+      # resta non evaso finche' non scrive il cliente. Con questi due, la riga
+      # che non parte mette un tag "evasione-fallita" e una nota sull'ordine,
+      # nel pannello che si apre comunque ogni giorno.
+      # Il token si crea in Impostazioni > App e canali di vendita > Sviluppa
+      # app, con il solo permesso write_orders.
+      - key: SHOPIFY_ADMIN_TOKEN
+        sync: false
+      - key: SHOPIFY_SHOP_DOMAIN
+        value: "1p1st1-n4.myshopify.com"
       - key: PRINTIFY_API_KEY
         sync: false
       - key: PRINTIFY_SHOP_ID

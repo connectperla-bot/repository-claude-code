@@ -260,6 +260,7 @@ app.post('/webhooks/orders-create', async function (req, res) {
 
     if (failures.length > 0) {
       console.error('Ordine ' + order.id + ': ' + failures.length + ' riga/righe su ' + customItems.length + ' richiedono controllo manuale.');
+      await segnalaSuShopify(order, failures);
     }
     // Sempre 200: Shopify non deve ritentare (rielaborerebbe anche le righe
     // gia' riuscite). I fallimenti restano nei log di Render per un controllo
@@ -270,6 +271,74 @@ app.post('/webhooks/orders-create', async function (req, res) {
     res.status(500).send('Errore interno');
   }
 });
+
+// ROUND 45 -- RENDERE VISIBILE IL GUASTO.
+//
+// Fino a qui, quando una riga non si riusciva a evadere, l'unica traccia era
+// un console.error su un servizio Render di piano gratuito, i cui log non sono
+// conservati ne' inoltrati da nessuna parte. Il commento diceva "restano nei
+// log per un controllo manuale, non silenziosi": ma perche' non siano
+// silenziosi qualcuno deve sapere QUANDO guardare, e non c'era niente che
+// glielo dicesse. In pratica l'ordine restava non evaso finche' non scriveva
+// il cliente.
+//
+// Qui la segnalazione si sposta dove la titolare guarda comunque ogni giorno:
+// l'ordine stesso nel pannello Shopify, con un tag "evasione-fallita" e una
+// nota che dice quale riga e perche'.
+//
+// SHOPIFY_ADMIN_TOKEN e' OPZIONALE di proposito: se manca, si continua a
+// scrivere sul log esattamente come prima e nessun ordine si rompe per questo.
+// Il token si crea in Impostazioni > App e canali di vendita > Sviluppa app,
+// con il solo permesso write_orders.
+async function segnalaSuShopify(order, failures) {
+  const token = process.env.SHOPIFY_ADMIN_TOKEN;
+  const negozio = process.env.SHOPIFY_SHOP_DOMAIN;
+  if (!token || !negozio) {
+    console.error('Nessun tag sull\'ordine ' + order.id + ': SHOPIFY_ADMIN_TOKEN/' +
+      'SHOPIFY_SHOP_DOMAIN non impostati. La segnalazione resta solo qui nei log.');
+    return;
+  }
+  const dettaglio = failures
+    .map(function (f) { return '• ' + f.item + ' — ' + f.error; })
+    .join('\n');
+  const nota = 'EVASIONE FALLITA (' + failures.length + ' riga/righe). ' +
+    'Queste righe NON sono state inviate allo stampatore:\n' + dettaglio;
+  try {
+    const res = await fetch('https://' + negozio + '/admin/api/2025-01/graphql.json', {
+      method: 'POST',
+      headers: {
+        'X-Shopify-Access-Token': token,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: 'mutation segnala($id: ID!, $tags: [String!]!, $note: String) {' +
+          ' tagsAdd(id: $id, tags: $tags) { userErrors { message } }' +
+          ' orderUpdate(input: { id: $id, note: $note }) { userErrors { message } } }',
+        variables: {
+          id: 'gid://shopify/Order/' + order.id,
+          tags: ['evasione-fallita'],
+          // La nota esistente non si perde: Shopify la sostituisce, quindi si
+          // antepone quella vecchia se c'era.
+          note: order.note ? order.note + '\n\n' + nota : nota,
+        },
+      }),
+    });
+    if (!res.ok) {
+      console.error('Tag sull\'ordine non riuscito (' + res.status + ').');
+      return;
+    }
+    const dati = await res.json();
+    const errori = []
+      .concat((((dati.data || {}).tagsAdd || {}).userErrors) || [])
+      .concat((((dati.data || {}).orderUpdate || {}).userErrors) || []);
+    if (errori.length) {
+      console.error('Tag sull\'ordine rifiutato:', errori.map(function (e) { return e.message; }).join('; '));
+    }
+  } catch (err) {
+    // Non deve mai impedire il 200: il webhook e' gia' stato lavorato.
+    console.error('Segnalazione sull\'ordine non riuscita:', err.message);
+  }
+}
 
 async function handleCustomItem(order, item, custom, customBack) {
   // ROUND 17 — un lato e' "valido" se porta un composito (printify_image_id).
