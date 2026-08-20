@@ -14,10 +14,19 @@
 // Elenco paesi preso 1:1 dal Market Shopify "Perla EU" gia' configurato
 // (Impostazioni > Mercati) — stessa segmentazione che il negozio usa gia'
 // per prezzi/valuta, non un elenco EU inventato qui.
+//
+// ROUND 46 -- via la Russia. Era in questo elenco e nel mercato Shopify, ma
+// non aveva nessuna zona di spedizione: un cliente russo metteva i prodotti
+// in carrello e non arrivava al checkout, perche' Shopify non sapeva quanto
+// fargli pagare. Qui dentro contava davvero: chooseProviderName mandava quel
+// paese su Printful come se fosse EU. Tolta da tutti e due i posti.
+//
+// Il Canada non c'e' mai stato: non e' in nessun mercato Shopify da quando e'
+// stato chiuso "il resto del mondo", quindi non c'era niente da togliere.
 const PERLA_EU_COUNTRIES = [
   'IT', 'AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DE', 'DK', 'EE', 'FI', 'FR',
   'GR', 'HU', 'IE', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK',
-  'SI', 'ES', 'SE', 'GB', 'ME', 'MC', 'SM', 'UA', 'RU',
+  'SI', 'ES', 'SE', 'GB', 'ME', 'MC', 'SM', 'UA',
 ];
 
 // Tipi prodotto per cui esiste (o potrebbe esistere) un fornitore EU

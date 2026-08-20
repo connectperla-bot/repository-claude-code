@@ -81,4 +81,24 @@ prova('chooseClient restituisce un client con fulfillOrder per ogni fornitore', 
   });
 });
 
+console.log('\nPaesi che il negozio non serve');
+
+prova('la Russia non e\' piu\' un paese EU', function () {
+  // Era nell'elenco e nel mercato Shopify, ma senza nessuna zona di
+  // spedizione: il cliente russo non arrivava al checkout. Se qualcuno la
+  // rimettesse qui senza rimettere anche la tariffa, questo test lo ferma.
+  assert.ok(router.PERLA_EU_COUNTRIES.indexOf('RU') === -1,
+    'RU non deve stare fra i paesi serviti da Printful');
+  const ordineRU = { shipping_address: { country_code: 'RU' } };
+  assert.strictEqual(router.isEuShipping(ordineRU), false);
+  assert.strictEqual(router.chooseProviderName('collare_eu', ordineRU, conPrintful), 'printify');
+});
+
+prova('il Canada non e\' un paese EU', function () {
+  // Non lo e' mai stato: non e' in nessun mercato Shopify. Sta qui perche'
+  // "Printify serve USA e Canada" tornava fuori a ogni giro.
+  assert.ok(router.PERLA_EU_COUNTRIES.indexOf('CA') === -1);
+  assert.strictEqual(router.isEuShipping({ shipping_address: { country_code: 'CA' } }), false);
+});
+
 console.log('\n' + passati + ' verifiche superate.' + (process.exitCode ? ' CI SONO FALLIMENTI.' : ''));
