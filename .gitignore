@@ -38,3 +38,4 @@ out-foto/
 # Anteprima di scripts/perla-motivi-nuovi.py eseguito a mano: e' un provino
 # per guardare i motivi, si rifa' con `python3 scripts/perla-motivi-nuovi.py`.
 motivi/
+generated-designs/usa-print-files/
