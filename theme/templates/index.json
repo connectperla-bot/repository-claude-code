@@ -1,0 +1,347 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "hero": {
+      "type": "image-banner",
+      "settings": {
+        "image": "shopify://shop_images/457AD9CC-EA1C-4ED3-AFFA-F42FEB06FEBC.jpg",
+        "use_default_image": true,
+        "hero_focal_y": 6,
+        "height": "large",
+        "text_position": "left",
+        "section_number": "",
+        "eyebrow": "",
+        "heading": "Il collare glielo disegni tu",
+        "text": "Carichi una foto o scegli un motivo, sistemi il nome dove vuoi, e stampiamo quel pezzo lì. Collari, bandane, medagliette, ciotole, cucce, tappetini, guinzagli.",
+        "button_label": "Vedi i prodotti",
+        "button_link": "/collections/all",
+        "button2_label": "Chi siamo",
+        "button2_link": "/pages/chi-siamo"
+      }
+    },
+    "marquee1": {
+      "type": "marquee",
+      "blocks": {
+        "m1": {
+          "type": "item",
+          "settings": {
+            "text": "Spedizione gratuita"
+          }
+        },
+        "m2": {
+          "type": "item",
+          "settings": {
+            "text": "Italia 4-8 giorni"
+          }
+        },
+        "m3": {
+          "type": "item",
+          "settings": {
+            "text": "Disegnato in Italia"
+          }
+        },
+        "m4": {
+          "type": "item",
+          "settings": {
+            "text": "Stampato dopo l'ordine"
+          }
+        },
+        "m5": {
+          "type": "item",
+          "settings": {
+            "text": "Per Aron & Mia"
+          }
+        }
+      },
+      "block_order": [
+        "m1",
+        "m2",
+        "m3",
+        "m4",
+        "m5"
+      ],
+      "settings": {
+        "bg": "navy",
+        "drift_speed": 1
+      }
+    },
+    "trust": {
+      "type": "trust-row",
+      "blocks": {
+        "t1": {
+          "type": "item",
+          "settings": {
+            "icon": "truck",
+            "title": "Spedizione gratuita",
+            "text": "Senza minimo d'ordine"
+          }
+        },
+        "t2": {
+          "type": "item",
+          "settings": {
+            "icon": "sparkle",
+            "title": "Italia in 4-8 giorni",
+            "text": "Europa e Stati Uniti in 5-12"
+          }
+        },
+        "t3": {
+          "type": "item",
+          "settings": {
+            "icon": "return",
+            "title": "Reso entro 30 giorni",
+            "text": "Sui prodotti non personalizzati"
+          }
+        },
+        "t4": {
+          "type": "item",
+          "settings": {
+            "icon": "shield",
+            "title": "Se l'errore è nostro",
+            "text": "Rifacciamo il pezzo, anche personalizzato"
+          }
+        }
+      },
+      "block_order": [
+        "t1",
+        "t2",
+        "t3",
+        "t4"
+      ],
+      "settings": {
+        "heading": "",
+        "bg": "default"
+      }
+    },
+    "bestsellers": {
+      "type": "featured-collection",
+      "settings": {
+        "eyebrow": "",
+        "heading": "I nostri preferiti",
+        "subheading": "",
+        "collection": "all",
+        "layout": "scroll",
+        "products_to_show": 8,
+        "columns": 4,
+        "button_label": "Vedi tutto",
+        "button_link": "/collections/all",
+        "bg": "default"
+      }
+    },
+    "story": {
+      "type": "brand-story",
+      "settings": {
+        "layout": "left",
+        "show_seal": true,
+        "section_number": "",
+        "eyebrow": "",
+        "heading": "Tutto è iniziato con Aron e Mia",
+        "pullquote": "Diciassette anni, due cani, un collare che non esisteva.",
+        "text": "<p>Perla nasce da Emanuele e Nicola, diciassette anni, e dai loro due cani. Cercavano un collare che non fosse né di plastica né da novanta euro, e non lo trovavano.</p><p>Così hanno iniziato a disegnarli. Ogni pezzo passa prima da Aron e Mia: se non piace a loro, non arriva a te.</p>",
+        "signature": "— Emanuele, Nicola, Aron & Mia",
+        "button_label": "Vedi i prodotti",
+        "button_link": "",
+        "bg": "cream"
+      }
+    },
+    "whyperla": {
+      "type": "compare",
+      "blocks": {
+        "v1": {
+          "type": "value",
+          "settings": {
+            "icon": "paw",
+            "title": "Provato sui nostri cani",
+            "text": "Aron e Mia testano ogni prodotto. Se non convince loro, non lo vendiamo."
+          }
+        },
+        "v2": {
+          "type": "value",
+          "settings": {
+            "icon": "shield",
+            "title": "Acquisto protetto",
+            "text": "Pagamenti sicuri e assistenza dedicata: se un articolo personalizzato arriva danneggiato o con un errore nostro, lo sostituiamo subito."
+          }
+        },
+        "v3": {
+          "type": "value",
+          "settings": {
+            "icon": "truck",
+            "title": "Spedizione tracciata",
+            "text": "Ogni ordine ha un tracking. Ti diciamo sempre dove si trova il tuo pacco."
+          }
+        },
+        "v4": {
+          "type": "value",
+          "settings": {
+            "icon": "sparkle",
+            "title": "Niente magazzino",
+            "text": "Stampiamo dopo che hai ordinato, quindi non ci sono rimanenze da smaltire né un catalogo infinito."
+          }
+        }
+      },
+      "block_order": [
+        "v1",
+        "v2",
+        "v3",
+        "v4"
+      ],
+      "settings": {
+        "section_number": "",
+        "eyebrow": "",
+        "heading": "Perché comprare qui",
+        "subtext": "Siamo due ragazzi con due cani. Trattiamo ogni ordine come se fosse per Aron e Mia.",
+        "bg": "default"
+      }
+    },
+    "marquee2": {
+      "type": "marquee",
+      "blocks": {
+        "n1": {
+          "type": "item",
+          "settings": {
+            "text": "Collari"
+          }
+        },
+        "n2": {
+          "type": "item",
+          "settings": {
+            "text": "Bandane"
+          }
+        },
+        "n3": {
+          "type": "item",
+          "settings": {
+            "text": "Medagliette"
+          }
+        },
+        "n4": {
+          "type": "item",
+          "settings": {
+            "text": "Cucce"
+          }
+        }
+      },
+      "block_order": [
+        "n1",
+        "n2",
+        "n3",
+        "n4"
+      ],
+      "settings": {
+        "bg": "default",
+        "drift_speed": 0
+      }
+    },
+    "quiz": {
+      "type": "quiz",
+      "settings": {
+        "collection_default": "personalizzati-con-il-nome",
+        "collection_1": "collari-guinzagli",
+        "collection_2": "cucce-letti",
+        "collection_3": "ciotole-alimentazione",
+        "collection_4": "abbigliamento-bandane"
+      }
+    },
+    "reviews": {
+      "type": "testimonials",
+      "settings": {
+        "eyebrow": "",
+        "heading": "Recensioni",
+        "show_summary": false,
+        "rating": "",
+        "review_count": "",
+        "empty_text": "Non ci sono ancora recensioni: il negozio ha aperto da poco. Se ordini, scrivici com'è andata.",
+        "founder_note": "Non abbiamo ancora recensioni da mostrarti, e non vogliamo inventarcele. Quello che possiamo dirti è che ogni prodotto che vendiamo lo proviamo prima su Aron e Mia: se non convince loro, non lo vendiamo a te. Le prime recensioni vere arriveranno presto — nel frattempo, grazie per la fiducia.",
+        "founder_note_signature": "— Emanuele, Nicola, Aron & Mia",
+        "bg": "cream"
+      }
+    },
+    "instagram": {
+      "type": "instagram",
+      "blocks": {
+        "i1": {
+          "type": "post",
+          "settings": {
+            "link": ""
+          }
+        },
+        "i2": {
+          "type": "post",
+          "settings": {
+            "link": ""
+          }
+        },
+        "i3": {
+          "type": "post",
+          "settings": {
+            "link": ""
+          }
+        },
+        "i4": {
+          "type": "post",
+          "settings": {
+            "link": ""
+          }
+        },
+        "i5": {
+          "type": "post",
+          "settings": {
+            "link": ""
+          }
+        },
+        "i6": {
+          "type": "post",
+          "settings": {
+            "link": ""
+          }
+        }
+      },
+      "block_order": [
+        "i1",
+        "i2",
+        "i3",
+        "i4",
+        "i5",
+        "i6"
+      ],
+      "settings": {
+        "eyebrow": "@perlaitaly",
+        "heading": "Aron, Mia e i vostri cani",
+        "handle": "Seguici su Instagram",
+        "link": "",
+        "bg": "default"
+      }
+    },
+    "newsletter": {
+      "type": "newsletter",
+      "settings": {
+        "eyebrow": "",
+        "heading": "Il 10% sul tuo primo ordine",
+        "text": "",
+        "button_label": "Iscriviti",
+        "bg": "ink"
+      }
+    }
+  },
+  "order": [
+    "hero",
+    "marquee1",
+    "trust",
+    "bestsellers",
+    "story",
+    "whyperla",
+    "marquee2",
+    "quiz",
+    "reviews",
+    "instagram",
+    "newsletter"
+  ]
+}
