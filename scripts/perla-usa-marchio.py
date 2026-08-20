@@ -37,7 +37,9 @@ import tempfile
 QUI = os.path.dirname(os.path.abspath(__file__))
 RADICE = os.path.dirname(QUI)
 NUOVO = os.path.join(RADICE, "generated-designs", "perla-combined-logo.png")
-VECCHIO = "LOGO PERLA - Copia.PNG"
+# Due nomi per lo stesso difetto: la cuccia "Geometric Tribal" usa un terzo
+# file di marchio, logo-full.png, 600x507, che sta a 0,23 di copertura.
+VECCHIO = ("LOGO PERLA - Copia.PNG", "logo-full.png")
 # Dopo il primo giro il marchio vecchio non c'e' piu' su quei prodotti: per
 # correggere la posizione si riconosce quello nuovo messo male.
 DA_CORREGGERE = "perla-combined-logo.png"
@@ -92,9 +94,9 @@ def main():
             break
         pagina += 1
 
-    bersaglio = DA_CORREGGERE if "--correggi" in sys.argv else VECCHIO
+    bersaglio = (DA_CORREGGERE,) if "--correggi" in sys.argv else VECCHIO
     da_fare = [p for p in prodotti if (not solo_cucce or p["blueprint_id"] == 419) and any(
-        im.get("name") == bersaglio
+        im.get("name") in bersaglio
         for pa in p.get("print_areas", [])
         for ph in pa.get("placeholders", [])
         for im in ph.get("images", []))]
@@ -125,7 +127,7 @@ def main():
             for ph in pa.get("placeholders", []):
                 nuove = []
                 for im in ph.get("images", []):
-                    if im.get("name") != bersaglio:
+                    if im.get("name") not in bersaglio:
                         nuove.append(im)
                         continue
                     prop_vecchia = im["height"] / float(im["width"])
