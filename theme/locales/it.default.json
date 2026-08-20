@@ -1,0 +1,202 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin language editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "accessibility": {
+    "close": "Chiudi",
+    "refresh_page": "La selezione di un'opzione ricarica l'intera pagina.",
+    "skip_to_text": "Vai al contenuto"
+  },
+  "assistant": {
+    "open": "Apri assistente",
+    "title": "Assistente Perla",
+    "ask_placeholder": "Scrivi la tua domanda...",
+    "ask_send": "Invia domanda",
+    "ask_thinking": "Sto pensando...",
+    "ask_error": "Non riesco a risponderti proprio ora. Scrivici via email.",
+    "page_cta_text": "Domande su questa pagina? Il nostro assistente risponde subito.",
+    "page_cta_label": "Chiedi all'assistente"
+  },
+  "general": {
+    "breadcrumb": { "home": "Home" },
+    "meta": { "page": "Pagina {{ page }}", "tags": "Tag: {{ tags }}" },
+    "newsletter": { "placeholder": "La tua email", "button": "Iscriviti", "success": "Grazie! Controlla la tua email per lo sconto di benvenuto." },
+    "pagination": { "label": "Paginazione", "previous": "Precedente", "next": "Successivo" },
+    "search": {
+      "title": "Cerca",
+      "search": "Cerca",
+      "placeholder": "Cosa cerchi per il tuo pet?",
+      "results": { "one": "{{ count }} risultato per «{{ terms }}»", "other": "{{ count }} risultati per «{{ terms }}»" },
+      "no_results": "Nessun risultato per «{{ terms }}». Abbiamo annusato ovunque.",
+      "no_results_prefix": "Nessun risultato per",
+      "discover": "Più cercati",
+      "view_all": "Vedi tutti i risultati",
+      "searching": "Ricerca in corso…",
+      "close": "Chiudi"
+    }
+  },
+  "customer": {
+    "account": { "title": "Account", "eyebrow": "Area riservata", "greeting": "Ciao, {{ name }}", "logout": "Esci" },
+    "fields": {
+      "email": "Email", "password": "Password", "password_confirm": "Conferma password", "first_name": "Nome", "last_name": "Cognome", "company": "Azienda (opzionale)", "address1": "Indirizzo", "address2": "Interno, scala (opzionale)", "city": "Città", "zip": "CAP", "province": "Provincia", "country": "Paese", "phone": "Telefono"
+    },
+    "login": { "eyebrow": "Bentornato", "title": "Accedi", "subtitle": "Entra per seguire i tuoi ordini e ritrovare i tuoi salvati.", "submit": "Accedi", "forgot": "Password dimenticata?", "create": "Crea un account" },
+    "recover": { "title": "Reimposta la password", "subtitle": "Inserisci la tua email: ti invieremo le istruzioni per scegliere una nuova password.", "submit": "Invia istruzioni", "back": "← Torna all'accesso", "success": "Fatto! Ti abbiamo inviato un'email per reimpostare la password." },
+    "register": { "eyebrow": "Unisciti a Perla", "title": "Crea un account", "subtitle": "Salva i tuoi preferiti, velocizza il checkout e segui ogni ordine.", "submit": "Registrati", "have_account": "Hai già un account? Accedi", "consent": "Creando un account accetti la nostra Privacy Policy. Niente spam." },
+    "activate": { "eyebrow": "Quasi fatto", "title": "Attiva il tuo account", "subtitle": "Scegli una password per completare l'attivazione.", "submit": "Attiva account", "decline": "Rifiuta invito" },
+    "reset": { "eyebrow": "Sicurezza", "title": "Nuova password", "subtitle": "Scegli una nuova password per il tuo account.", "new_password": "Nuova password", "submit": "Reimposta password" },
+    "orders": { "title": "I tuoi ordini", "order": "Ordine", "date": "Data", "payment": "Pagamento", "fulfillment": "Spedizione", "total": "Totale", "empty": "Non hai ancora ordini.", "shop": "Vai allo shop" },
+    "order": { "eyebrow": "Dettaglio ordine", "title": "Ordine {{ name }}", "placed": "Effettuato il {{ date }}", "product": "Prodotto", "price": "Prezzo", "qty": "Qtà", "total": "Totale", "summary": "Riepilogo", "shipping_address": "Indirizzo di spedizione", "billing_address": "Indirizzo di fatturazione" },
+    "addresses": { "title": "I tuoi indirizzi", "default": "Indirizzo predefinito", "none": "Nessun indirizzo salvato.", "manage": "Gestisci indirizzi", "back": "← Torna all'account", "add_title": "Aggiungi un indirizzo", "save": "Salva indirizzo", "edit": "Modifica", "update": "Aggiorna", "cancel": "Annulla", "delete": "Elimina", "set_default": "Imposta come predefinito", "confirm": "Vuoi davvero eliminare questo indirizzo?" },
+    "saved": { "title": "I tuoi salvati", "empty": "Ancora nessun salvato. Il cane si aspettava di meglio.", "count": "{{ count }} prodotti salvati", "view": "Vedi i salvati" },
+    "preferences": { "title": "Preferenze", "language": "Lingua", "currency": "Valuta", "note": "Per attivare più lingue o valute, contatta il negozio — al momento questo store usa Italiano/Inglese ed EUR." }
+  },
+  "cart": {
+    "free_shipping": { "unlocked": "Spedizione gratuita in Europa", "remaining_html": "Ti mancano {{ amount }} per la spedizione gratuita" },
+    "hear": { "label": "Come ci hai conosciuto?", "placeholder": "Seleziona un'opzione", "opt_friend": "Un amico / passaparola", "opt_friend_short": "Un amico", "opt_other": "Altro", "saved": "Grazie!" },
+    "general": {
+      "title": "Carrello", "empty": "Il carrello è vuoto. Il cane ha notato.", "empty_text": "Collari, bandane, medagliette, ciotole, cucce, tappetini e guinzagli: si personalizzano dalla pagina del prodotto.", "continue": "Continua lo shopping", "remove": "Rimuovi", "note": "Aggiungi una nota all'ordine", "note_ph": "Istruzioni speciali (es. nome da personalizzare)", "subtotal": "Subtotale", "total": "Totale", "tax_note": "Tasse e spedizione calcolate al checkout.", "checkout": "Procedi al checkout", "view_cart": "Vedi il carrello", "upsell_title": "Ti potrebbe piacere anche", "error": "Qualcosa è andato storto. Riprova."
+    }
+  },
+  "products": {
+    "price": { "from_price_html": "Da {{ price }}" },
+    "product": {
+      "add_to_cart": "Aggiungi al carrello", "adding": "Aggiungo…", "added": "Aggiunto ✓", "sold_out": "Esaurito", "unavailable": "Non disponibile", "quick_add": "Aggiunta rapida", "quick_view": "Anteprima", "choose_options": "Scegli le opzioni", "view_full": "Vedi tutti i dettagli", "on_sale": "Offerta", "personalizable": "Personalizzabile", "name_only": "Aggiungi il suo nome", "media": "Immagine", "wishlist_add": "Salva nei preferiti", "wishlist_added": "Aggiunto ai salvati ♥", "wishlist_removed": "Rimosso dai salvati", "notify_me": "Avvisami quando torna disponibile", "notify_email_ph": "La tua email", "notify_send": "Avvisami", "notify_sent": "Perfetto! Ti avviseremo via email appena torna disponibile."
+    }
+  },
+  "popup": {
+    "eyebrow": "Benvenuto in Perla", "offer": "-10%", "title": "Il 10% sul primo ordine", "text": "Iscriviti e ricevi il codice via email.", "placeholder": "La tua email", "button": "Ottieni il codice", "success": "Fatto! Controlla la tua email.", "decline": "Il mio cane non merita sconti"
+  },
+  "sections": {
+    "announcement": { "label": "Annunci" },
+    "apps": { "empty": "Aggiungi qui un blocco app dal tema editor (recensioni, upsell, banner…)." },
+    "faq": { "empty": "Aggiungi le tue domande dal pannello Shopify." },
+    "header": { "menu": "Menu", "primary_nav": "Navigazione principale", "view_all": "Vedi tutto", "quiz_cta": "Trova il prodotto perfetto", "language": "Lingua" },
+    "footer": { "rights": "Tutti i diritti riservati." },
+    "collection_list": { "shop": "Vedi" },
+    "featured": { "example": "Prodotto di esempio" },
+    "collection": {
+      "eyebrow": "Collezione", "count": { "one": "{{ count }} prodotto", "other": "{{ count }} prodotti" }, "sort": "Ordina per", "min": "Min", "max": "Max", "apply": "Applica", "clear": "Rimuovi filtri", "empty_title": "Qui non c'è niente da riportare", "empty_text": "Prova a rimuovere alcuni filtri."
+    },
+    "product": {
+      "quantity": "Quantità",
+      "pet_name_label": "Nome del tuo pet",
+      "pet_name_key": "Nome del pet",
+      "pet_name_ph": "Es. Rocky",
+      "pet_name_note": "Sarà ricamato/stampato sul prodotto.",
+      "photo_label": "Carica una foto (opzionale)",
+      "photo_key": "Foto Personalizzata",
+      "photo_area_label": "Area di stampa",
+      "photo_zoom": "Zoom",
+      "photo_rotate": "Ruota",
+      "photo_reset": "Reimposta",
+      "photo_undo": "Annulla",
+      "photo_clear_all": "Cancella tutto",
+      "photo_studio_title": "Studio di personalizzazione",
+      "photo_toolbar": "Strumenti",
+      "photo_zoom_in": "Aumenta zoom",
+      "photo_zoom_out": "Riduci zoom",
+      "photo_rotate_left": "Ruota a sinistra",
+      "photo_rotate_right": "Ruota a destra",
+      "photo_delete": "Rimuovi elemento",
+      "photo_fullscreen": "Schermo intero",
+      "photo_mockup_label": "Anteprima sul prodotto",
+      "photo_mockup_note": "Anteprima orientativa. La stampa reale segue l'area di stampa a sinistra.",
+      "add_photo": "+ Foto",
+      "add_text": "+ Testo",
+      "add_sticker": "+ Adesivo",
+      "layer_toolbar": "Strumenti elemento selezionato",
+      "layers_label": "Livelli",
+      "color_ink": "Nero",
+      "color_white": "Bianco",
+      "color_gold": "Oro",
+      "color_gold_deep": "Oro intenso",
+      "color_sage": "Verde salvia",
+      "color_cream": "Crema",
+      "color_custom": "Altro colore",
+      "precise_x": "X %",
+      "precise_y": "Y %",
+      "precise_rotate": "Rotazione °",
+      "generate_mockup": "Genera anteprima reale",
+      "meta_shipping": "Spedizione gratuita in Europa",
+      "meta_returns": "Sostituzione garantita per difetti",
+      "meta_custom": "Lo componi tu, lo stampiamo dopo l'ordine",
+      "assure_secure": "Pagamenti sicuri",
+      "assure_returns": "Sostituzione garantita per difetti",
+      "assure_tracked": "Spedizione tracciata",
+      "payment_methods": "Metodi di pagamento",
+      "low_stock": "Ultimi {{ count }} disponibili",
+      "tab_description": "Descrizione",
+      "tab_details": "Dettagli & materiali",
+      "tab_size": "Taglie & come misurare",
+      "tab_care": "Cura e lavaggio",
+      "tab_custom": "Personalizzazione",
+      "tab_shipping": "Spedizione & resi",
+      "name_font_label": "Font del nome",
+      "name_color_label": "Colore del nome",
+      "name_position_label": "Posizione del nome",
+      "name_live_preview_label": "Anteprima stampa:",
+      "photo_composing": "Preparazione dell'immagine…",
+      "photo_compose_error": "Non siamo riusciti a preparare il tuo design. Riprova fra qualche secondo: senza il file non possiamo stamparlo.",
+      "pay_note": "Paga in 3 rate con Scalapay o Klarna",
+      "type_collare": "Collare",
+      "type_bandana": "Bandana",
+      "type_medaglietta": "Medaglietta",
+      "type_ciotola": "Ciotola",
+      "type_cuccia": "Cuccia",
+      "type_tappetino": "Tappetino",
+      "type_guinzaglio": "Guinzaglio",
+      "side_front": "Fronte",
+      "side_back": "Retro — Contatti",
+      "medaglietta_back_type": "Medaglietta (retro) — Contatti",
+      "logo_icon_only": "Logo: solo simbolo",
+      "logo_with_name": "Logo con nome",
+      "view_zoom_group": "Zoom della vista",
+      "view_zoom_out": "Riduci la vista",
+      "view_zoom_in": "Ingrandisci la vista",
+      "view_zoom_reset": "Reset",
+      "view_zoom_reset_label": "Torna alla vista consigliata",
+      "logo_variant_group": "Variante del logo",
+      "side_group": "Lato della medaglietta",
+      "edit_text": "Modifica il testo",
+      "empty_hint": "Trascina qui una foto, oppure usa + Foto e + Testo qui sotto.",
+      "empty_hint_text": "Usa + Testo qui sotto per scrivere cosa incidere.",
+      "mockup_pending": "Preparo l'anteprima: ci vuole una decina di secondi.",
+      "mockup_retry": "Riprova",
+      "neutro_hint": "Su questo disegno puoi aggiungere solo il nome.",
+      "neutro_cta": "Personalizzalo interamente",
+      "sticker_star": "Stella",
+      "sticker_heart": "Cuore",
+      "sticker_dot": "Pallino",
+      "sticker_diamond": "Rombo",
+      "sticker_flower": "Fiore",
+      "sticker_paw": "Zampa",
+      "sticker_bone": "Osso",
+      "sticker_crown": "Corona",
+      "sticker_sparkle": "Scintilla",
+      "sticker_leaf": "Foglia",
+      "sticker_bow": "Fiocco",
+      "sticker_cloud": "Nuvola",
+      "sticker_butterfly": "Farfalla",
+      "sticker_bell": "Campanella",
+      "sticker_ring": "Anello"
+    },
+    "related": { "eyebrow": "Completa il look" },
+    "testimonials": { "based_on": "su {{ count }} recensioni" },
+    "blog": { "eyebrow": "Il blog di Perla", "read": "Leggi l'articolo", "back": "Torna al blog", "empty": "Ancora nessun articolo." },
+    "article": { "comments": { "one": "{{ count }} commento", "other": "{{ count }} commenti" }, "comment": "Commento", "comment_send": "Invia commento", "comment_success": "Commento inviato! Sarà pubblicato dopo la moderazione." },
+    "list_collections": { "eyebrow": "Le collezioni", "title": "Tutte le collezioni", "products": "prodotti" },
+    "contact": { "name": "Nome", "email": "Email", "phone": "Telefono", "message": "Messaggio", "send": "Invia messaggio", "success": "Grazie! Ti risponderemo al più presto." },
+    "404": { "text": "Questa pagina non esiste. Qualcuno l'avrà sotterrata in giardino. Torna alla home oppure vai allo shop.", "home": "Torna alla home", "shop": "Vai allo shop" },
+    "annulla": { "eyebrow": "Ordini", "titolo": "Annulla o cambia il tuo ordine", "intro": "Finché la stampa non è partita puoi fermare tutto. Scrivi il numero dell'ordine e l'email con cui hai comprato: te lo diciamo subito.", "campo_numero": "Numero dell'ordine", "ph_numero": "Es. 1042", "campo_email": "Email dell'ordine", "ph_email": "quella della mail di conferma", "btn_cerca": "Controlla", "si_puo": "L'ordine [numero] non è ancora in stampa: puoi annullarlo adesso.", "avviso": "Annullando fermiamo la stampa e ti rimborsiamo l'intero importo sul metodo che hai usato. Non si torna indietro: se volevi cambiare qualcosa, annulla e riordina come preferisci.", "btn_conferma": "Sì, annulla e rimborsa", "btn_indietro": "No, lascia com'è", "nota": "Cambiare un pezzo già ordinato non si può: ogni prodotto viene stampato apposta per te, non esiste un magazzino da cui scambiarlo. Annulli, ti rimborsiamo, e riordini con il disegno che vuoi.", "errore_generico": "Non riusciamo a controllare l'ordine in questo momento. Riprova fra qualche minuto, oppure scrivici e lo facciamo noi.", "errore_campi": "Servono tutti e due: il numero dell'ordine e l'email con cui hai comprato.", "senza_servizio": "Per annullare o cambiare un ordine scrivici:" },
+    "quiz": {
+      "eyebrow": "Trova il prodotto perfetto", "fallback": "il tuo cane", "q_name": "Come si chiama il tuo cane?", "name_ph": "Es. Rocky", "btn_next": "Continua", "btn_back": "← Indietro", "q_type": "Quanto è grande?", "type_small": "Cane piccolo", "type_medium": "Cane medio", "type_large": "Cane grande", "type_cat": "Gatto", "q_age": "Quanti anni ha?", "age_puppy": "Cucciolo", "age_adult": "Adulto", "age_senior": "Senior", "q_activity": "Cosa fa più spesso?", "act_walks": "Passeggiate", "act_play": "Gioco", "act_relax": "Relax sul divano", "act_travel": "Viaggi", "q_interest": "Cosa stai cercando?", "int_collars": "Collari & guinzagli", "int_beds": "Cucce & letti", "int_bowls": "Ciotole", "int_apparel": "Abbigliamento", "result_title": "Ecco i prodotti perfetti per", "result_text": "Questi sono i più adatti alle tue risposte. Con il 10% di benvenuto.", "code": "BENVENUTO10", "shop_btn": "Vedi i prodotti per", "news_heading": "Ricevi i consigli e sblocca il 10%", "news_ph": "La tua email", "news_button": "Sblocca", "news_success": "Perfetto! Controlla la tua email.", "q_luogo": "Dove passate più tempo insieme?", "luogo_citta": "In città", "luogo_campagna": "In campagna", "luogo_mare": "Al mare", "luogo_casa": "A casa", "q_pelo": "Di che colore ha il pelo?", "pelo_chiaro": "Chiaro", "pelo_scuro": "Scuro", "pelo_rosso": "Fulvo o rossiccio", "pelo_misto": "Bicolore o macchiato", "int_collare": "Un collare", "int_guinzaglio": "Un guinzaglio", "int_bandana": "Una bandana", "int_ciotola": "Una ciotola", "luogo_frase_citta": "In città vince la sobrietà: antracite, nero e un filo d'argento.", "luogo_frase_campagna": "In campagna stanno bene i verdi: salvia e oliva, come gli ulivi.", "luogo_frase_mare": "Al mare i blu: notte e petrolio, con l'oro a scaldarli.", "luogo_frase_casa": "In casa l'eleganza classica: bordeaux e oro, damasco italiano.", "pelo_hint_chiaro": "Sul pelo chiaro i toni scuri risaltano: si vede il disegno e si legge il nome.", "pelo_hint_scuro": "Sul pelo scuro serve un contrasto caldo, altrimenti il disegno sparisce.", "pelo_hint_rosso": "Il fulvo chiede verdi e blu: sono i colori che gli stanno di fronte sulla ruota.", "pelo_hint_misto": "Con un pelo bicolore un disegno regolare mette ordine invece di sommarsi.", "taglia_hint_small": "Per un cane piccolo la taglia S è quella giusta.", "taglia_hint_medium": "Per un cane medio la taglia M è quella giusta.", "taglia_hint_large": "Per un cane grande la taglia L è quella giusta.", "taglia_hint_cat": "Per un gatto scegli la taglia più piccola disponibile.", "pick_cta": "Guarda il prodotto", "consent": "Iscrivendoti accetti la nostra Privacy Policy. Niente spam."
+    }
+  }
+}
