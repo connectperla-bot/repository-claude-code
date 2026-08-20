@@ -34,3 +34,7 @@ out-foto/
 # scripts/perla-eu-prodotti.json. In git ci va lo script, non la sua uscita.
 generated-designs/motivi-stampa/
 out-foto/
+
+# Anteprima di scripts/perla-motivi-nuovi.py eseguito a mano: e' un provino
+# per guardare i motivi, si rifa' con `python3 scripts/perla-motivi-nuovi.py`.
+motivi/
