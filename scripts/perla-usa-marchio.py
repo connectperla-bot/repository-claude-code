@@ -23,9 +23,31 @@ Quindi si tiene la scala com'era (stessa larghezza a video) e si ALZA il
 marchio di meta' della differenza di altezza, cosi' il bordo inferiore
 resta dov'era invece di finire nella parte che la cuccia arrotola sotto.
 
+FUORI DALLE CUCCE NON BASTA CAMBIARE IL FILE
+Provato con --tutti su una bandana e guardato il mockup: il marchio nuovo,
+alto il doppio a parita' di larghezza, finisce oltre la punta del triangolo e
+viene tagliato. Guardato il retro per escludere che fosse una piega: e' bianco,
+la stoffa finisce li' davvero. E guardando la foto di prima si scopre che era
+tagliato anche quello vecchio: la posizione era gia' sbagliata.
+
+Ma il motivo vero e' un altro, ed e' venuto fuori elencando i livelli. Il
+disegno di fondo di OGNI bandana e OGNI medaglietta si chiama "...-perla.jpg":
+il marchio e' gia' dentro l'artwork. Quello sovrapposto e' un SECONDO marchio,
+e per giunta non e' sempre lo stesso file -- in giro ce ne sono quattro
+("LOGO PERLA - Copia.PNG", "v2-01-logo-centrale.png",
+"v3-square-coaster-logo.png", "perla-combined-logo.png"), e due prodotti non ne
+hanno nessuno.
+
+Quindi qui non c'e' un file da sostituire: c'e' da decidere se il marchio
+sovrapposto ci deve stare. La bandana di prova e' stata rimessa com'era
+(LOGO PERLA - Copia.PNG, x=0.500 y=0.863 scale=0.0447). Sulle cucce il lavoro
+resta valido: li' il marchio era davvero sotto risoluzione e non ce n'e' un
+altro nell'artwork.
+
 USO
     python3 scripts/perla-usa-marchio.py            # elenca e basta
     python3 scripts/perla-usa-marchio.py --applica
+    python3 scripts/perla-usa-marchio.py --tutti --solo "Ocean Wave" --applica
 """
 import base64
 import json
@@ -75,6 +97,27 @@ def api(metodo, percorso, corpo=None, token=None):
         raise RuntimeError("risposta non JSON: " + out[:200])
 
 
+def vendibile(p):
+    """Vero se cambiare il marchio a questo prodotto serve a qualcuno.
+
+    Due modi di non servire a niente, e li abbiamo incontrati entrambi:
+
+    - il prodotto non ha `external.id`, cioe' su Shopify non esiste. Sono i
+      quattro "Copy of" rimasti solo dentro Printify.
+    - nessuna variante e' insieme abilitata e disponibile. Sono i 18 collari:
+      il fornitore ha tutte e 288 le varianti a is_available: false, il PUT
+      risponde 500 su qualunque cosa, e su Shopify stanno in bozza. Scriverci
+      sopra vuol dire soltanto raccogliere errori.
+
+    La regola guarda i dati, non l'elenco dei nomi: se un giorno i collari
+    tornano producibili, rientrano da soli senza toccare il codice.
+    """
+    if not (p.get("external") or {}).get("id"):
+        return False
+    return any(v.get("is_enabled") and v.get("is_available")
+               for v in p.get("variants", []))
+
+
 def main():
     env = chiavi()
     token, shop = env["PRINTIFY_API_KEY"], env["PRINTIFY_SHOP_ID"]
@@ -95,12 +138,25 @@ def main():
         pagina += 1
 
     bersaglio = (DA_CORREGGERE,) if "--correggi" in sys.argv else VECCHIO
-    da_fare = [p for p in prodotti if (not solo_cucce or p["blueprint_id"] == 419) and any(
+    col_marchio = [p for p in prodotti if (not solo_cucce or p["blueprint_id"] == 419) and any(
         im.get("name") in bersaglio
         for pa in p.get("print_areas", [])
         for ph in pa.get("placeholders", [])
         for im in ph.get("images", []))]
-    print("%d prodotti hanno il marchio piccolo" % len(da_fare))
+    da_fare = [p for p in col_marchio if vendibile(p)]
+    scartati = len(col_marchio) - len(da_fare)
+    # La regola "stessa larghezza" e' stata tarata guardando un mockup di
+    # cuccia, area 15600x12600. Su una bandana (4275x2325) e su una
+    # medaglietta (810x900) le proporzioni sono altre: prima di applicarla a
+    # venti prodotti se ne fa uno per tipo e lo si guarda.
+    if "--solo" in sys.argv:
+        pezzi = [s for s in sys.argv[sys.argv.index("--solo") + 1].split(",") if s]
+        da_fare = [p for p in da_fare if any(s.lower() in p["title"].lower() for s in pezzi)]
+        if not da_fare:
+            raise SystemExit("--solo non ha selezionato niente: controlla le sottostringhe")
+    print("%d prodotti hanno il marchio piccolo, %d in vendita%s"
+          % (len(col_marchio), len(da_fare),
+             " (%d saltati: fuori vendita o non su Shopify)" % scartati if scartati else ""))
     if not applica:
         for p in da_fare:
             print("  " + p["title"][:64])
