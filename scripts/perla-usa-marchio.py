@@ -135,13 +135,25 @@ def main():
                     largo = im["scale"] * larghezza_area
                     alto_prima = largo * prop_vecchia
                     alto_dopo = largo * prop_nuova
+                    # Se il marchio era stato messo piu' largo di quanto il
+                    # file nuovo consenta, si riduce fino alla sua risoluzione
+                    # vera invece di ingrandirlo di nuovo. Succede sulla cuccia
+                    # "Geometric Tribal", dove il marchio stava a 2621 px e il
+                    # file ne ha 1600: lasciandolo com'era sarebbe rimasto
+                    # l'unico livello sgranato di tutto il catalogo.
+                    scala = im["scale"]
+                    massima = caricato["width"] / float(larghezza_area)
+                    if scala > massima:
+                        scala = massima
+                        largo = scala * larghezza_area
+                        alto_dopo = largo * prop_nuova
                     y = im["y"] - (alto_dopo - alto_prima) / 2.0 / altezza_area
                     nuove.append({
                         "id": caricato["id"], "name": caricato["file_name"],
                         "type": caricato.get("mime_type", "image/png"),
                         "height": caricato["height"], "width": caricato["width"],
                         "x": im["x"], "y": round(max(0.02, min(0.98, y)), 6),
-                        "angle": im.get("angle", 0), "scale": im["scale"],
+                        "angle": im.get("angle", 0), "scale": round(scala, 6),
                     })
                     toccati += 1
                 ph["images"] = nuove
