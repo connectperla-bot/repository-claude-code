@@ -177,25 +177,40 @@ def main():
             time.sleep(PAUSA)
             continue
 
-        grezzo = os.path.join(OUT, p["handle"][:70] + ".png")
-        finito = os.path.join(OUT, p["handle"][:70] + ".jpg")
-        subprocess.run(["curl", "-s", "-m", "180", "-o", grezzo, d["images"][0]])
-        if not os.path.exists(grezzo) or os.path.getsize(grezzo) < 5000:
-            print("%2d/%d  %-32s scarico fallito" % (i, len(coda), p["title"][:32]))
+        # TUTTE le inquadrature, non solo la prima.
+        # /generate-mockup ne restituisce fino a quattro -- la principale piu'
+        # gli extra[] di Printful (piegato, indossato, di lato): il lavoro lato
+        # server e' gia' fatto, vedi perla-upload-endpoint.js righe 505-533.
+        # Qui se ne prendeva una sola, ed e' per questo che i 66 prodotti EU
+        # avevano una foto contro le otto dei Printify.
+        indirizzi = []
+        for n, sorgente in enumerate(d["images"], 1):
+            base = "%s-%d" % (p["handle"][:66], n)
+            grezzo = os.path.join(OUT, base + ".png")
+            finito = os.path.join(OUT, base + ".jpg")
+            subprocess.run(["curl", "-s", "-m", "180", "-o", grezzo, sorgente])
+            if not os.path.exists(grezzo) or os.path.getsize(grezzo) < 5000:
+                print("%2d/%d  %-32s scarico fallito (%d)" % (i, len(coda), p["title"][:32], n))
+                continue
+            misura = bianco(grezzo, finito)
+            os.remove(grezzo)
+            u = posta(UPLOAD, file=finito)
+            if not u.get("url"):
+                print("%2d/%d  %-32s upload fallito (%d): %s"
+                      % (i, len(coda), p["title"][:32], n, str(u)[:100]))
+                continue
+            indirizzi.append(u["url"])
+
+        if not indirizzi:
             time.sleep(PAUSA)
             continue
-        misura = bianco(grezzo, finito)
-        os.remove(grezzo)
 
-        u = posta(UPLOAD, file=finito)
-        if not u.get("url"):
-            print("%2d/%d  %-32s upload fallito: %s" % (i, len(coda), p["title"][:32], str(u)[:120]))
-            time.sleep(PAUSA)
-            continue
-
-        ospitate[p["handle"]] = u["url"]
+        # La chiave resta il handle, ma il valore ora e' un ELENCO. Le voci
+        # vecchie sono stringhe singole: chi legge questo file deve accettare
+        # entrambe le forme finche' non sono state rifatte tutte.
+        ospitate[p["handle"]] = indirizzi
         json.dump(ospitate, open(p_out, "w"), indent=1)
-        print("%2d/%d  %-32s %s  %s" % (i, len(coda), p["title"][:32], misura, u["url"].rsplit("/", 1)[-1]))
+        print("%2d/%d  %-32s %s  %d foto" % (i, len(coda), p["title"][:32], misura, len(indirizzi)))
         time.sleep(PAUSA)
 
     print("\n%d ospitate in totale" % len(ospitate))
