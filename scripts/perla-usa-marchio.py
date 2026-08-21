@@ -48,6 +48,8 @@ USO
     python3 scripts/perla-usa-marchio.py            # elenca e basta
     python3 scripts/perla-usa-marchio.py --applica
     python3 scripts/perla-usa-marchio.py --tutti --solo "Ocean Wave" --applica
+    python3 scripts/perla-usa-marchio.py --rimuovi              # elenca
+    python3 scripts/perla-usa-marchio.py --rimuovi --applica    # toglie
 """
 import base64
 import json
@@ -65,6 +67,11 @@ VECCHIO = ("LOGO PERLA - Copia.PNG", "logo-full.png")
 # Dopo il primo giro il marchio vecchio non c'e' piu' su quei prodotti: per
 # correggere la posizione si riconosce quello nuovo messo male.
 DA_CORREGGERE = "perla-combined-logo.png"
+# Per RIMUOVERE il marchio sovrapposto servono tutti i nomi, non i due che
+# bastavano a sostituirlo: nel catalogo ne girano cinque, uno diverso quasi per
+# ogni ondata di prodotti.
+MARCHI = VECCHIO + (DA_CORREGGERE, "v2-01-logo-centrale.png",
+                    "v3-square-coaster-logo.png")
 
 
 def chiavi():
@@ -118,16 +125,59 @@ def vendibile(p):
                for v in p.get("variants", []))
 
 
+def togli(da_fare, bersaglio, shop, token):
+    """Toglie il marchio sovrapposto, lasciando l'artwork.
+
+    MAI SVUOTARE UN'AREA DI STAMPA
+    Due prodotti -- "Pet Bandana - Plain White Triangle" e "Blank Round Pet ID
+    Tag" -- hanno SOLO il logo e nessun disegno di fondo: sono i "Crea il Tuo
+    Design", dove il cliente porta lui l'immagine. Togliere il livello li
+    lascerebbe con niente da stampare. Quindi il logo si rimuove solo se nel
+    placeholder resta almeno un'altra immagine: i due si escludono da soli, e
+    non c'e' nessun elenco di nomi da tenere aggiornato.
+    """
+    fatti = saltati = 0
+    for p in da_fare:
+        aree = json.loads(json.dumps(p["print_areas"]))
+        tolti = 0
+        for pa in aree:
+            for ph in pa.get("placeholders", []):
+                immagini = ph.get("images", [])
+                restano = [im for im in immagini if im.get("name") not in bersaglio]
+                if not restano:
+                    continue          # qui il marchio E' il disegno: si lascia
+                tolti += len(immagini) - len(restano)
+                ph["images"] = restano
+            pa["placeholders"] = [x for x in pa.get("placeholders", []) if x.get("images")]
+        if not tolti:
+            print("  %-52s solo marchio, lasciato com'e'" % p["title"][:52])
+            saltati += 1
+            continue
+        r = api("PUT", "/v1/shops/%s/products/%s.json" % (shop, p["id"]),
+                token=token, corpo={"print_areas": aree})
+        if r.get("id") != p["id"]:
+            print("  ERRORE %-44s %s" % (p["title"][:44], json.dumps(r)[:140]))
+            continue
+        print("  %-52s -%d marchi" % (p["title"][:52], tolti))
+        fatti += 1
+    print("\n%d prodotti ripuliti%s" % (fatti, ", %d lasciati intatti" % saltati if saltati else ""))
+
+
 def main():
     env = chiavi()
     token, shop = env["PRINTIFY_API_KEY"], env["PRINTIFY_SHOP_ID"]
     applica = "--applica" in sys.argv
+    rimuovi = "--rimuovi" in sys.argv
     # Il marchio piccolo sta su 49 prodotti, ma SOTTO RISOLUZIONE solo sulle
     # cucce: li' l'area e' 15600 px e il marchio viene stampato a 1350, mentre
     # su una bandana da 4275 sta a 370 e i 554 px bastano. Cambiarlo altrove
     # non e' una riparazione, e' una scelta di immagine -- e cambia la
     # dicitura da "PERLA" a "Perla Italia". Con --tutti si estende a tutti.
-    solo_cucce = "--tutti" not in sys.argv
+    #
+    # La rimozione invece riguarda per definizione bandane e medagliette, dove
+    # il marchio e' gia' dentro l'artwork: limitarla alle cucce non vorrebbe
+    # dire niente, quindi --rimuovi vale su tutto.
+    solo_cucce = "--tutti" not in sys.argv and not rimuovi
 
     prodotti, pagina = [], 1
     while True:
@@ -137,8 +187,24 @@ def main():
             break
         pagina += 1
 
-    bersaglio = (DA_CORREGGERE,) if "--correggi" in sys.argv else VECCHIO
-    col_marchio = [p for p in prodotti if (not solo_cucce or p["blueprint_id"] == 419) and any(
+    if rimuovi:
+        bersaglio = MARCHI
+    elif "--correggi" in sys.argv:
+        bersaglio = (DA_CORREGGERE,)
+    else:
+        bersaglio = VECCHIO
+
+    def in_gioco(p):
+        # La rimozione riguarda SOLO bandane (562) e medagliette (566): sono
+        # quelle il cui artwork porta gia' il marchio, quindi quello
+        # sovrapposto e' un doppione. Sulle cucce (419) il marchio e' uno solo
+        # ed e' quello che abbiamo appena portato ad alta risoluzione: toglierlo
+        # vorrebbe dire cancellare il lavoro fatto.
+        if rimuovi:
+            return p["blueprint_id"] in (562, 566)
+        return not solo_cucce or p["blueprint_id"] == 419
+
+    col_marchio = [p for p in prodotti if in_gioco(p) and any(
         im.get("name") in bersaglio
         for pa in p.get("print_areas", [])
         for ph in pa.get("placeholders", [])
@@ -162,6 +228,10 @@ def main():
             print("  " + p["title"][:64])
         print("\n(elenco soltanto: aggiungi --applica" +
               ("; --tutti per estendere oltre le cucce)" if solo_cucce else ")"))
+        return
+
+    if rimuovi:
+        togli(da_fare, bersaglio, shop, token)
         return
 
     with open(NUOVO, "rb") as fh:

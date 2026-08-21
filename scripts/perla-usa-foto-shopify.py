@@ -53,7 +53,12 @@ RADICE = os.path.dirname(QUI)
 MIEI = ('cuccia-baroque-royal', 'cuccia-vintage-damask', 'cuccia-luxury-paisley',
         'cuccia-ornate-medallion', 'cuccia-luxurious-navy', 'cuccia-perla-italy',
         'cuccia-copy-of', 'cuccia-geometric', 'cuccia-personalized', 'cuccia-teal-',
-        'bandana-da-', 'medaglietta-da-')
+        'bandana-da-', 'medaglietta-da-',
+        # Meta' delle medagliette non passa da "medaglietta-da-": il loro
+        # disegno si chiama "tag-...-perla.jpg", nome ereditato dalla prima
+        # ondata. Senza questo prefisso restavano fuori dalla ripubblicazione e
+        # tenevano su Shopify la foto vecchia.
+        'tag-')
 
 TIPO = {419: 'cuccia', 562: 'bandana', 566: 'medaglietta', 570: 'ciotola', 784: 'collare'}
 
