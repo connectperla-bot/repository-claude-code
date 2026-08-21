@@ -147,8 +147,19 @@ def main():
     p_out = os.path.join(OUT, "ospitate.json")
     ospitate = json.load(open(p_out)) if os.path.exists(p_out) else {}
 
+    # RIPARTIRE DOVE SI ERA RIMASTI
+    # Il contenitore si riavvia e si porta via il processo: la prima corsa e'
+    # morta al dodicesimo prodotto su 66 e me ne sono accorto solo guardando
+    # l'orario dell'ultima riga di log. Un valore a ELENCO in ospitate.json vuol
+    # dire "gia' rifatto in questo giro, con tutte le inquadrature": quelli si
+    # saltano anche sotto --rifai, cosi' rilanciare il comando riprende invece
+    # di ricominciare. Le voci vecchie sono stringhe singole e vanno rifatte.
+    def gia_rifatto(p):
+        return isinstance(ospitate.get(p["handle"]), list)
+
     coda = [p for p in prodotti
             if (rifai or (not p["gia_fatta"] and p["handle"] not in ospitate))
+            and not (rifai and gia_rifatto(p))
             and (tipi is None or tipo_di(p["handle"]) in tipi)
             and (solo is None or any(s in p["handle"] for s in solo))][:massimo]
     if solo is not None and not coda:
