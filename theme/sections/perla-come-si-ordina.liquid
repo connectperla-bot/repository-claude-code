@@ -1,0 +1,134 @@
+{%- comment -%}
+  "Come si ordina" — i passi veri, con le immagini del sito vero.
+
+  PERCHE' ESISTE
+  La personalizzazione di Perla non e' un menu a tendina: e' uno studio con un
+  canvas, dove si carica una foto, si scrive un nome, lo si sposta. Chi arriva
+  dalla pubblicita' non lo ha mai visto prima, e un negozio che chiede di
+  imparare qualcosa prima di comprare perde chi non ha voglia di imparare.
+  Questa pagina fa vedere l'ordine completo prima che il cliente lo cominci.
+
+  LE IMMAGINI
+  Sono scatti del sito vero, non disegni: ogni passo mostra la schermata che il
+  cliente si trovera' davanti. Se un giorno l'editor cambia aspetto, queste
+  vanno rifatte -- una guida che mostra un'interfaccia che non esiste piu' e'
+  peggio di nessuna guida.
+
+  IL VIDEO
+  Facoltativo. Se manca, la pagina resta completa: i passi si leggono da soli.
+{%- endcomment -%}
+
+{% style %}
+  .ordina__intro { max-width: 60ch; margin: 0 auto 40px; text-align: center; }
+  .ordina__video {
+    max-width: 900px; margin: 0 auto 56px; border-radius: var(--card-radius, 8px);
+    overflow: hidden; background: var(--color-cream, #f7f3ec);
+  }
+  .ordina__video video { display: block; width: 100%; height: auto; }
+  .ordina__passi { display: grid; gap: 56px; max-width: 1000px; margin: 0 auto; }
+  .ordina__passo { display: grid; gap: 28px; align-items: center; }
+  @media (min-width: 750px) {
+    .ordina__passo { grid-template-columns: 1fr 1fr; }
+    .ordina__passo:nth-child(even) .ordina__passo-testo { order: 2; }
+  }
+  .ordina__passo-figura {
+    margin: 0; border-radius: var(--card-radius, 8px); overflow: hidden;
+    background: var(--color-cream, #f7f3ec);
+  }
+  .ordina__passo-figura img { display: block; width: 100%; height: auto; }
+  .ordina__numero {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--color-ink, #1c1c1c); color: #fff;
+    font-size: 0.86rem; letter-spacing: .02em; margin-bottom: 12px;
+  }
+  .ordina__passo-testo h3 { margin: 0 0 10px; }
+  .ordina__passo-testo p { margin: 0; line-height: 1.6; }
+  .ordina__coda { max-width: 60ch; margin: 56px auto 0; text-align: center; }
+  .ordina__coda .btn { margin-top: 18px; }
+{% endstyle %}
+
+<section class="section {% if section.settings.bg == 'cream' %}section--cream{% endif %}">
+  <div class="page-width">
+    <div class="section-head" data-reveal>
+      {%- if section.settings.eyebrow != blank -%}<p class="eyebrow">{{ section.settings.eyebrow }}</p>{%- endif -%}
+      <h2>{{ section.settings.heading }}</h2>
+    </div>
+
+    {%- if section.settings.intro != blank -%}
+      <div class="ordina__intro" data-reveal>{{ section.settings.intro }}</div>
+    {%- endif -%}
+
+    {%- if section.settings.video != blank -%}
+      {%- comment -%}
+        controls e playsinline, niente autoplay: un video che parte da solo con
+        l'audio addosso e' il motivo per cui la gente chiude la scheda.
+      {%- endcomment -%}
+      <div class="ordina__video" data-reveal>
+        <video controls playsinline preload="metadata"
+          {% if section.settings.video_poster != blank %}poster="{{ section.settings.video_poster | image_url: width: 1200 }}"{% endif %}>
+          <source src="{{ section.settings.video }}" type="video/mp4">
+        </video>
+      </div>
+    {%- endif -%}
+
+    <div class="ordina__passi">
+      {%- for block in section.blocks -%}
+        <div class="ordina__passo" data-reveal {{ block.shopify_attributes }}>
+          <div class="ordina__passo-testo">
+            <span class="ordina__numero">{{ forloop.index }}</span>
+            <h3>{{ block.settings.titolo }}</h3>
+            <p>{{ block.settings.testo }}</p>
+          </div>
+          {%- if block.settings.immagine != blank -%}
+            <figure class="ordina__passo-figura">
+              <img src="{{ block.settings.immagine | image_url: width: 900 }}"
+                   alt="{{ block.settings.titolo | escape }}"
+                   width="900" height="{{ 900 | divided_by: block.settings.immagine.aspect_ratio | round }}"
+                   loading="lazy">
+            </figure>
+          {%- endif -%}
+        </div>
+      {%- endfor -%}
+    </div>
+
+    {%- if section.settings.coda != blank -%}
+      <div class="ordina__coda" data-reveal>
+        {{ section.settings.coda }}
+        {%- if section.settings.cta_link != blank -%}
+          <a class="btn" href="{{ section.settings.cta_link }}">{{ section.settings.cta_label | default: 'Inizia da qui' }}</a>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Come si ordina",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Sopratitolo" },
+    { "type": "text", "id": "heading", "label": "Titolo", "default": "Come si ordina" },
+    { "type": "richtext", "id": "intro", "label": "Introduzione" },
+    { "type": "url", "id": "video", "label": "Video (file mp4)", "info": "Caricalo in Contenuti > File e incolla qui il collegamento. Se lo lasci vuoto la pagina resta completa lo stesso." },
+    { "type": "image_picker", "id": "video_poster", "label": "Immagine di copertina del video" },
+    { "type": "richtext", "id": "coda", "label": "Chiusura" },
+    { "type": "url", "id": "cta_link", "label": "Collegamento del pulsante" },
+    { "type": "text", "id": "cta_label", "label": "Testo del pulsante", "default": "Inizia da qui" },
+    { "type": "select", "id": "bg", "label": "Sfondo", "options": [ {"value":"default","label":"Bianco perla"}, {"value":"cream","label":"Crema"} ], "default": "default" }
+  ],
+  "max_blocks": 8,
+  "blocks": [
+    {
+      "type": "passo",
+      "name": "Passo",
+      "settings": [
+        { "type": "text", "id": "titolo", "label": "Titolo del passo" },
+        { "type": "textarea", "id": "testo", "label": "Testo", "info": "Descrivi cosa vede e cosa tocca, non cosa prova." },
+        { "type": "image_picker", "id": "immagine", "label": "Schermata" }
+      ]
+    }
+  ],
+  "presets": [ { "name": "Come si ordina" } ]
+}
+{% endschema %}
