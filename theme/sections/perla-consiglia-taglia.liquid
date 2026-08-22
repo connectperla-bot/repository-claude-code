@@ -1,0 +1,189 @@
+{%- comment -%}
+  Consigliatore di taglia — peso e razza, e la pastiglia giusta si seleziona
+  da sola.
+
+  PERCHE' E' UNA SEZIONE E NON UN PEZZO DI main-product.liquid
+  Il posto naturale sarebbe dentro la scheda prodotto, accanto ai bottoni della
+  taglia. Ma main-product.liquid e' un file da 48 KB e ogni riscrittura completa
+  e' un'occasione di romperlo; templates/product.json invece pesa 746 byte.
+  Quindi il pannello nasce come sezione a se', e assets/perla-taglia.js lo
+  sposta accanto a .variant-group appena la pagina e' pronta. Se il JavaScript
+  non parte, il pannello resta piu' in basso e continua a funzionare: non
+  sparisce niente.
+
+  QUANDO NON SI VEDE
+  - se il prodotto ha una taglia sola (medagliette, guinzagli, ciotole USA):
+    non c'e' niente da consigliare
+  - se il tipo non ha una tabella misure in perla-taglia.js
+  In entrambi i casi il JavaScript rimuove il nodo, cosi' non resta un riquadro
+  vuoto in fondo alla pagina.
+
+  DOVE STANNO LE PAROLE
+  Nel blocco "locales" dello schema, non in theme/locales/*.json. Le stringhe
+  servono solo qui dentro, e i due file di lingua globali pesano diciotto
+  chilobyte l'uno: riscriverli per intero a ogni ritocco di una frase e' un
+  rischio senza contropartita. Il filtro t continua a funzionare identico, e
+  l'inglese resta inglese -- che era il motivo della nota ROUND 33 sul non
+  lasciare italiano nel markup.
+{%- endcomment -%}
+
+{%- assign tipo = '' -%}
+{%- if product.tags contains 'collare-eu' -%}{%- assign tipo = 'collare_eu' -%}
+{%- elsif product.tags contains 'bandana-eu' -%}{%- assign tipo = 'bandana_eu' -%}
+{%- elsif product.tags contains 'ciotola-eu' -%}{%- assign tipo = 'ciotola_eu' -%}
+{%- elsif product.tags contains 'cuccia' -%}{%- assign tipo = 'cuccia' -%}
+{%- elsif product.tags contains 'bandana' -%}{%- assign tipo = 'bandana' -%}
+{%- endif -%}
+
+{%- comment -%}
+  Il conteggio delle varianti e' la seconda guardia, e sta qui e non solo nel
+  JavaScript: cosi' il markup non viene nemmeno generato per i prodotti a
+  taglia unica, e chi legge il sorgente non trova un pannello morto.
+{%- endcomment -%}
+{%- if tipo != '' and product.variants.size > 1 -%}
+{%- comment -%}
+  Lo stile sta qui e non in assets/perla-studio.css per la stessa ragione dei
+  testi: sono venti righe che riguardano solo questo pannello, e il foglio di
+  stile del tema andrebbe riscritto per intero a ogni ritocco. Le variabili
+  (--gold, --ink, --cream...) sono quelle gia' definite dal tema, quindi il
+  pannello cambia colore insieme al resto se un giorno cambiate palette.
+{%- endcomment -%}
+{% style %}
+  .taglia-aiuto { margin: 14px 0 18px; }
+  .taglia-aiuto__apri {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: none; border: 0; padding: 6px 0; cursor: pointer;
+    font: inherit; color: var(--color-ink, #1c1c1c);
+    text-decoration: underline; text-underline-offset: 3px;
+  }
+  .taglia-aiuto__apri svg { width: 18px; height: 18px; }
+  .taglia-aiuto__corpo {
+    margin-top: 10px; padding: 16px;
+    background: var(--color-cream, #f7f3ec);
+    border-radius: var(--card-radius, 8px);
+  }
+  .taglia-aiuto__campi {
+    display: grid; gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+  .taglia-aiuto__campo { display: flex; flex-direction: column; gap: 5px; font-size: 0.86em; }
+  .taglia-aiuto__campo input {
+    padding: 9px 11px; border: 1px solid rgba(0,0,0,.18);
+    border-radius: var(--button-radius, 4px); font: inherit; background: #fff;
+    width: 100%; box-sizing: border-box;
+  }
+  .taglia-aiuto__calcola { margin-top: 14px; }
+  .taglia-aiuto__esito {
+    margin: 12px 0 0; padding: 10px 12px; border-radius: var(--button-radius, 4px);
+    background: rgba(0,0,0,.05); font-size: 0.92em; line-height: 1.45;
+  }
+  .taglia-aiuto__esito.is-ok {
+    background: rgba(122,143,106,.16);
+    border-left: 3px solid var(--color-sage, #7a8f6a);
+  }
+  .taglia-aiuto__nota { margin: 12px 0 0; font-size: 0.8em; opacity: .75; line-height: 1.45; }
+{% endstyle %}
+
+<div class="taglia-aiuto" data-consiglia-taglia data-tipo="{{ tipo }}"
+  data-testo-ok="{{ 'taglia.esito_ok' | t }}"
+  data-testo-vuoto="{{ 'taglia.esito_vuoto' | t }}"
+  data-testo-fuori="{{ 'taglia.esito_fuori' | t }}">
+
+  <button type="button" class="taglia-aiuto__apri" data-taglia-apri aria-expanded="false">
+    {% render 'icon', icon: 'paw' %}
+    <span>{{ 'taglia.apri' | t }}</span>
+  </button>
+
+  <div class="taglia-aiuto__corpo" data-taglia-corpo hidden>
+    <div class="taglia-aiuto__campi">
+      <label class="taglia-aiuto__campo">
+        <span>{{ 'taglia.peso' | t }}</span>
+        <input type="number" min="0.5" max="90" step="0.5" inputmode="decimal"
+               placeholder="{{ 'taglia.peso_ph' | t }}" data-taglia-peso>
+      </label>
+
+      <label class="taglia-aiuto__campo">
+        <span>{{ 'taglia.razza' | t }}</span>
+        <input type="text" list="perla-razze" autocomplete="off"
+               placeholder="{{ 'taglia.razza_ph' | t }}" data-taglia-razza>
+      </label>
+
+      {%- if tipo == 'collare_eu' -%}
+        {%- comment -%}
+          Solo sui collari, e per primo nell'ordine di fiducia: la circonferenza
+          del collo e' l'unico dato che non e' una stima. Peso e razza servono a
+          chi non ha un metro da sarta sottomano.
+        {%- endcomment -%}
+        <label class="taglia-aiuto__campo">
+          <span>{{ 'taglia.collo' | t }}</span>
+          <input type="number" min="15" max="80" step="0.5" inputmode="decimal"
+                 placeholder="{{ 'taglia.collo_ph' | t }}" data-taglia-collo>
+        </label>
+      {%- endif -%}
+    </div>
+
+    <datalist id="perla-razze" data-taglia-razze></datalist>
+
+    <button type="button" class="btn btn--soft taglia-aiuto__calcola" data-taglia-calcola>
+      {{ 'taglia.calcola' | t }}
+    </button>
+
+    <p class="taglia-aiuto__esito" data-taglia-esito role="status" aria-live="polite" hidden></p>
+
+    <p class="taglia-aiuto__nota">
+      {{ 'taglia.nota' | t }}
+      <a href="/pages/guida-alle-taglie">{{ 'taglia.guida' | t }}</a>
+    </p>
+  </div>
+</div>
+
+<script src="{{ 'perla-taglia.js' | asset_url }}" defer></script>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Consiglio taglia",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Compare solo sui prodotti con piu' di una taglia (collari, bandane, cucce, ciotole europee). Le misure vengono dai cataloghi dei fornitori, non da impostazioni: se il fornitore le cambia, va aggiornato assets/perla-taglia.js."
+    }
+  ],
+  "locales": {
+    "it": {
+      "taglia": {
+        "apri": "Non sai la taglia? Te la diciamo noi",
+        "peso": "Peso del cane",
+        "peso_ph": "kg — es. 8",
+        "razza": "Razza",
+        "razza_ph": "Inizia a scrivere, oppure lascia vuoto",
+        "collo": "Circonferenza del collo (se puoi misurarla)",
+        "collo_ph": "cm — es. 38",
+        "calcola": "Consigliami la taglia",
+        "esito_ok": "Taglia [taglia]: l'abbiamo già selezionata per te, [perche].",
+        "esito_vuoto": "Scrivi almeno il peso oppure la razza e ci pensiamo noi.",
+        "esito_fuori": "Con queste misure nessuna delle nostre taglie calza bene. Scrivici: piuttosto che vendertene una che stringe, ti diciamo cosa fare.",
+        "nota": "È un consiglio, non una legge: se la misura cade fra due taglie prendiamo la più grande, perché una fibbia stringe ma non allunga.",
+        "guida": "Guida alle taglie"
+      }
+    },
+    "en": {
+      "taglia": {
+        "apri": "Not sure about the size? We'll tell you",
+        "peso": "Dog's weight",
+        "peso_ph": "kg — e.g. 8",
+        "razza": "Breed",
+        "razza_ph": "Start typing, or leave it blank",
+        "collo": "Neck circumference (if you can measure it)",
+        "collo_ph": "cm — e.g. 38",
+        "calcola": "Recommend my size",
+        "esito_ok": "Size [taglia]: we've already selected it for you, [perche].",
+        "esito_vuoto": "Give us the weight or the breed and we'll take it from there.",
+        "esito_fuori": "None of our sizes fits these measurements well. Write to us: rather than sell you one that pinches, we'll tell you what to do.",
+        "nota": "It's advice, not a rule: when a measurement falls between two sizes we go with the larger one, because a buckle tightens but never stretches.",
+        "guida": "Size guide"
+      }
+    }
+  }
+}
+{% endschema %}
