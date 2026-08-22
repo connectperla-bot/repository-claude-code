@@ -7,7 +7,7 @@
     "start:upload": "node perla-upload-endpoint.js",
     "start:printify": "node perla-printify-order-sync.js",
     "start:assistant": "node perla-assistant-bot.js",
-    "test": "node ../tests/provider-router.test.js && node ../tests/varianti-fornitore.test.js && node ../tests/righe-senza-personalizzazione.test.js && node ../tests/motivo-di-base.test.js && node ../tests/guardia-carrello.test.js && node ../tests/ingressi-non-fidati.test.js && node ../tests/sicurezza-endpoint.test.js && node ../tests/consiglio-taglia.test.js && python3 ../tests/file-stampa-non-specchiati.test.py"
+    "test": "node ../tests/provider-router.test.js && node ../tests/varianti-fornitore.test.js && node ../tests/righe-senza-personalizzazione.test.js && node ../tests/motivo-di-base.test.js && node ../tests/guardia-carrello.test.js && node ../tests/ingressi-non-fidati.test.js && node ../tests/sicurezza-endpoint.test.js && node ../tests/consiglio-taglia.test.js && node ../tests/passaggio-a-persona.test.js && python3 ../tests/file-stampa-non-specchiati.test.py"
   },
   "dependencies": {
     "express": "^4.19.2",

@@ -1,0 +1,87 @@
+{%- comment -%}
+  Assistente Perla — chip con risposte predefinite (zero costi, no API) +
+  campo domanda libera collegato a scripts/perla-assistant-bot.js quando
+  "assistant_ai_endpoint" è configurato nelle impostazioni tema.
+  Lazy: il pannello si attiva solo al primo tap sulla bolla.
+
+  ROUND 46 — il passaggio a una persona. Il piede aveva solo "Scrivici", cioè
+  un'email: una risposta domani a una domanda di adesso. Ora c'è anche un
+  collegamento che apre la chat con gli admin (Shopify Inbox), e la stessa
+  chat si apre da sola quando il servizio risponde con apri_chat — vedi
+  assets/perla-persona.js, che ascolta senza toccare assets/global.js.
+{%- endcomment -%}
+{%- if settings.assistant_enabled -%}
+{%- comment -%}
+  L'etichetta segue la lingua della vetrina. Non passa dai file di lingua
+  perché è una stringa sola e quei file pesano diciotto chilobyte l'uno.
+{%- endcomment -%}
+{%- assign etichetta_persona = 'Parla con una persona' -%}
+{%- if request.locale.iso_code == 'en' -%}
+  {%- assign etichetta_persona = 'Talk to a person' -%}
+{%- endif -%}
+<div class="assistant" data-assistant aria-live="polite"
+  data-assistant-ai-endpoint="{{ settings.assistant_ai_endpoint | escape }}"
+  data-assistant-ask-error="{{ 'assistant.ask_error' | t | escape }}"
+  data-assistant-persona-label="{{ etichetta_persona | escape }}"
+>
+  <button type="button" class="assistant__bubble" data-assistant-open aria-label="{{ 'assistant.open' | t | default: 'Apri assistente' }}" aria-expanded="false">
+    <span class="assistant__bubble-pearl" aria-hidden="true"></span>
+    <span class="assistant__bubble-label">{{ settings.assistant_bubble_label | default: 'Aiuto?' }}</span>
+  </button>
+
+  <div class="assistant__panel" data-assistant-panel hidden role="dialog" aria-modal="false" aria-label="{{ 'assistant.title' | t | default: 'Assistente Perla' }}">
+    <div class="assistant__head">
+      <div class="assistant__id">
+        <span class="assistant__avatar" aria-hidden="true"></span>
+        <div>
+          <strong>{{ settings.assistant_name | default: 'Perla' }}</strong>
+          <small>{{ settings.assistant_status | default: 'Di solito risponde in pochi secondi' }}</small>
+        </div>
+      </div>
+      <button type="button" class="assistant__close" data-assistant-close aria-label="{{ 'accessibility.close' | t }}">{% render 'icon', icon: 'close' %}</button>
+    </div>
+
+    <div class="assistant__body" data-assistant-body>
+      <div class="assistant__msg assistant__msg--bot">{{ settings.assistant_welcome | default: 'Ciao! Sono qui per aiutarti. Su cosa hai bisogno?' }}</div>
+    </div>
+
+    <div class="assistant__quick" data-assistant-quick>
+      {%- comment -%} chip = risposte predefinite. data-answer letto dal JS {%- endcomment -%}
+      <button type="button" class="assistant__chip" data-assistant-answer="{{ settings.assistant_a_shipping | default: 'Spediamo in tutta Italia in 4-8 giorni e in Europa in 5-12 giorni. Ricevi sempre un codice di tracciamento via email.' | escape }}">{{ settings.assistant_q_shipping | default: 'Spedizioni' }}</button>
+      <button type="button" class="assistant__chip" data-assistant-answer="{{ settings.assistant_a_returns | default: 'Hai 30 giorni dalla consegna per il reso. Scrivici e ti guidiamo passo passo.' | escape }}">{{ settings.assistant_q_returns | default: 'Resi' }}</button>
+      <button type="button" class="assistant__chip" data-assistant-answer="{{ settings.assistant_a_sizes | default: 'Ogni prodotto ha una guida taglie nella scheda. Se hai dubbi, scrivici razza e peso del tuo cane: ti consigliamo noi.' | escape }}">{{ settings.assistant_q_sizes | default: 'Taglie' }}</button>
+      <button type="button" class="assistant__chip" data-assistant-answer="{{ settings.assistant_a_payment | default: 'Accettiamo carte (Visa, Mastercard, Amex), PayPal, Apple Pay e Google Pay. Pagamenti sempre sicuri.' | escape }}">{{ settings.assistant_q_payment | default: 'Pagamenti' }}</button>
+      <button type="button" class="assistant__chip" data-assistant-answer="{{ settings.assistant_a_track | default: 'Trovi il link di tracciamento nell\'email di spedizione. Non lo trovi? Scrivici il numero d\'ordine e controlliamo subito.' | escape }}">{{ settings.assistant_q_track | default: 'Traccia ordine' }}</button>
+    </div>
+
+    {%- comment -%} Domanda libera con risposta reale (vedi assets/global.js + scripts/perla-assistant-bot.js) {%- endcomment -%}
+    <form class="assistant__ask" data-assistant-ask novalidate>
+      <input
+        type="text"
+        class="assistant__ask-input"
+        data-assistant-ask-input
+        placeholder="{{ 'assistant.ask_placeholder' | t }}"
+        aria-label="{{ 'assistant.ask_placeholder' | t }}"
+        maxlength="300"
+        autocomplete="off"
+      >
+      <button type="submit" class="assistant__ask-send" aria-label="{{ 'assistant.ask_send' | t }}">{% render 'icon', icon: 'arrow' %}</button>
+    </form>
+
+    <div class="assistant__foot">
+      <p class="assistant__fallback">{{ settings.assistant_fallback_text | default: 'Non hai trovato risposta?' }}</p>
+      <div class="assistant__actions">
+        {%- comment -%}
+          "Parla con una persona" lo aggiunge assets/perla-persona.js in testa a
+          questa riga, così se lo script non parte il piede resta quello di
+          prima invece di mostrare un pulsante che non apre niente.
+        {%- endcomment -%}
+        {%- if settings.social_whatsapp_link != blank -%}<a class="assistant__action" href="{{ settings.social_whatsapp_link }}" target="_blank" rel="noopener">{% render 'icon', icon: 'whatsapp' %} WhatsApp</a>{%- endif -%}
+        {%- if settings.assistant_contact_link != blank -%}<a class="assistant__action" href="{{ settings.assistant_contact_link }}">{% render 'icon', icon: 'arrow' %} {{ settings.assistant_contact_label | default: 'Scrivici' }}</a>{%- endif -%}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="{{ 'perla-persona.js' | asset_url }}" defer></script>
+{%- endif -%}
