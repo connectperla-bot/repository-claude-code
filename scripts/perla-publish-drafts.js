@@ -13,6 +13,28 @@
  *
  * Uso:
  *   node scripts/perla-publish-drafts.js <id1> <id2> ...
+ *
+ * DOPO AVER PUBBLICATO: METTI LA GIACENZA SULLA SEDE DEL NEGOZIO
+ *
+ * Un prodotto appena spinto da Printify su Shopify arriva con la giacenza
+ * SOLO sulla posizione "Printify", che e' un servizio di evasione. Shopify non
+ * la conta come scorta vendibile online: la scheda si apre, il prezzo si vede,
+ * e il carrello risponde 422 "gia' esaurito". Nemmeno inventoryPolicy CONTINUE
+ * lo evita, e l'API di amministrazione intanto giura che va tutto bene
+ * (availableForSale true, 9999 pezzi, sellableOnlineQuantity 9999).
+ *
+ * Il 22 agosto questo teneva fermi TUTTI e 49 i prodotti americani: la vetrina
+ * diceva "Disponibile (0) - Esaurito (49)" e nessuno poteva comprare niente.
+ * La linea europea non ne soffre perche' Printful dichiara
+ * inventoryManagement: true e Shopify le lascia gestire la scorta.
+ *
+ * Il rimedio, per ogni variante nuova:
+ *   inventoryActivate(inventoryItemId, locationId: <Sede del negozio>,
+ *                     available: 9999)
+ * Dopo, la stessa pagina risponde available:true e il carrello accetta.
+ *
+ * Controllo veloce dopo ogni pubblicazione, senza aprire l'admin:
+ *   /collections/all?country=US -> il filtro deve dire "Esaurito (0)"
  */
 
 const fs = require('fs');
