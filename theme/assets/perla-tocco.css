@@ -1,0 +1,201 @@
+/* Il telefono: niente si muove sotto il dito, e quello che c'e' scritto si legge.
+ *
+ * PERCHE' UN FILE A PARTE
+ * Le regole da correggere stanno in base.css (124 KB) e perla-studio.css
+ * (28 KB). Riscrivere per intero centocinquanta chilobyte per cambiarne sei
+ * e' il modo piu' rapido di rompere il negozio. Questo foglio si carica per
+ * ultimo, quindi a parita' di specificita' vince per ordine, e si legge tutto
+ * in una schermata.
+ *
+ * COSA SI E' ROTTO, MISURATO SUL SITO
+ * 1. Toccando il menu le tre lineette si spostavano: .icon-btn:active porta
+ *    scale(.96) e .icon-btn ha transition .2s, quindi il pulsante si
+ *    rimpicciolisce lentamente e l'icona dentro striscia di un pixel.
+ * 2. Ogni tasto cambiava dimensione sotto il dito, per la stessa ragione.
+ * 3. Attorno a quello che si tocca compariva un riquadro grigio: nessuno
+ *    aveva mai impostato -webkit-tap-highlight-color, e allora lo disegna il
+ *    telefono, con il suo colore, non con i nostri.
+ * 4. Nell'editor le cose restavano ingrandite DOPO il tocco: su un dispositivo
+ *    touch :hover resta attaccato all'ultimo elemento toccato finche' non ne
+ *    tocchi un altro, e perla-studio.css ha ventisette regole :hover senza
+ *    nessuna protezione.
+ *
+ * IL PRINCIPIO
+ * Un ritorno tattile serve -- il dito copre il tasto e senza risposta non sai
+ * se hai premuto. Ma deve essere un cambio di COLORE, non di GEOMETRIA: il
+ * colore lo vedi col dito appoggiato sopra, un ridimensionamento di due punti
+ * percentuali no, e intanto sposta quello che c'e' intorno.
+ */
+
+/* 1 — Il riquadro del telefono non lo vogliamo: il ritorno lo diamo noi. */
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 2 — Nessun tasto cambia piu' dimensione quando lo premi.
+ *
+ * !important perche' le regole originali ce l'hanno: in base.css c'e'
+ * .btn:active{transform:scale(.97)!important} dentro una media query, e senza
+ * !important qui non la si scavalca. A parita' di peso vince chi arriva dopo,
+ * e questo foglio arriva dopo. */
+.btn:active,
+.btn:focus:active,
+.icon-btn:active,
+.menu-toggle:active,
+.card__add:active,
+.quick-add:active,
+.hear-chip:active,
+.qty button:active,
+.assistant__bubble:active,
+.assistant__ask-send:active,
+.photo-studio__tool:active,
+.fabric-studio__add-btn:active,
+.name-color-swatch:active,
+.name-font-swatch:active,
+.variant-pill:active,
+.taglia-aiuto__apri:active {
+  transform: none !important;
+}
+
+/* Al posto del ridimensionamento, un velo che si accende e si spegne subito.
+ * 90ms: si vede, e non fa in tempo a sembrare un'animazione. */
+.btn:active,
+.card__add:active,
+.quick-add:active,
+.fabric-studio__add-btn:active {
+  filter: brightness(0.92);
+  transition: filter 90ms linear;
+}
+
+.icon-btn:active,
+.menu-toggle:active,
+.photo-studio__tool:active,
+.assistant__ask-send:active {
+  background: color-mix(in srgb, var(--color-ink) 12%, transparent);
+  transition: background 90ms linear;
+}
+
+/* 3 — Il dito non ha il passaggio del mouse.
+ *
+ * base.css una protezione ce l'ha gia', ma si ferma alle schede e ai pulsanti
+ * del catalogo: l'editor -- dove il cliente tocca di piu' -- era rimasto
+ * scoperto per intero. */
+@media (hover: none), (pointer: coarse) {
+  .name-color-swatch:hover,
+  .name-font-swatch:hover,
+  .photo-studio__tool:hover,
+  .fabric-studio__add-btn:hover,
+  .fabric-studio__sticker:hover,
+  .photo-studio__layer-list li:hover,
+  .rail__nav:hover,
+  .search-result:hover .search-result__media img,
+  .search-card:hover .search-card__img img,
+  .taglia-aiuto__apri:hover,
+  .assistant__chip:hover,
+  .assistant__action:hover,
+  .fullmenu__link:hover span {
+    transform: none !important;
+  }
+
+  /* L'onda dorata a ogni tocco: bella col mouse, invadente col dito, che sta
+   * gia' sopra il punto dove nasce e la copre a meta'. */
+  .ripple {
+    display: none !important;
+  }
+}
+
+/* 4 — Quello che si tocca dev'essere grande abbastanza da toccarlo.
+ *
+ * Quarantaquattro pixel e' la misura che Apple e Google indicano da anni, ed
+ * e' anche il numero che il tema usa gia' per il menu, i pulsanti quantita' e
+ * i collegamenti del piede. Nell'editor era rimasto indietro: i comandi
+ * stavano a 36x36 e le pastiglie del colore a 32x32, cioe' meno di un
+ * polpastrello, in mezzo ad altri comandi.
+ *
+ * Si cresce con l'area di tocco, non col disegno: l'icona resta della sua
+ * misura, e' il bersaglio intorno che si allarga. */
+@media (pointer: coarse) {
+  /* Un pulsante alto 39px non e' un difetto grave, ma non costa niente
+   * portarlo a 44: .btn e' gia' inline-flex con il contenuto centrato,
+   * quindi il testo resta dov'e' e cresce solo la cornice. */
+  .btn {
+    min-height: 44px;
+  }
+
+  .photo-studio__tool,
+  .fabric-studio__add-btn,
+  .wishlist-btn,
+  .assistant__chip,
+  .fabric-studio__sticker,
+  .taglia-aiuto__apri {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* I tre comandi dello zoom sono l'eccezione che si era portata dietro il
+   * suo 36px: perla-studio.css li rimpicciolisce con
+   * .fabric-studio__toolbar--view .photo-studio__tool, due classi, che batte
+   * una classe sola. Qui si risponde con la stessa specificita' -- e a
+   * parita' vince chi arriva dopo, cioe' questo foglio. Serve anche
+   * width/height, perche' li' sono fissati e non basta il minimo. */
+  .fabric-studio__toolbar--view .photo-studio__tool {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Le pastiglie del colore restano tonde e piccole a vedersi: cresce solo
+   * l'area sensibile, con uno pseudo-elemento invisibile centrato sopra.
+   * Stessa cosa per i pallini della galleria, che sono alti sette pixel. */
+  .name-color-swatch,
+  .name-font-swatch,
+  .product__dot {
+    position: relative;
+  }
+  .name-color-swatch::after,
+  .name-font-swatch::after,
+  .product__dot::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+  }
+
+  /* I collegamenti del piede stavano a 22px di altezza: la regola che il tema
+   * aveva gia' guarda .footer__col a, ma questi stanno dentro <li> senza
+   * classe e le sfuggivano. Diventano alti 44 senza cambiare il testo: cresce
+   * la riga, non il carattere. */
+  .footer li > a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+}
+
+/* 5 — Il cartellino "Aggiungi il suo nome" e' scritto a 9,6px, ed e' poco.
+ *
+ * Ci ho provato: portato a 11px va a capo su due righe e la seconda finisce
+ * sotto il cuore dei preferiti -- misurato, 33 schede su 35. Il cartellino e'
+ * largo al massimo 145px dentro una scheda da 169, e non c'e' spazio.
+ *
+ * Ingrandire il testo qui vuol dire prima accorciarlo ("Personalizzabile", che
+ * il tema usa gia' altrove, sta in una riga sola) oppure spostare il cuore.
+ * Sono due decisioni di grafica, non correzioni: le lascio a chi disegna,
+ * invece di rompere la scheda per guadagnare un pixel e mezzo.
+ */
+
+/* 6 — Chi ha chiesto meno animazioni al sistema operativo deve essere
+ * ascoltato anche qui, non solo in base.css. */
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .icon-btn,
+  .card__add,
+  .quick-add,
+  .photo-studio__tool {
+    transition: none !important;
+  }
+}
