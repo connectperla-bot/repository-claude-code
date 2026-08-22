@@ -7,6 +7,17 @@
  * ultimo, quindi a parita' di specificita' vince per ordine, e si legge tutto
  * in una schermata.
  *
+ * DOV'E' AGGANCIATO
+ * In layout/theme.liquid, subito dopo perla-studio.css:
+ *
+ *     {{ 'perla-tocco.css' | asset_url | stylesheet_tag }}
+ *
+ * Quel file non e' copiato in questo repository (ci stanno solo i file
+ * toccati da questo lavoro, e theme.liquid e' cambiato di una riga sola):
+ * la riga qui sopra e' tutto quello che serve per rimetterla se un giorno il
+ * tema venisse ricostruito da zero. L'ORDINE CONTA: se finisce prima di
+ * base.css non corregge piu' niente.
+ *
  * COSA SI E' ROTTO, MISURATO SUL SITO
  * 1. Toccando il menu le tre lineette si spostavano: .icon-btn:active porta
  *    scale(.96) e .icon-btn ha transition .2s, quindi il pulsante si
