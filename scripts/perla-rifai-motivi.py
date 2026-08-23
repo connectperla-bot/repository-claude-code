@@ -22,13 +22,19 @@ Tutte e tre si correggono senza toccare il disegno, ed e' quello che fa questo
 script: perla-piastrelle-originali.py estrae la piastrella vera, la porta alla
 misura fisica giusta e la stende sull'area di stampa senza mai ingrandirla.
 
-DOVE PESCA
-  linea EU    generated-designs/motivi-stampa/_originali/ -- 62 file alla
-              misura nativa di stampa, uno per prodotto, con lo stesso nome.
-  linea USA   generated-designs/*.jpg -- le sorgenti di quella linea. Sono
-              piccole (1280x720), ma AFFIANCATE a grandezza naturale danno un
-              file nitido a qualunque misura, che e' esattamente cio' che
-              ingrandirle non faceva.
+SOLO LA LINEA EUROPEA, E PERCHE'
+Qui si tocca esclusivamente la linea EU, dove in
+generated-designs/motivi-stampa/_originali/ c'e' un originale nativo PER OGNI
+PRODOTTO, con lo stesso nome: la corrispondenza e' esatta e non si indovina
+niente.
+
+La linea americana ne e' fuori, ed e' una correzione a un mio errore. Avevo
+provato a pescare le sue sorgenti dai file sparsi in generated-designs/, ma li'
+per le medagliette esiste UN SOLO file: 14 medagliette su 16 avrebbero stampato
+lo stesso identico disegno, al posto dei 16 diversi che hanno oggi. Lo stesso,
+in piccolo, su tre coppie di bandane. I file di stampa americani buoni esistono
+gia' su Printify -- uno per prodotto, alla misura esatta dell'area, scala 1,0 --
+e vanno letti da li', non ricostruiti a naso da questo repository.
 
 QUANDO NON C'E' UN ORIGINALE BUONO NON SI INVENTA
 Il prodotto viene elencato e lasciato com'e'. Scelta della titolare, ed e' la
@@ -118,31 +124,8 @@ def sorgente(handle, titolo, tipo):
                 return os.path.join(tessere.ORIGINALI, f), nome
         return None, None
 
-    # Linea americana: le sorgenti hanno nomi propri, si cerca per parole in
-    # comune con handle e titolo. Il TITOLO conta di piu' -- e' l'unica delle
-    # due cose che il cliente legge, e sulla linea americana i due non vanno
-    # d'accordo: `bandana-damask-navy` si chiama Bandana "Paisley".
-    testo = (titolo + " " + handle).lower()
-    migliore = None
-    for nome, f in _originali_per("", SORGENTI_USA):
-        parole = [p for p in nome.lower().replace("_", "-").split("-")
-                  if len(p) > 3 and p not in ("perla", "italia", "bandana",
-                                              "cuccia", "collar", "tag", "new")]
-        if not parole:
-            continue
-        punti = sum(1 for p in parole if p in testo)
-        # Preferenza forte per la stessa famiglia. Senza, a parita' di parole
-        # in comune vinceva il nome piu' lungo: la bandana "Diamante" pescava
-        # dal disegno della CUCCIA "geometric charcoal silver" invece che da
-        # quello della bandana omonima. Un disegno pensato per un altro
-        # oggetto puo' anche funzionare, ma se quello giusto c'e' si usa
-        # quello.
-        if punti and nome.lower().startswith(tipo.split("-")[0]):
-            punti += 10
-        if punti and (migliore is None or punti > migliore[0]):
-            migliore = (punti, os.path.join(SORGENTI_USA, f), nome)
-    if migliore:
-        return migliore[1], migliore[2]
+    # Fuori dalla linea EU non si cerca: vedi la nota in cima. Meglio
+    # nessun file che il file di un altro prodotto.
     return None, None
 
 
@@ -163,6 +146,10 @@ def main(argv):
         os.makedirs(USCITA, exist_ok=True)
     conteggio = {}
     saltati = []
+    # NESSUN PRODOTTO PUO' RICEVERE IL DISEGNO DI UN ALTRO.
+    # E' la guardia che mi mancava e che sarebbe bastata a fermare il disastro
+    # delle 14 medagliette gemelle. Non e' un avviso: la generazione si ferma.
+    gia_visti = {}
     print("%-50s %-15s %-22s %s" % ("prodotto", "area", "originale", "esito"))
     for handle, titolo, _id, linea in elenco_prodotti():
         if any(p in handle.lower() for p in NEUTRI) or "crea il tuo" in titolo.lower():
@@ -178,6 +165,14 @@ def main(argv):
             conteggio["senza-originale"] = conteggio.get("senza-originale", 0) + 1
             saltati.append((handle, "nessun originale corrispondente"))
             continue
+
+        if percorso in gia_visti:
+            raise SystemExit(
+                "FERMO: %s e %s userebbero lo stesso disegno (%s).\n"
+                "Due prodotti col medesimo disegno sono un difetto peggiore di\n"
+                "quello che si stava correggendo." %
+                (gia_visti[percorso], handle, os.path.basename(percorso)))
+        gia_visti[percorso] = handle
 
         nota = ""
         if scrivi:
