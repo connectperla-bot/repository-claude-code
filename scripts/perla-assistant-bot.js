@@ -186,13 +186,69 @@ app.post('/assistant/ask', limitePerIp, async function (req, res) {
 // guardando il puntino che lampeggia. Con questa scaletta il caso peggiore
 // resta sotto gli 8 secondi, e chi non riceve risposta viene comunque passato
 // a una persona (vedi RISPOSTA_AI_GIU) invece di leggere un errore.
-const TENTATIVI = [
-  { modello: 'gemini-flash-latest', attesaPrima: 0 },
-  { modello: 'gemini-flash-latest', attesaPrima: 350 },
-  { modello: 'gemini-flash-lite-latest', attesaPrima: 0 },
-  { modello: 'gemini-flash-lite-latest', attesaPrima: 900 },
-];
+const MODELLO_PRIMARIO = 'gemini-flash-latest';
 const BUDGET_MS = 8000;
+const PAUSE = [0, 350, 0, 900];
+
+// ROUND 47b -- il modello di riserva si chiede a Google, non si indovina.
+//
+// Alla prima stesura avevo scritto a mano 'gemini-flash-lite-latest', seguendo
+// la convenzione di nomi del primario. In produzione i ripieghi tornavano in
+// 0,8-1,2 secondi: troppo presto perche' i quattro tentativi fossero avvenuti
+// (le sole pause valgono 1,25 s). Il secondo modello veniva scartato subito --
+// 404, quel nome non esiste. Indovinare un altro nome sarebbe lo stesso errore
+// una seconda volta.
+//
+// Ora l'elenco si chiede all'avvio e si tiene solo cio' che dichiara di saper
+// fare generateContent. Si guadagna anche dell'altro: quando Google ritirera'
+// il modello primario -- e prima o poi lo fa -- il servizio se ne accorge da
+// solo invece di tacere finche' qualcuno non legge i log.
+//
+// La scoperta e' volutamente non bloccante: se ListModels non risponde, si
+// parte lo stesso con il solo primario, che e' esattamente il comportamento
+// precedente. Niente di quello che c'e' oggi puo' peggiorare per colpa di
+// questa aggiunta.
+let RISERVE = [];
+
+async function scopriRiserve() {
+  const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?key=' +
+    GEMINI_API_KEY);
+  if (!r.ok) {
+    throw new Error('ListModels (' + r.status + '): ' + (await r.text()).slice(0, 200));
+  }
+  const dati = await r.json();
+  return (dati.models || [])
+    .filter(function (m) {
+      return (m.supportedGenerationMethods || []).indexOf('generateContent') >= 0;
+    })
+    .map(function (m) { return String(m.name || '').replace(/^models\//, ''); })
+    // Solo i "flash": sono i piu' veloci e i piu' capienti del piano gratuito.
+    // Fuori le varianti che non servono a una chat di testo e che
+    // risponderebbero male o costerebbero di piu' del necessario.
+    .filter(function (nome) {
+      return /flash/.test(nome) &&
+        !/(thinking|image|audio|live|tts|embedding|vision)/i.test(nome) &&
+        nome !== MODELLO_PRIMARIO;
+    });
+}
+
+scopriRiserve().then(function (trovati) {
+  RISERVE = trovati.slice(0, 2);
+  console.log('Modelli di riserva disponibili: ' +
+    (RISERVE.length ? RISERVE.join(', ') : 'nessuno'));
+}).catch(function (err) {
+  console.error('Elenco modelli non recuperato, si usa solo ' + MODELLO_PRIMARIO +
+    ': ' + err.message);
+});
+
+// La scaletta si ricompone a ogni domanda, perche' RISERVE arriva dalla rete e
+// puo' popolarsi dopo l'avvio.
+function scaletta() {
+  const modelli = [MODELLO_PRIMARIO, MODELLO_PRIMARIO].concat(RISERVE);
+  return modelli.map(function (modello, i) {
+    return { modello: modello, attesaPrima: PAUSE[Math.min(i, PAUSE.length - 1)] };
+  });
+}
 
 // 429 = troppe richieste, 5xx = problema loro: tutti passeggeri, si riprova.
 // 400/401/403 no: chiave sbagliata o richiesta malformata non guariscono
@@ -212,7 +268,7 @@ async function askGemini(message) {
   let ultimoErrore = null;
   let modelloMorto = null;
 
-  for (const tentativo of TENTATIVI) {
+  for (const tentativo of scaletta()) {
     if (tentativo.modello === modelloMorto) continue;
     if (tentativo.attesaPrima) {
       if (Date.now() + tentativo.attesaPrima >= scadenza) break;
