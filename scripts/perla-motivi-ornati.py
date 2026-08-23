@@ -94,8 +94,24 @@ def _piastrella(W, H, px, py, cella, fondo, mezzo_salto=False, ss=2):
     di volte nell'altezza (600), quindi il bordo cadeva a meta' cella. E' lo
     stesso motivo per cui sul negozio si vedono motivi interi da un lato e
     mozzi dall'altro."""
-    return _geo._piastrella(W, H, _passo_intero(W, px), _passo_intero(H, py),
-                            cella, fondo, mezzo_salto, ss)
+    px = _passo_intero(W, px)
+    py = _passo_intero(H, py)
+    # Il mezzo salto sfasa le colonne alterne di mezzo periodo. Su una tela
+    # ampia arricchisce il disegno; su un nastro dove ci stanno due sole file
+    # -- collare, guinzaglio -- garantisce invece che META' delle colonne
+    # nasca tagliata dal bordo, perche' il loro centro cade proprio li'.
+    # Visto sul primo collare "Medaglioni" a misura vera: file intere in una
+    # colonna, mezzi medaglioni in quella accanto.
+    if mezzo_salto and H / py < 4:
+        mezzo_salto = False
+    # Il supercampionamento moltiplica per quattro i pixel in memoria. Sulla
+    # cuccia (15600 x 12600 = 196 Mpx) diventerebbero 786 Mpx, cioe' oltre due
+    # gigabyte per una sola immagine. A 124 px/cm il bordo scalettato e' sotto
+    # il decimo di millimetro e nessuno lo vedra' mai: sulle tele enormi il
+    # supercampionamento si spegne, e si spende quella memoria dove serve.
+    if W * H > 30_000_000:
+        ss = 1
+    return _geo._piastrella(W, H, px, py, cella, fondo, mezzo_salto, ss)
 
 # Serif largamente disponibile, in famiglia con il Playfair del tema. Se manca
 # si scende di grado invece di fallire: un marchio con un altro carattere e'
@@ -423,17 +439,33 @@ MOTIVI = {
 
 # ---- il marchio, piccolo e mai tagliato -----------------------------------
 
-# Altezza del riquadro del marchio, in centimetri di prodotto finito. Nove
-# millimetri: si legge da vicino su una bandana e resta discreto su un
-# collare, dove l'area e' alta 2,5 cm.
-MARCHIO_CM = 0.9
+# Altezza del riquadro del marchio, in centimetri di prodotto finito.
+# Prima stesura: 9 mm. Guardato il collare a misura vera, su un nastro alto
+# 2,5 cm occupavano oltre un terzo dell'altezza e la scritta sembrava
+# un'etichetta appiccicata sopra il disegno. 4,5 mm: si legge da vicino e
+# lascia il motivo padrone del campo, che e' cio' che si e' scelto.
+MARCHIO_CM = 0.45
 # Ogni quanto si ripete, in centimetri. Rado di proposito: il marchio
 # accompagna il motivo, non lo sostituisce.
 MARCHIO_PASSO_CM = 16.0
 
 
+def altezza_marchio(tipo):
+    """Quanto grande, in centimetri, su questo prodotto.
+
+    Una misura fissa per tutti non funziona in nessuna delle due direzioni:
+    4,5 mm sono giusti sul collare e spariscono su una bandana da 68 cm,
+    9 mm sono giusti sulla bandana e sul collare occupano un terzo
+    dell'altezza. Si lega quindi al lato corto -- il 2,5% -- dentro due
+    estremi: mai sotto i 4,5 mm, che e' il limite sotto cui non si legge piu',
+    e mai sopra i 12 mm, che e' dove smetterebbe di essere discreto.
+    """
+    corto = _scala.AREE[tipo].cm_h
+    return min(1.2, max(0.45, corto * 0.025))
+
+
 def marchi_interi(im, tipo, testo="PERLA ITALIA", colore=None, opacita=0.62,
-                  passo_cm=MARCHIO_PASSO_CM, altezza_cm=MARCHIO_CM):
+                  passo_cm=MARCHIO_PASSO_CM, altezza_cm=None):
     """Stampa il marchio su una griglia, saltando quelli che uscirebbero.
 
     LA REGOLA
@@ -449,6 +481,8 @@ def marchi_interi(im, tipo, testo="PERLA ITALIA", colore=None, opacita=0.62,
     """
     a = _scala.AREE[tipo]
     ppc = _scala.px_per_cm(tipo)
+    if altezza_cm is None:
+        altezza_cm = altezza_marchio(tipo)
     alt = max(8.0, altezza_cm * ppc)
     passo = max(alt * 2.4, passo_cm * ppc)
 
@@ -480,7 +514,20 @@ def marchi_interi(im, tipo, testo="PERLA ITALIA", colore=None, opacita=0.62,
             l, t = cx - mw / 2, cy - mh / 2
             if l < 0 or t < 0 or l + mw > W or t + mh > H:
                 continue          # uscirebbe: si salta, non si taglia
-            d.text((cx - tw / 2 - x0, cy - th / 2 - y0), testo, font=font, fill=rgba)
+            # Le lettere si incastrano nel motivo e si leggono a fatica.
+            # Primo tentativo: un cartiglio traslucido dietro. Guardato sul
+            # collare a misura vera sembrava un adesivo appiccicato sopra il
+            # damascato -- un rettangolo netto in mezzo a un disegno che di
+            # rettangoli non ne ha. Un alone scuro attorno alle lettere fa lo
+            # stesso lavoro senza introdurre una forma che non c'entra.
+            tx, ty = cx - tw / 2 - x0, cy - th / 2 - y0
+            alone = (0, 0, 0, int(150 * opacita))
+            raggio = max(1, int(alt * 0.06))
+            for ox in range(-raggio, raggio + 1):
+                for oy in range(-raggio, raggio + 1):
+                    if ox or oy:
+                        d.text((tx + ox, ty + oy), testo, font=font, fill=alone)
+            d.text((tx, ty), testo, font=font, fill=rgba)
             stampati += 1
     return stampati
 
