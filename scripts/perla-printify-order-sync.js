@@ -177,6 +177,19 @@ app.use(function (req, res, next) {
 app.use(express.raw({ type: 'application/json', limit: '2mb' }));
 
 function verifyShopifyWebhook(req) {
+  // ROUND 46 -- il corpo DEVE essere un Buffer.
+  //
+  // express.raw() qui sopra e' registrato con type: 'application/json': se la
+  // richiesta arriva senza quel Content-Type il corpo non viene letto come
+  // grezzo e req.body resta l'oggetto vuoto {}. crypto.update() con un oggetto
+  // non restituisce false: SOLLEVA un'eccezione, che risaliva fino al catch
+  // esterno e faceva rispondere 500. E 500 per Shopify significa "riprova", per
+  // 48 ore -- l'esatto contrario di quello che vuole il commento piu' sotto.
+  // Nessun rischio dagli ordini veri (Shopify manda sempre application/json),
+  // ma qualunque altra chiamata all'indirizzo -- una scansione automatica, un
+  // servizio mal configurato -- avviava una raffica di errori e di ritenti.
+  if (!Buffer.isBuffer(req.body)) return false;
+
   const hmacHeader = req.get('X-Shopify-Hmac-Sha256') || '';
   const digest = crypto
     .createHmac('sha256', SHOPIFY_WEBHOOK_SECRET)
@@ -191,7 +204,24 @@ function verifyShopifyWebhook(req) {
 
 app.post('/webhooks/orders-create', async function (req, res) {
   try {
+    // ROUND 46 -- ogni chiamata lascia una traccia, riuscita o no.
+    //
+    // Prima, una firma sbagliata rispondeva 401 senza scrivere NIENTE nei log.
+    // Dal pannello Render il risultato era indistinguibile da "il webhook non
+    // e' mai arrivato": lo stesso silenzio per due guasti opposti -- il secret
+    // sbagliato (si corregge su Render) e l'URL sbagliato (si corregge su
+    // Shopify) -- che non si possono nemmeno distinguere, figurarsi correggere.
+    // E il primo controllo che si fa dopo aver creato il webhook e' proprio
+    // guardare i log, dove non c'era niente da guardare.
+    console.log('Webhook ricevuto: ' + (req.get('X-Shopify-Topic') || 'topic sconosciuto') +
+      ' da ' + (req.get('X-Shopify-Shop-Domain') || 'negozio sconosciuto') +
+      ' (' + ((req.body && req.body.length) || 0) + ' byte)');
+
     if (!verifyShopifyWebhook(req)) {
+      console.error('Firma non valida: la chiamata non viene da Shopify, oppure ' +
+        'SHOPIFY_WEBHOOK_SECRET su Render non corrisponde al secret del negozio ' +
+        '(Shopify > Impostazioni > Notifiche > Webhook, riga in fondo alla ' +
+        'pagina). Richiesta rifiutata, niente e\' stato elaborato.');
       return res.status(401).send('Firma non valida');
     }
 
