@@ -73,6 +73,23 @@ const SEGNALE = /\s*\[PERSONA\]\s*/i;
 const RISPOSTA_PERSONA = 'Ti apro subito la chat con noi: scrivi pure li\', ' +
   'ti risponde una persona del team.';
 
+// ROUND 47 -- cosa si dice quando il modello non risponde affatto.
+//
+// Misurato in produzione il 23 agosto: 7 domande su 10 tornavano
+// "Servizio AI non disponibile" per un 503 UNAVAILABLE di Google ("this model
+// is currently experiencing high demand"). Il tema, davanti a quell'errore,
+// mostra "Non riesco a risponderti proprio ora. Scrivici via email.": un
+// vicolo cieco proprio mentre il cliente sta chiedendo qualcosa. Quel
+// messaggio non porta da nessuna parte, e l'email e' il canale piu' lento che
+// abbiamo.
+//
+// Adesso il fallimento del modello degrada verso la persona invece che verso
+// il nulla: si risponde 200 con un testo utile e apri_chat, e il tema apre la
+// chat come per una richiesta esplicita. Il guasto resta visibile dove serve
+// -- nei log di Render -- non davanti al cliente.
+const RISPOSTA_AI_GIU = 'In questo momento non riesco a rispondere da solo. ' +
+  'Ti apro la chat con noi: scrivi pure li\', ti risponde una persona del team.';
+
 const app = express();
 app.use(express.json({ limit: '10kb' }));
 
@@ -149,14 +166,76 @@ app.post('/assistant/ask', limitePerIp, async function (req, res) {
     if (chiedePersona) {
       return res.json({ reply: RISPOSTA_PERSONA, apri_chat: true });
     }
-    res.status(502).json({ error: 'Servizio AI non disponibile' });
+    res.json({ reply: RISPOSTA_AI_GIU, apri_chat: true });
   }
 });
 
+// ROUND 47 -- il 503 di Google si riprova, non si subisce.
+//
+// "This model is currently experiencing high demand" e' per definizione
+// temporaneo, e infatti su dieci domande identiche tre passavano e sette no.
+// Una singola chiamata secca trasformava un intoppo di un secondo nel
+// fallimento della conversazione.
+//
+// Due leve, in quest'ordine:
+//   1. si riprova lo stesso modello dopo una pausa breve;
+//   2. si passa a un modello diverso, che ha capacita' sua e quasi mai e'
+//      sovraccarico nello stesso istante.
+//
+// I tempi sono tarati su una chat, non su un lavoro in coda: il cliente sta
+// guardando il puntino che lampeggia. Con questa scaletta il caso peggiore
+// resta sotto gli 8 secondi, e chi non riceve risposta viene comunque passato
+// a una persona (vedi RISPOSTA_AI_GIU) invece di leggere un errore.
+const TENTATIVI = [
+  { modello: 'gemini-flash-latest', attesaPrima: 0 },
+  { modello: 'gemini-flash-latest', attesaPrima: 350 },
+  { modello: 'gemini-flash-lite-latest', attesaPrima: 0 },
+  { modello: 'gemini-flash-lite-latest', attesaPrima: 900 },
+];
+const BUDGET_MS = 8000;
+
+// 429 = troppe richieste, 5xx = problema loro: tutti passeggeri, si riprova.
+// 400/401/403 no: chiave sbagliata o richiesta malformata non guariscono
+// insistendo, e insistere ruberebbe secondi al cliente per niente.
+// 404 e' il caso di mezzo -- modello ritirato: inutile ripetere lo stesso
+// nome, ha senso solo passare al successivo.
+function transitorio(stato) {
+  return stato === 429 || stato >= 500;
+}
+
+function pausa(ms) {
+  return new Promise(function (r) { setTimeout(r, ms); });
+}
+
 async function askGemini(message) {
+  const scadenza = Date.now() + BUDGET_MS;
+  let ultimoErrore = null;
+  let modelloMorto = null;
+
+  for (const tentativo of TENTATIVI) {
+    if (tentativo.modello === modelloMorto) continue;
+    if (tentativo.attesaPrima) {
+      if (Date.now() + tentativo.attesaPrima >= scadenza) break;
+      await pausa(tentativo.attesaPrima);
+    }
+    if (Date.now() >= scadenza) break;
+
+    try {
+      return await unaChiamata(tentativo.modello, message);
+    } catch (err) {
+      ultimoErrore = err;
+      if (err.stato === 404) { modelloMorto = tentativo.modello; continue; }
+      if (err.stato && !transitorio(err.stato)) throw err;
+    }
+  }
+
+  throw ultimoErrore || new Error('Gemini non raggiungibile entro il tempo utile');
+}
+
+async function unaChiamata(modello, message) {
   const url =
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=' +
-    GEMINI_API_KEY;
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modello +
+    ':generateContent?key=' + GEMINI_API_KEY;
 
   const response = await fetch(url, {
     method: 'POST',
@@ -174,7 +253,10 @@ async function askGemini(message) {
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error('Gemini API error (' + response.status + '): ' + text);
+    const err = new Error('Gemini API error (' + response.status + ') su ' +
+      modello + ': ' + text);
+    err.stato = response.status;   // askGemini decide se vale la pena riprovare
+    throw err;
   }
 
   const data = await response.json();

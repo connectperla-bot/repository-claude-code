@@ -94,12 +94,42 @@ async function aspettaAvvio(tentativi) {
       assert.strictEqual(r.corpo.apri_chat, true);
     });
 
-    await prova('una domanda normale NON apre la chat', async function () {
+    // ROUND 47 -- questa prova diceva l'opposto, e il 23 agosto la produzione
+    // ha spiegato perche' era sbagliata: sette domande su dieci tornavano
+    // "Servizio AI non disponibile" per un 503 di Google, e il tema mostrava
+    // "Scrivici via email" -- un vicolo cieco. Il ripiego giusto quando il
+    // modello tace non e' l'errore: e' la persona.
+    //
+    // Con la chiave finta il modello non risponde mai, quindi qui si esercita
+    // sempre quel ramo. Cio' che resta distinguibile, e che conta, e' che le
+    // due strade dicano cose diverse: chi ha chiesto una persona non deve
+    // sentirsi rispondere che l'assistente e' guasto.
+    await prova('se il modello tace, anche una domanda normale passa a una persona', async function () {
       const r = await chiedi('quanto costa la spedizione in Italia?');
-      // col modello finto questa fallisce, ed e' giusto: non c'e' nessuna
-      // persona da chiamare per una domanda a cui il bot saprebbe rispondere
-      assert.strictEqual(r.stato, 502);
-      assert.notStrictEqual(r.corpo.apri_chat, true);
+      assert.strictEqual(r.stato, 200, 'un errore secco lascia il cliente a un vicolo cieco');
+      assert.strictEqual(r.corpo.apri_chat, true);
+      assert.ok(/non riesco a rispondere/i.test(r.corpo.reply || ''),
+        'risposta inattesa: ' + r.corpo.reply);
+    });
+
+    await prova('chi chiede una persona non sente parlare di guasti', async function () {
+      const r = await chiedi('voglio parlare con una persona');
+      assert.ok(/apro subito la chat/i.test(r.corpo.reply || ''),
+        'risposta inattesa: ' + r.corpo.reply);
+      assert.ok(!/non riesco a rispondere/i.test(r.corpo.reply || ''),
+        'a chi chiede aiuto non si racconta che il bot e\' rotto');
+    });
+
+    // I nuovi tentativi servono per il 503 ("alta domanda"), che passa da solo.
+    // Una chiave sbagliata e' un 400 e non guarisce insistendo: se finisse
+    // nella scaletta dei tentativi il cliente aspetterebbe otto secondi per
+    // ricevere comunque niente. Qui la chiave e' finta, quindi il tempo di
+    // risposta e' la misura diretta che il 400 non viene ripetuto.
+    await prova('una chiave sbagliata non fa aspettare il cliente', async function () {
+      const inizio = Date.now();
+      await chiedi('quanto costa la spedizione in Italia?');
+      const durata = Date.now() - inizio;
+      assert.ok(durata < 3000, 'ha impiegato ' + durata + ' ms: sta riprovando un errore che non passa');
     });
 
     await prova('nessun segnale [PERSONA] finisce sotto gli occhi del cliente', async function () {
