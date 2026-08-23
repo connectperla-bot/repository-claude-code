@@ -1,0 +1,78 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "ordina": {
+      "type": "perla-come-si-ordina",
+      "settings": {
+        "eyebrow": "Prima volta qui?",
+        "heading": "Come si ordina",
+        "intro": "<p>Personalizzare un pezzo Perla richiede due minuti e non serve saper usare niente di particolare. Qui sotto c'è l'ordine completo, passo per passo, con le schermate che troverai davvero.</p>",
+        "coda": "<p>Se qualcosa non torna, scrivici prima di ordinare: è molto più facile sistemare un design adesso che un pacco dopo.</p>",
+        "cta_link": "/collections/personalizzati-con-il-nome",
+        "cta_label": "Scegli il tuo pezzo",
+        "bg": "default"
+      },
+      "blocks": {
+        "p1": {
+          "type": "passo",
+          "settings": {
+            "titolo": "Scegli il pezzo",
+            "testo": "Collare, bandana, medaglietta, ciotola, guinzaglio o cuccia. I prodotti che si possono personalizzare hanno la scritta «Aggiungi il suo nome» sulla scheda."
+          }
+        },
+        "p2": {
+          "type": "passo",
+          "settings": {
+            "titolo": "Dicci quanto pesa il tuo cane",
+            "testo": "Sui prodotti con più di una taglia trovi «Non sai la taglia? Te la diciamo noi»: scrivi il peso, o la razza, e la taglia giusta si seleziona da sola. Se hai un metro da sarta, la misura del collo è ancora più precisa."
+          }
+        },
+        "p3": {
+          "type": "passo",
+          "settings": {
+            "titolo": "Apri lo studio e metti il nome",
+            "testo": "Sotto alle foto c'è l'area di stampa: quello che vedi lì è esattamente lo spazio che verrà stampato. Premi «+ Testo», scrivi il nome del tuo pet e scegli carattere e colore."
+          }
+        },
+        "p4": {
+          "type": "passo",
+          "settings": {
+            "titolo": "Sposta, ingrandisci, ruota",
+            "testo": "Trascina il nome dove lo vuoi. Se preferisci i numeri esatti ci sono i campi X, Y e rotazione. Sui prodotti «Crea il Tuo Design» puoi anche caricare una foto e aggiungere adesivi."
+          }
+        },
+        "p5": {
+          "type": "passo",
+          "settings": {
+            "titolo": "Guarda l'anteprima vera",
+            "testo": "Premi «Genera anteprima reale»: il disegno viene montato sul prodotto come lo vedrà lo stampatore. È il momento di controllare le maiuscole e gli accenti, perché dopo si stampa così."
+          }
+        },
+        "p6": {
+          "type": "passo",
+          "settings": {
+            "titolo": "Aggiungi al carrello",
+            "testo": "Se il design non è stato caricato bene, il carrello si ferma e te lo dice: è una protezione voluta, serve a non farti pagare un pezzo che non si potrebbe stampare."
+          }
+        },
+        "p7": {
+          "type": "passo",
+          "settings": {
+            "titolo": "Poi ci pensiamo noi",
+            "testo": "L'ordine parte in stampa entro un giorno lavorativo. Italia 4-8 giorni, Europa e Stati Uniti 5-12. Il codice di tracciamento arriva via email appena il pacco si muove."
+          }
+        }
+      },
+      "block_order": ["p1", "p2", "p3", "p4", "p5", "p6", "p7"]
+    }
+  },
+  "order": ["ordina"]
+}
