@@ -116,6 +116,15 @@ def clic(p, sel):
             return False
 
 
+def sullo_stesso_posto(p):
+    """Vero se siamo ancora sulla scheda prodotto.
+
+    Serve perche' un clic andato a vuoto su un link non fallisce: porta
+    altrove, e da li' in poi ogni scatto ritrae la pagina sbagliata senza che
+    niente segnali l'errore."""
+    return p.url.rstrip("/").endswith("index.html") or "index.html" in p.url
+
+
 def scatta(p, n, nome):
     os.makedirs(USCITA, exist_ok=True)
     percorso = "%s/%d-%s.png" % (USCITA, n, nome)
@@ -145,12 +154,22 @@ def passeggiata(p):
         clic(p, "[data-taglia-calcola]")
         fatti.append(scatta(p, 2, "la-taglia"))
 
-    # 3 — si apre lo studio
-    for sel in ("[data-open-studio]", "text=Personalizza", ".product__customize",
-                "[data-photo-customizer] button", "text=Aggiungi il suo nome"):
+    # 3 — si apre lo studio.
+    # I selettori sono TUTTI dentro [data-photo-customizer], e nessuno e' un
+    # "text=". Prima c'era `text=Personalizza`, che e' una ricerca per
+    # sottostringa: agganciava la voce di menu "Personalizzati con il Nome",
+    # la pagina navigava via, e le foto dal terzo passo in poi erano cinque
+    # copie della stessa schermata sbagliata -- tutte da 17 915 byte, identiche
+    # al byte, che e' il modo in cui il difetto si e' fatto notare.
+    for sel in ("[data-photo-customizer] [data-open-studio]",
+                "[data-photo-customizer] [data-add-text]",
+                "[data-photo-customizer] [data-photo-input]"):
         if clic(p, sel):
             break
     p.wait_for_timeout(1200)
+    if not sullo_stesso_posto(p):
+        raise SystemExit("La pagina e' navigata via aprendo lo studio: "
+                         "un selettore ha agganciato un link invece di un comando.")
     fatti.append(scatta(p, 3, "lo-studio"))
 
     # 4 — il nome. Non si scrive dentro la tela: il tema ha un campo normale
