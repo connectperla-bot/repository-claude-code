@@ -553,6 +553,78 @@
     });
   }
 
+  /* -------------------------------------------------------------------------
+     7. IL FILE DI STAMPA ALLA RISOLUZIONE CHE L'AREA CHIEDE
+
+     IL DIFETTO, MISURATO
+     In assets/global.js, buildComposite() esporta sempre 2000 px sul lato
+     lungo, qualunque sia l'area di stampa:
+
+         var EXPORT_BASE = 2000,
+             exportW = ratio >= 1 ? EXPORT_BASE : Math.round(EXPORT_BASE * ratio),
+             multiplier = exportW / canvasW;
+
+     Confrontato con le aree vere (scripts/perla-scala-stampa.py):
+
+         guinzaglio EU  12389x219    ->  2000x35     3% dei pixel
+         cuccia USA     15600x12600  ->  2000x1615   2%
+         collare EU      7169x315    ->  2000x88     8%
+         ciotola EU      6496x803    ->  2000x247    9%
+         bandana EU      4125x4125   ->  2000x2000  24%
+
+     Il fornitore riceve quell'immagine e la ingrandisce fino all'area: un nome
+     scritto su una tela alta 35 px e portato a 219 non e' piu' una scritta, e'
+     una sbavatura. E' questo che si vede come "la scritta viene rimpicciolita",
+     ed e' anche la seconda causa -- indipendente dalla risoluzione delle
+     sorgenti -- del "sembrano impastati" da cui e' partito tutto.
+
+     Le proporzioni invece sono giuste: misurato in Chromium, l'inchiostro
+     occupa 0,5043 della tela nell'anteprima e 0,5025 nel file di stampa. Non
+     e' un problema di scala, e' di risoluzione.
+
+     COSA FA
+     Avvolge toDataURL e alza il moltiplicatore SOLO quando ne arriva uno --
+     cioe' solo per il file di stampa. L'anteprima (updateMockupPreview chiama
+     toDataURL senza moltiplicatore) resta identica a oggi.
+
+     I TRE LIMITI, E PERCHE' QUESTI
+       LATO_MAX 4096 e PIXEL_MAX 16 Mpx: oltre, Safari su iPhone smette di
+       disegnare la tela e toDataURL torna un'immagine vuota. Meglio quattro
+       volte i pixel su tutti i telefoni che sedici su nessuno.
+
+       BYTE_MAX: perla-upload-endpoint.js rifiuta oltre MAX_UPLOAD_MB (10 di
+       default, ma sul server puo' essere piu' basso). Si misura il risultato e
+       se sfora si scende, invece di produrre un file che verrebbe respinto --
+       il caricamento non si rompe mai, al massimo si accontenta.
+
+     PERCHE' DA QUI E NON DA global.js: stessa ragione del punto 6. Un bundle
+     minificato da 89 KB non si riscrive a mano per cambiare una costante.
+     ---------------------------------------------------------------------- */
+  var LATO_MAX = 4096;              // lato massimo che ogni telefono regge
+  var PIXEL_MAX = 16e6;             // e la stessa soglia espressa in area
+  var BYTE_MAX = 8 * 1024 * 1024;   // sotto MAX_UPLOAD_MB, con margine
+
+  function quantoSiPuoAlzare(fc, mult) {
+    var w = fc.getWidth() * mult;
+    var h = fc.getHeight() * mult;
+    if (!(w > 0) || !(h > 0)) return 1;
+    var perLato = LATO_MAX / Math.max(w, h);
+    var perArea = Math.sqrt(PIXEL_MAX / (w * h));
+    var k = Math.min(perLato, perArea);
+    return k > 1 ? k : 1;           // non si scende mai sotto quello che c'era
+  }
+
+  function copia(o) {
+    var n = {};
+    for (var k in o) { if (Object.prototype.hasOwnProperty.call(o, k)) n[k] = o[k]; }
+    return n;
+  }
+
+  function byte(dataUrl) {
+    var virgola = dataUrl.indexOf(',');
+    return Math.round((dataUrl.length - virgola - 1) * 0.75);
+  }
+
   function agganciaFabric() {
     var F = window.fabric;
     if (!F || !F.Canvas || !F.Canvas.prototype) return false;
@@ -565,6 +637,42 @@
       }
       return render.apply(this, arguments);
     };
+
+    // La risoluzione del file di stampa. StaticCanvas e' l'antenato di Canvas:
+    // avvolgerlo qui copre entrambi con un solo aggancio.
+    var base = F.StaticCanvas && F.StaticCanvas.prototype;
+    if (base && !base.__perlaRisoluzione) {
+      base.__perlaRisoluzione = true;
+      var esporta = base.toDataURL;
+      base.toDataURL = function (opz) {
+        // Nessun moltiplicatore = anteprima sullo schermo: non si tocca.
+        if (!opz || opz.multiplier == null || opz.__perlaAlzato) {
+          return esporta.apply(this, arguments);
+        }
+        var k = quantoSiPuoAlzare(this, opz.multiplier);
+        if (k <= 1.0001) return esporta.apply(this, arguments);
+
+        var prova = copia(opz);
+        prova.__perlaAlzato = true;
+        prova.multiplier = opz.multiplier * k;
+
+        var url;
+        try {
+          url = esporta.call(this, prova);
+        } catch (err) {
+          return esporta.apply(this, arguments);   // memoria: si torna a prima
+        }
+        // Se il file e' troppo pesante per il caricamento si scende, fino al
+        // massimo a quello che l'editor produceva prima: peggio di cosi' no.
+        var giri = 0;
+        while (byte(url) > BYTE_MAX && prova.multiplier > opz.multiplier && giri < 4) {
+          giri++;
+          prova.multiplier = Math.max(opz.multiplier, prova.multiplier / 1.5);
+          try { url = esporta.call(this, prova); } catch (err) { break; }
+        }
+        return url;
+      };
+    }
     return true;
   }
 

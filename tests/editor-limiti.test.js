@@ -41,9 +41,25 @@ function prova(nome, fn) {
 // ---- finto fabric, ridotto a quello che il file usa davvero ---------------
 
 function fintoFabric() {
+  // StaticCanvas e' l'antenato di Canvas anche in fabric vero: la catena serve,
+  // perche' il file del tema aggancia la risoluzione sull'antenato e i limiti
+  // sul discendente.
+  function StaticCanvas() {}
+  StaticCanvas.prototype.toDataURL = function (opz) {
+    const m = (opz && opz.multiplier) || 1;
+    const w = Math.round(this.getWidth() * m);
+    const h = Math.round(this.getHeight() * m);
+    this.__ultimo = { w: w, h: h, multiplier: m };
+    // Un finto payload proporzionale ai pixel: serve solo perche' il budget in
+    // byte si misura sulla lunghezza vera della stringa.
+    const car = Math.max(1, Math.round(w * h * (this.__bytePerPixel || 0) / 0.75));
+    return 'data:image/png;base64,' + 'A'.repeat(car);
+  };
   function Canvas() {}
+  Canvas.prototype = Object.create(StaticCanvas.prototype);
+  Canvas.prototype.constructor = Canvas;
   Canvas.prototype.renderAll = function () { return this; };
-  return { Canvas: Canvas };
+  return { Canvas: Canvas, StaticCanvas: StaticCanvas };
 }
 
 function tela(fabric, larghezza, altezza, tondo) {
@@ -211,6 +227,110 @@ function testIlCollareNonSiMangiaMezzaTela() {
   assert.ok(r.height <= 13 - 1, 'il nome non entra piu\' nella banda utile');
 }
 
+// ---- la risoluzione del file di stampa -----------------------------------
+
+// Le aree di stampa vere, da scripts/perla-scala-stampa.py. Stanno qui come
+// documentazione dell'intento: sono la misura che il file esportato dovrebbe
+// avvicinare, ed e' rispetto a queste che "2000 px sul lato lungo" era il 3%.
+const AREE = {
+  'guinzaglio-eu': [12389, 219],
+  'collare-eu': [7169, 315],
+  'ciotola-eu': [6496, 803],
+  'bandana-eu': [4125, 4125],
+  'cuccia-usa': [15600, 12600],
+};
+
+// Quello che global.js calcola oggi in buildComposite(): 2000 px sul lato
+// lungo, e il moltiplicatore per arrivarci dalla tela sullo schermo.
+function comeGlobalJs(larghezzaTela, rapporto) {
+  const exportW = rapporto >= 1 ? 2000 : Math.round(2000 * rapporto);
+  return exportW / larghezzaTela;
+}
+
+function telaDaEsportare(larghezza, altezza, bytePerPixel) {
+  const fabric = fintoFabric();
+  caricaTema(fabric);
+  const fc = new fabric.Canvas();
+  fc.getWidth = () => larghezza;
+  fc.getHeight = () => altezza;
+  fc.getObjects = () => [];
+  fc.requestRenderAll = () => {};
+  fc.on = () => {};
+  fc.lowerCanvasEl = { closest: () => null };
+  if (bytePerPixel) fc.__bytePerPixel = bytePerPixel;
+  return fc;
+}
+
+function testLAnteprimaNonSiTocca() {
+  // updateMockupPreview chiama toDataURL SENZA moltiplicatore: quella e'
+  // l'immagine che si vede a schermo e deve restare grande quanto la tela.
+  const fc = telaDaEsportare(600, 400);
+  fc.toDataURL({ format: 'png' });
+  assert.deepStrictEqual(fc.__ultimo, { w: 600, h: 400, multiplier: 1 });
+}
+
+function testIlFileDiStampaQuadruplicaIPixel() {
+  // Su un telefono la tela e' larga circa 330 px. Per ogni prodotto vero si
+  // esporta come farebbe global.js e si verifica che i pixel consegnati siano
+  // almeno quattro volte quelli di prima.
+  Object.keys(AREE).forEach(function (tipo) {
+    const rapporto = AREE[tipo][0] / AREE[tipo][1];
+    const larghezza = 330;
+    const altezza = Math.max(1, Math.round(larghezza / rapporto));
+    const mult = comeGlobalJs(larghezza, rapporto);
+
+    const prima = Math.round(larghezza * mult) * Math.round(altezza * mult);
+    const fc = telaDaEsportare(larghezza, altezza);
+    fc.toDataURL({ format: 'png', multiplier: mult });
+    const dopo = fc.__ultimo.w * fc.__ultimo.h;
+
+    assert.ok(dopo >= prima * 3.9,
+      tipo + ': solo ' + (dopo / prima).toFixed(2) + ' volte i pixel di prima');
+  });
+}
+
+function testNonSuperaILimitiDelTelefono() {
+  // Oltre 4096 px di lato o 16 megapixel Safari su iPhone smette di disegnare
+  // e toDataURL torna un'immagine vuota: meglio quattro volte i pixel ovunque
+  // che sedici da nessuna parte.
+  Object.keys(AREE).forEach(function (tipo) {
+    const rapporto = AREE[tipo][0] / AREE[tipo][1];
+    [330, 900, 1400].forEach(function (larghezza) {
+      const altezza = Math.max(1, Math.round(larghezza / rapporto));
+      const fc = telaDaEsportare(larghezza, altezza);
+      fc.toDataURL({ format: 'png', multiplier: comeGlobalJs(larghezza, rapporto) });
+      const u = fc.__ultimo;
+      assert.ok(Math.max(u.w, u.h) <= 4096 + 1,
+        tipo + ' a ' + larghezza + 'px: lato ' + Math.max(u.w, u.h));
+      assert.ok(u.w * u.h <= 16e6 + 1000,
+        tipo + ' a ' + larghezza + 'px: ' + (u.w * u.h / 1e6).toFixed(1) + ' megapixel');
+    });
+  });
+}
+
+function testNonRimpicciolisceMai() {
+  // Su una tela gia' grande il moltiplicatore non deve MAI scendere: sarebbe
+  // il difetto di partenza, al contrario.
+  const fc = telaDaEsportare(3000, 3000);
+  const mult = 1.2;
+  fc.toDataURL({ format: 'png', multiplier: mult });
+  assert.ok(fc.__ultimo.multiplier >= mult,
+    'moltiplicatore sceso da ' + mult + ' a ' + fc.__ultimo.multiplier);
+}
+
+function testIlBudgetInByteFaScendere() {
+  // perla-upload-endpoint.js rifiuta oltre MAX_UPLOAD_MB. Se il file alzato
+  // sfora, deve scendere da solo invece di produrre un caricamento respinto.
+  const fc = telaDaEsportare(330, 330, 0.9);   // finto: ~0,9 byte per pixel
+  const mult = comeGlobalJs(330, 1);           // 6,06 -> alzato sarebbe 4000x4000
+  const url = fc.toDataURL({ format: 'png', multiplier: mult });
+  const byte = Math.round((url.length - url.indexOf(',') - 1) * 0.75);
+  assert.ok(byte <= 8 * 1024 * 1024,
+    'file da ' + (byte / 1e6).toFixed(1) + ' MB: oltre il budget');
+  assert.ok(fc.__ultimo.multiplier >= mult,
+    'sceso sotto quello che l\'editor produceva prima');
+}
+
 function testUnSoloPulsanteSchermoIntero() {
   // Il riquadro creava un secondo pulsante che non faceva altro che premere
   // quello gia' presente: sul telefono se ne vedevano due, con testi diversi
@@ -232,6 +352,13 @@ prova('sulla medaglietta il limite e\' il tondo, non il quadrato', testMedagliet
 prova('chi sta gia\' dentro non viene spostato di un pixel', testChiSttaGiaDentroNonSiMuove);
 prova('sul collare il margine non si mangia mezza tela', testIlCollareNonSiMangiaMezzaTela);
 prova('un solo pulsante "Schermo intero"', testUnSoloPulsanteSchermoIntero);
+
+console.log('\nEditor: risoluzione del file di stampa');
+prova('l\'anteprima a schermo resta com\'era', testLAnteprimaNonSiTocca);
+prova('il file di stampa quadruplica i pixel', testIlFileDiStampaQuadruplicaIPixel);
+prova('non supera i limiti di tela del telefono', testNonSuperaILimitiDelTelefono);
+prova('non rimpicciolisce mai quello che c\'era', testNonRimpicciolisceMai);
+prova('se il file sfora il caricamento, scende da solo', testIlBudgetInByteFaScendere);
 
 console.log('\n' + fatte + ' verifiche superate.' +
   (process.exitCode ? ' Alcune FALLITE.' : ''));
