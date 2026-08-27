@@ -145,5 +145,109 @@ async function aspettaAvvio(tentativi) {
     servizio.kill();
   }
 
+  // ---- l'altra meta': il tema ---------------------------------------------
+  //
+  // Il servizio dice "apri la chat"; chi la apre davvero e' assets/perla-
+  // persona.js, e li' vive anche la regola che evita DUE bolle di chat nello
+  // stesso angolo. Sono lo stesso comportamento visto dai due lati, quindi
+  // stanno nello stesso file di prova.
+  //
+  // Inbox e' un web component con shadow DOM: qui se ne finge uno con la sua
+  // parte `activator`, che e' il contratto pubblico su cui il tema si aggancia.
+  // Il nome dell'elemento e' <shopify-chat>, letto sulla pagina vera e non
+  // dedotto: il finto porta lo stesso nome perche' una prova che usa un nome
+  // inventato non dice niente sul negozio.
+
+  function fintoInbox() {
+    const clic = { conteggio: 0 };
+    const bolla = {
+      click: function () { clic.conteggio++; },
+      getAttribute: function () { return null; },
+    };
+    const host = {
+      tagName: 'SHOPIFY-CHAT',
+      style: {},
+      _attr: {},
+      shadowRoot: {
+        querySelector: function (sel) { return sel.indexOf('activator') !== -1 ? bolla : null; },
+      },
+      getAttribute: function (k) { return Object.prototype.hasOwnProperty.call(host._attr, k) ? host._attr[k] : null; },
+      setAttribute: function (k, v) { host._attr[k] = v; },
+      removeAttribute: function (k) { delete host._attr[k]; },
+    };
+    return { host: host, bolla: bolla, clic: clic };
+  }
+
+  function caricaTema(conInbox) {
+    const finto = conInbox ? fintoInbox() : null;
+    const nodi = finto ? [finto.host] : [];
+    const ascoltatori = {};
+    const assistente = {
+      getAttribute: function (k) {
+        if (k === 'data-assistant-ai-endpoint') return 'https://esempio.invalido/ask';
+        if (k === 'data-assistant-persona-label') return 'Parla con una persona';
+        return null;
+      },
+      querySelector: function () { return null; },
+    };
+    // il piede dell'assistente, dove finisce "Parla con una persona"
+    const piede = {
+      firstChild: null,
+      querySelector: function () { return null; },
+      insertBefore: function () {},
+    };
+    const doc = {
+      readyState: 'complete',
+      addEventListener: function (n, fn) { ascoltatori[n] = fn; },
+      contains: function (el) { return nodi.indexOf(el) !== -1; },
+      querySelector: function (sel) {
+        if (sel.indexOf('.assistant__actions') !== -1) return piede;
+        return sel.indexOf('[data-assistant]') !== -1 ? assistente : null;
+      },
+      querySelectorAll: function (sel) { return sel === '*' ? nodi : []; },
+      createElement: function () { return { style: {}, setAttribute: function () {}, addEventListener: function () {} }; },
+    };
+    const win = { fetch: function () { return Promise.resolve({}); }, location: { href: '' } };
+    const codice = require('fs').readFileSync(
+      path.join(__dirname, '..', 'theme', 'assets', 'perla-persona.js'), 'utf8');
+    new Function('window', 'document', 'setInterval', 'clearInterval', 'setTimeout', codice)(
+      win, doc, function () { return 0; }, function () {}, function () {});
+    return { finto: finto, win: win };
+  }
+
+  await prova('la bolla di Inbox si spegne: una chat sola nell\'angolo', function () {
+    const { finto } = caricaTema(true);
+    assert.strictEqual(finto.host.style.opacity, '0', 'la bolla e\' rimasta accesa');
+    assert.strictEqual(finto.host.style.pointerEvents, 'none',
+      'intercetta ancora i clic e copre l\'assistente sotto');
+    assert.strictEqual(finto.host.getAttribute('data-perla-inbox'), 'spenta');
+  });
+
+  await prova('si spegne, non si rimuove: display resta intatto', function () {
+    const { finto } = caricaTema(true);
+    // display:none mentre un web component si inizializza gli fa sbagliare le
+    // misure: si toglie la vista, non l'elemento.
+    assert.ok(!finto.host.style.display, 'usa display invece di opacity');
+  });
+
+  await prova('niente window.ShopifyChat: era un gancio inesistente', function () {
+    const codice = require('fs').readFileSync(
+      path.join(__dirname, '..', 'theme', 'assets', 'perla-persona.js'), 'utf8');
+    const righe = codice.split('\n').filter(function (r) { return r.trim().indexOf('*') !== 0 && r.trim().indexOf('//') !== 0; });
+    assert.ok(righe.join('\n').indexOf('ShopifyChat') === -1,
+      'il tentativo a vuoto e\' tornato nel codice');
+  });
+
+  await prova('senza Inbox si finisce sui contatti, non su un pulsante morto', function () {
+    const { win } = caricaTema(false);
+    // Nessun componente da trovare: il file non deve lasciare il cliente
+    // davanti a niente. Non potendo chiamare apriInbox dall'esterno, si
+    // verifica che la via d'uscita sia scritta nel sorgente.
+    const codice = require('fs').readFileSync(
+      path.join(__dirname, '..', 'theme', 'assets', 'perla-persona.js'), 'utf8');
+    assert.ok(codice.indexOf('/pages/contact') !== -1, 'manca la via d\'uscita');
+    assert.strictEqual(win.location.href, '', 'ha navigato via al solo caricamento');
+  });
+
   console.log('\n' + passati + ' verifiche superate.\n');
 })();
