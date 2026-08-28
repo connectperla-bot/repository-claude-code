@@ -45,7 +45,7 @@ capo il difetto che questo modulo esiste per togliere.
 """
 import os
 
-from PIL import Image
+from PIL import Image, ImageDraw
 
 QUI = os.path.dirname(os.path.abspath(__file__))
 RADICE = os.path.dirname(QUI)
@@ -54,6 +54,43 @@ MARCHIO = os.path.join(RADICE, "generated-designs", "perla-combined-logo.png")
 # Il nome con cui il marchio si riconosce nei file gia' costruiti, e i nomi dei
 # livelli-marchio che questo modulo rende obsoleti su Printify.
 NOME = "perla-combined-logo.png"
+
+# ==========================================================================
+# QUALI MOTIVI IL MARCHIO CE L'HANNO GIA'
+# ==========================================================================
+# Aggiungere il marchio a un motivo che lo contiene gia' non e' un dettaglio:
+# e' il difetto "marchio doppio" gia' corretto una volta su bandane e
+# medagliette (commit 962ade7). Quindi si compone SOLO dove manca davvero.
+#
+# La classificazione e' stata fatta GUARDANDO i quindici nativi europei a
+# risoluzione piena -- provino d'insieme e poi zoom centrale a 1240 px sui
+# dubbi -- e non leggendo i nomi, che su questo progetto mentono
+# regolarmente: bandana-damasco-reale.jpg non e' un damasco, e' un ramo
+# d'ulivo su crema senza un filo di marchio.
+#
+# Tre modi in cui un nativo porta gia' il marchio, tutti e tre validi:
+#   medaglione singolo   art-deco-rosa, diamanti, onde-dorate, paisley-cammeo
+#   scritta ripetuta     barocco, damasco-diamante, erbario, floreale-elegante,
+#                        ghirigori, onde, paisley-rosa, ramo-dulivo
+#
+# Chi rivede questa tabella rifaccia lo stesso: guardi le immagini.
+NATIVI_SENZA_MARCHIO = {
+    "bandana-damasco-reale.jpg",   # rami d'ulivo verdi su crema, niente scritte
+    "bandana-ulivo-nuovo.jpg",     # foglie tenui su crema, niente scritte
+    "bandana-ulivo.jpg",           # damasco bordeaux e oro pieno, niente scritte
+}
+
+
+def serve(nativo):
+    """Vero se a questo motivo il marchio va aggiunto.
+
+    I motivi GEOMETRICI sono disegnati da perla-motivi-nuovi.py e non hanno
+    marchio per costruzione: si passa None e la risposta e' sempre si'.
+    """
+    if not nativo:
+        return True
+    return os.path.basename(nativo) in NATIVI_SENZA_MARCHIO
+
 LIVELLI_OBSOLETI = ("LOGO PERLA - Copia.PNG", "logo-full.png",
                     "perla-combined-logo.png", "v2-01-logo-centrale.png",
                     "v3-square-coaster-logo.png")
@@ -181,6 +218,61 @@ def riquadri(tipo, area, marchio_wh):
     return fuori
 
 
+# Oro del marchio: serve per decidere se sul fondo si vedrebbe o no.
+ORO = (214, 178, 96)
+# Sotto questo scarto di luminosita' fra marchio e fondo, il marchio sparisce.
+# Misurato sul caso che ha fatto nascere questa funzione: la bandana
+# "laurel navy" ha fondo senape (luminosita' 176) e l'oro sta a 178 -- scarto
+# 2 su 255, e infatti della scritta "Perla" non si vedeva niente, restava solo
+# la parola "Italia" scura che sembrava capitata li' per sbaglio.
+CONTRASTO_MINIMO = 60
+
+
+def _luminosita(rgb):
+    return 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]
+
+
+def _cartella(base, riquadro, margine=0.14, raggio=0.10):
+    """Disegna dietro il marchio una cartella che lo renda leggibile.
+
+    PERCHE'
+    Il file del marchio e' oro su trasparente: nato per fondi scuri. Su un
+    fondo chiaro o dorato -- e ce ne sono, il damasco ritinto in senape e' uno
+    -- l'oro sull'oro non si vede, e del marchio resta solo la parola scura in
+    basso. Non e' un difetto del file: e' che manca il supporto.
+
+    NON E' UN'INVENZIONE STILISTICA. I motivi originali di questo catalogo
+    mettono gia' il marchio dentro una cartella: ovale su paisley-rosa, tonda
+    su ghirigori, rettangolare con bordo dorato sulla bandana damascata. Qui
+    si fa la stessa cosa, prendendo il colore dal fondo che c'e' davvero
+    sotto, cosi' la cartella appartiene al disegno invece di esserci appoggiata.
+
+    Si disegna SOLO quando serve: su fondo gia' scuro il marchio si legge da
+    solo e una cartella sarebbe una toppa.
+    """
+    s, a, largo, alto = riquadro
+    px, py = largo * margine, alto * margine * 0.5
+    box = (s - px, a - py, s + largo + px, a + alto + py)
+    ritaglio = base.crop(tuple(round(v) for v in box)).convert("RGB")
+    piccolo = ritaglio.resize((16, 16), Image.LANCZOS)
+    n = 16 * 16
+    medio = tuple(sum(p[i] for p in piccolo.getdata()) // n for i in range(3))
+
+    if _luminosita(medio) < _luminosita(ORO) - CONTRASTO_MINIMO:
+        return None      # fondo gia' scuro: il marchio d'oro si legge da solo
+
+    # cartella scura ricavata dal fondo: stessa tinta, molto piu' cupa, cosi'
+    # non e' un rettangolo nero appiccicato ma un'ombra dello stesso tessuto
+    fondo = tuple(max(0, min(255, round(c * 0.22))) for c in medio)
+    strato = Image.new("RGBA", base.size, (0, 0, 0, 0))
+    d = ImageDraw.Draw(strato)
+    r = round(min(box[2] - box[0], box[3] - box[1]) * raggio)
+    d.rounded_rectangle([round(v) for v in box], radius=r,
+                        fill=fondo + (238,), outline=ORO + (255,),
+                        width=max(2, round(largo * 0.012)))
+    return strato
+
+
 def componi(immagine, tipo, percorso_marchio=None):
     """Disegna il marchio sul file di stampa gia' costruito.
 
@@ -194,6 +286,9 @@ def componi(immagine, tipo, percorso_marchio=None):
 
     for s, a, largo, alto in box:
         largo, alto = max(1, round(largo)), max(1, round(alto))
+        cartella = _cartella(base, (s, a, largo, alto))
+        if cartella is not None:
+            base.alpha_composite(cartella, (0, 0))
         # solo riduzione: riquadri() ha gia' impedito il caso contrario
         pezzo = logo.resize((largo, alto), Image.LANCZOS)
         base.alpha_composite(pezzo, (round(s), round(a)))
