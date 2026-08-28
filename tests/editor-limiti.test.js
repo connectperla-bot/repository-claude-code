@@ -372,7 +372,7 @@ function testUnSoloPulsanteSchermoIntero() {
 
 function nodo(opz) {
   const n = Object.assign({
-    style: {}, attributi: {}, figli: {}, listener: [],
+    style: {}, attributi: {}, figli: {}, listener: [], aggiunti: [],
     offsetWidth: 0, offsetHeight: 0, clientWidth: 0, clientHeight: 0,
     scrollLeft: 0, scrollWidth: 0, hidden: false, className: '',
     classList: { add() {}, remove() {}, toggle() {} },
@@ -385,7 +385,9 @@ function nodo(opz) {
     addEventListener(nome, fn, cattura) { this.listener.push({ nome, fn, cattura: !!cattura }); },
     removeEventListener() {},
     contains() { return true; },
-    appendChild() {}, insertBefore() {}, remove() {},
+    aggiunti: [],
+    appendChild(n) { this.aggiunti.push(n); return n; },
+    insertBefore() {}, remove() {},
     closest(sel) {
       // basta per l'uso che ne fa il file: "sono io uno di questi?"
       return sel.split(',').some((s) => this.hasAttribute(s.trim().replace(/[[\]]/g, '')))
@@ -537,6 +539,38 @@ function testLaTextareaRestaA16px() {
   assert.strictEqual(t.hiddenTextarea.style.fontSize, '16px');
 }
 
+
+function testAvvisoRecessoPrimaDiPagare() {
+  // Sui beni fatti su misura il recesso non si applica -- art. 59 c. 1 lett. c
+  // del Codice del Consumo -- ma SOLO se il cliente lo sa prima di essere
+  // vincolato. Scriverlo nella pagina Resi non basta: nessuno la apre prima di
+  // comprare. Se sparisce da qui, l'esclusione non opera piu' e un collare col
+  // nome del cane torna indietro entro quattordici giorni.
+  const s = studioFinto(2208, 97, 350);
+  const avvisi = s.cust.aggiunti.filter(function (n) {
+    return n.hasAttribute && n.hasAttribute('data-avviso-recesso');
+  });
+  assert.strictEqual(avvisi.length, 1, 'avvisi trovati: ' + avvisi.length);
+  const t = avvisi[0].textContent || '';
+  assert.ok(/personalizzat/i.test(t), 'non dice che il pezzo e\' personalizzato');
+  assert.ok(/restituire|ripensamento/i.test(t), 'non dice che non si restituisce');
+  // La parte che protegge il cliente non puo' sparire lasciando solo il divieto.
+  assert.ok(/difettoso|sbagliato/i.test(t),
+    'non dice che se arriva difettoso lo rifacciamo noi: cosi\' e\' solo un no');
+}
+
+function testAvvisoRecessoConLaTipografiaGiusta() {
+  // Prima stesura: "non si puo' restituire", con l'apostrofo al posto
+  // dell'accento. Va bene in un commento, non in una frase che legge un cliente
+  // in mezzo a un sito che usa le virgolette curve ovunque.
+  const s = studioFinto(2208, 97, 350);
+  const t = s.cust.aggiunti.filter(function (n) {
+    return n.hasAttribute && n.hasAttribute('data-avviso-recesso');
+  })[0].textContent;
+  assert.ok(t.indexOf("puo'") === -1, 'c\'e\' ancora "puo\'" invece di "pu\u00f2"');
+  assert.ok(t.indexOf("'") === -1, 'apostrofo dritto nel testo per il cliente');
+}
+
 console.log('\nEditor: limiti dell\'area di stampa');
 prova('il nome non esce di lato', testNomeNonEsceDiLato);
 prova('il nome non esce in alto', testNomeNonEsceInAlto);
@@ -555,6 +589,10 @@ prova('il "+" ingrandisce e il Reset torna a tutta', testIlPiuIngrandisceEilRese
 prova('lo zoom del tema non viene piu\' chiamato', testLoZoomDelTemaNonVieneChiamato);
 prova('finche\' si vede tutta il riquadro non scorre di lato', testFincheSiVedeTuttaIlRiquadroNonScorre);
 prova('sui prodotti normali non si tocca niente', testSuiProdottiNormaliNonSiToccaNiente);
+
+console.log('\nEditor: il recesso si dice prima di pagare');
+prova('l\'avviso c\'e\', ed e\' completo', testAvvisoRecessoPrimaDiPagare);
+prova('con gli accenti e gli apostrofi giusti', testAvvisoRecessoConLaTipografiaGiusta);
 
 console.log('\nEditor: scrivere il nome non allarga la pagina');
 prova('la textarea nascosta non e\' mai assoluta', testLaTextareaNascostaNonAllargaLaPagina);

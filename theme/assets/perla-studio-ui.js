@@ -941,11 +941,54 @@
     }, 200);
   }
 
+  /* -------------------------------------------------------------------------
+     10. IL RECESSO SI DICE PRIMA DI PAGARE, NON DOPO
+
+     PERCHE' STA QUI E NON SOLO NELL'INFORMATIVA
+     Sui beni confezionati su misura il diritto di recesso di quattordici
+     giorni non si applica -- art. 59, comma 1, lettera c) del Codice del
+     Consumo, che recepisce l'art. 16 della direttiva 2011/83/UE. Ma
+     l'esclusione vale solo se il consumatore ne e' stato informato PRIMA di
+     essere vincolato dal contratto. Scriverlo soltanto nella pagina Resi non
+     basta: nessuno la apre prima di comprare.
+
+     Se non lo si dice qui, l'esclusione non opera e un collare con sopra il
+     nome del cane torna indietro entro quattordici giorni -- e lo paghiamo
+     noi, perche' rivenderlo e' impossibile.
+
+     DOVE
+     In fondo al riquadro di personalizzazione, cioe' l'ultima cosa che si
+     legge dopo aver scritto il nome e prima di premere "aggiungi al carrello".
+     Non e' un avvertimento in rosso: e' la stessa frase che diremmo a voce a
+     qualcuno che ci porge un collare da incidere.
+
+     Compare SOLO dove esiste `[data-photo-customizer]`, cioe' esattamente sui
+     prodotti personalizzabili: sugli altri non ha senso e non appare.
+     ---------------------------------------------------------------------- */
+
+  function initAvvisoRecesso(customizer) {
+    if (qs(customizer, '[data-avviso-recesso]')) return;   // gia' messo
+
+    var avviso = document.createElement('p');
+    avviso.className = 'photo-studio__note';
+    avviso.setAttribute('data-avviso-recesso', '');
+    avviso.textContent = STR.recessoNote || (IT
+      // Apostrofi tipografici e accenti veri: questo lo legge un cliente, non
+      // e' un commento nel codice. La prima stesura diceva "non si puo'
+      // restituire" con l'apostrofo al posto dell'accento, e in mezzo al resto
+      // del sito -- che usa le virgolette curve ovunque -- si vedeva.
+      ? 'Lo stampiamo apposta per te dopo l\u2019ordine: per legge un pezzo personalizzato non si pu\u00f2 restituire per ripensamento. Se arriva difettoso o sbagliato lo rifacciamo noi, spese comprese.'
+      : 'We print it for you after you order, so by law a personalised item can\u2019t be returned for a change of mind. If it arrives faulty or wrong, we remake it at our cost.');
+
+    customizer.appendChild(avviso);
+  }
+
   /* ---------------------------------------------------------------------- */
   function init() {
     each(document.querySelectorAll('[data-photo-customizer]'), function (c) {
       initWideHint(c);
       initNastro(c);
+      initAvvisoRecesso(c);
       initDragAndDrop(c);
       initEmptyState(c);
       initMockupFeedback(c);

@@ -253,3 +253,25 @@ html {
     box-shadow: none;
   }
 }
+
+/* 8 — L'avviso sul recesso, in fondo al riquadro di personalizzazione.
+ *
+ * Lo mette perla-studio-ui.js (sezione 10): sui beni fatti su misura il
+ * recesso non si applica, ma solo se il cliente lo sa PRIMA di pagare.
+ * Scriverlo solo nella pagina Resi non basta -- nessuno la apre prima di
+ * comprare -- e senza quell'informazione l'esclusione non opera.
+ *
+ * Deliberatamente sottotono: nessun rosso, nessun bordo d'allarme. Non stiamo
+ * avvertendo di un pericolo, stiamo dicendo com'e' fatto il prodotto. Un
+ * riquadro giallo qui farebbe esitare chi stava comprando, e per una cosa che
+ * gioca a nostro favore: e' fatto apposta per lui.
+ */
+.photo-studio__note {
+  margin: .9rem 0 0;
+  padding-top: .8rem;
+  border-top: 1px solid var(--color-line);
+  font-family: var(--font-body);
+  font-size: .78rem;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--color-text) 78%, transparent);
+}
