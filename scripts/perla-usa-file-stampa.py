@@ -677,16 +677,23 @@ def main():
 
     def scrivi(voce, tipo, chiave, nome_base, passo_px=None):
         """Costruisce e salva un file per OGNI misura di quel tipo."""
+        # Da dove viene il marchio si sa dalla voce, senza dover ricostruire:
+        # cosi' il manifesto si compila anche sui file gia' presenti, e non
+        # resta vuoto quando la costruzione non ha niente da fare.
+        nativo = voce[1] if voce[0] in ("eu", "artwork") else None
+        if voce[0] == "artwork" and "-perla" not in (nativo or ""):
+            nativo = None
+        come = "composto" if marchio.serve(nativo) else "nel motivo"
         for misura in misure(tipo):
             fuori = os.path.join(USCITA, nome_base(misura) + ".jpg")
-            if os.path.exists(fuori) and not rifai:
-                fatti.append((chiave, fuori, Image.open(fuori).size, voce[0], misura))
-                continue
-            im, come = costruisci(voce, tipo, misura, temporanei, passo_px)
-            im.save(fuori, quality=92, subsampling=0)
             manifesto[os.path.basename(fuori)] = {
                 "tipo": tipo, "misura": list(misura), "marchio": come,
                 "sorgente": chiave}
+            if os.path.exists(fuori) and not rifai:
+                fatti.append((chiave, fuori, Image.open(fuori).size, voce[0], misura))
+                continue
+            im, _ = costruisci(voce, tipo, misura, temporanei, passo_px)
+            im.save(fuori, quality=92, subsampling=0)
             fatti.append((chiave, fuori, im.size, voce[0], misura))
             print("%-44s %5dx%-5d %-11s %.1f MB" % (
                 chiave[:44], im.size[0], im.size[1], tipo,
