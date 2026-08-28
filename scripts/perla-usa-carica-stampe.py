@@ -9,7 +9,7 @@ COSA FA, IN ORDINE
 3. rilegge il prodotto e scarica il mockup nuovo, cosi' si puo' GUARDARE
    invece che fidarsi.
 
-DUE COSE CHE NON SI POSSONO SBAGLIARE
+TRE COSE CHE NON SI POSSONO SBAGLIARE
 
 `scale` e' la larghezza dell'immagine come frazione della larghezza
 dell'area. I file vecchi stavano a 1,1-1,5 perche' erano piccoli e venivano
@@ -17,9 +17,16 @@ allargati oltre l'area per coprirla. I nuovi sono esattamente della misura
 dell'area, quindi scale=1 e centro a (0,5, 0,5). Lasciare la vecchia scala
 significherebbe ingrandire di nuovo un file che era gia' giusto.
 
+UNA VOCE print_areas PER GRUPPO DI VARIANTI. E' la correzione di ROUND 47.
+Fino a ieri si scriveva UNA voce con dentro tutte le varianti, e siccome
+scale e' relativa all'AREA, lo stesso file su varianti di proporzioni
+diverse sforava o lasciava vuoto: sul collare M il 24% di fettuccia bianca,
+sulla cuccia 28"x18" il 18% di disegno tagliato. Printify accetta piu' voci,
+ognuna con i suoi `variant_ids`: una per misura, ognuna col suo file.
+
 Il PUT del prodotto vuole `print_areas` INTERO: quello che non si rimanda
-viene perso. Per questo si parte sempre dal prodotto appena riletto e si
-cambia una voce sola.
+viene perso. Per questo si riscrive tutto, partendo dal prodotto appena
+riletto.
 
 USO
     python3 scripts/perla-usa-carica-stampe.py --prova "Baroque Royal"
@@ -27,8 +34,10 @@ USO
 Senza --tutti non tocca niente: elenca e basta.
 """
 import base64
+import importlib.util
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -38,9 +47,29 @@ RADICE = os.path.dirname(QUI)
 STAMPE = os.path.join(RADICE, "generated-designs", "usa-print-files")
 ENV = os.path.join(RADICE, "config", "printify.local.env")
 
-# I livelli che NON sono il motivo: si riconoscono dal nome e vanno lasciati
-# stare. Sono il marchio, e stanno a una scala e a coordinate loro.
-LOGHI = ("logo", "LOGO", "perla-combined", "v2-01-logo")
+def _modulo(nome, percorso):
+    spec = importlib.util.spec_from_file_location(nome, percorso)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+aree = _modulo("aree_stampa", os.path.join(QUI, "aree-stampa.py"))
+marchio = _modulo("marchio", os.path.join(QUI, "marchio.py"))
+costruttore = _modulo("perla_usa_file_stampa", os.path.join(QUI, "perla-usa-file-stampa.py"))
+
+# I livelli che NON sono il motivo: sono il marchio.
+#
+# ROUND 47 -- prima venivano LASCIATI STARE, perche' il marchio viveva li'.
+# Ora il marchio e' composto dentro il file di stampa (marchio.py), quindi
+# questi livelli sono doppioni: si tolgono. Erano anche la fonte del difetto
+# "senza marchio": su diversi prodotti stavano fuori dal bordo dell'area
+# (misurato: x=-0,084 y=1,044 sulla cuccia "Geometric Tribal"), cioe' c'erano
+# ma non si stampavano.
+LOGHI = marchio.LIVELLI_OBSOLETI
+
+TIPO_DI_BLUEPRINT = {419: "cuccia", 562: "bandana", 566: "medaglietta",
+                     784: "collare", 570: "ciotola", 855: "tappetino"}
 
 
 def chiavi():
@@ -126,203 +155,143 @@ def carica_immagine(percorso, token):
     return risposta
 
 
-def sostituisci_per_sorgente(prodotto, nuove_per_nome):
-    """Sostituisce OGNI livello con il file costruito per quella sorgente.
+def sorgente_del_livello(nome):
+    """Dal file che il prodotto stampa OGGI alla chiave di PER_SORGENTE.
 
-    Diverso da sostituisci_motivo(): li' un prodotto aveva un motivo solo e
-    si rimpiazzava tutto con quello. Qui la chiave e' il nome del file che il
-    livello sta usando adesso, perche' un prodotto puo' averne piu' d'uno e
-    perche' i titoli non dicono cosa stampano davvero.
+    Tre forme possibili, perche' il catalogo ha stratificato tre tornate:
+        bandana-damask-navy-perla.jpg                    artwork originale
+        bandana-da-bandana-damask-navy-perla.jpg         gia' ricostruito
+        bandana-da-bandana-damask-navy-perla-4275x2325.jpg  ricostruito per misura
+    Tutte e tre riportano alla stessa chiave: bandana-damask-navy-perla.jpg.
     """
-    toccate = 0
-    aree = json.loads(json.dumps(prodotto["print_areas"]))
-    for pa in aree:
-        for ph in pa.get("placeholders", []):
-            nuove = []
-            for im in ph.get("images", []):
-                if not im.get("name"):
-                    # Livello senza nome = riferimento morto. Su "Copy of
-                    # Gingham Luxe" ce n'era uno da 566x147 il cui id, chiesto
-                    # a /v1/uploads, risponde "Not found": e' un residuo della
-                    # duplicazione del prodotto. Printify rifiutava l'intero
-                    # aggiornamento con "Provided images do not exist" finche'
-                    # glielo si rimandava. Ogni immagine vera ha un nome.
-                    print("  tolto un livello con riferimento morto (id %s)" % im.get("id"))
-                    continue
-                nuova = nuove_per_nome.get(im.get("name"))
-                if not nuova:
-                    nuove.append(im)
-                    continue
-                nuove.append({
-                    "id": nuova["id"],
-                    "name": nuova["file_name"],
-                    "type": nuova.get("mime_type", "image/jpeg"),
-                    "height": nuova["height"],
-                    "width": nuova["width"],
-                    "x": 0.5, "y": 0.5, "scale": 1.0, "angle": 0,
-                })
-                toccate += 1
-            ph["images"] = nuove
-        # Un placeholder senza immagini fa fallire il PUT con
-        # "print_areas.N.placeholders.M.images: ... required". Le medagliette
-        # ce l'hanno tutte: hanno un retro dichiarato e vuoto. Toglierlo dal
-        # payload non cancella niente -- era gia' vuoto -- e senza questo
-        # nessuna delle quindici medagliette si aggiorna.
-        pa["placeholders"] = [x for x in pa.get("placeholders", []) if x.get("images")]
-    return aree, toccate
-
-
-def sostituisci_motivo(prodotto, nuova):
-    """Rimpiazza il livello del motivo in ogni area di stampa.
-
-    Torna anche quante voci ha toccato: se e' zero il prodotto non aveva un
-    motivo da sostituire ed e' meglio saperlo che aggiornare a vuoto.
-    """
-    toccate = 0
-    aree = json.loads(json.dumps(prodotto["print_areas"]))  # copia
-    for pa in aree:
-        for ph in pa.get("placeholders", []):
-            nuove = []
-            for im in ph.get("images", []):
-                if any(l in (im.get("name") or "") for l in LOGHI):
-                    nuove.append(im)
-                    continue
-                nuove.append({
-                    "id": nuova["id"],
-                    "name": nuova["file_name"],
-                    "type": nuova.get("mime_type", "image/jpeg"),
-                    "height": nuova["height"],
-                    "width": nuova["width"],
-                    "x": 0.5, "y": 0.5, "scale": 1.0, "angle": 0,
-                })
-                toccate += 1
-            # il motivo sta sotto, il marchio sopra: l'ordine e' quello della
-            # lista e si conserva perche' si riscrive nella stessa posizione
-            ph["images"] = nuove
-        pa["placeholders"] = [x for x in pa.get("placeholders", []) if x.get("images")]
-    return aree, toccate
-
-
-def _catalogo():
-    """Il catalogo sta in perla-usa-file-stampa.py e non va duplicato qui:
-    se le due liste divergono si carica il file sbagliato sul prodotto
-    sbagliato, ed e' un errore che non si vede finche' non arriva stampato."""
-    import importlib.util
-    spec = importlib.util.spec_from_file_location(
-        "perla_usa_file_stampa", os.path.join(QUI, "perla-usa-file-stampa.py"))
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod.CATALOGO
-
-
-def file_per(titolo, catalogo):
-    """Il file costruito per questo prodotto.
-
-    La chiave del catalogo e' l'INIZIO del titolo Printify, non il titolo
-    intero: i titoli sono lunghi e cambiano in coda ("...for Dogs & Cats").
-    Il nome del file lo genera perla-usa-file-stampa.py dalla chiave, quindi
-    qui si parte dalla chiave e non dal titolo, altrimenti non si trova
-    niente -- e' esattamente lo sbaglio fatto la prima volta.
-
-    Fra due chiavi che combaciano entrambe (per esempio "Perla Italy..." e
-    "Copy of Perla Italy...") vince la piu' lunga, che e' la piu' precisa.
-    """
-    chiavi_ok = [k for k in catalogo if titolo.startswith(k)]
-    if not chiavi_ok:
-        return None
-    chiave = max(chiavi_ok, key=len)
-    nome = chiave.lower().replace(" ", "-").replace("'", "").replace("\u2014", "")
-    nome = "-".join(p for p in nome.split("-") if p)[:60]
-    for tipo in ("cuccia", "collare", "bandana", "ciotola", "medaglietta"):
-        f = os.path.join(STAMPE, "%s-%s.jpg" % (tipo, nome))
-        if os.path.exists(f):
-            return f
+    nome = nome or ""
+    m = re.match(r"^(?:collare|bandana|medaglietta|ciotola|cuccia|tappetino)"
+                 r"-da-(.+?)(?:-\d+x\d+)?\.jpg$", nome)
+    if m:
+        return m.group(1) + ".jpg"
+    if nome in costruttore.PER_SORGENTE or nome in costruttore.DA_ARTWORK:
+        return nome
     return None
 
 
-def per_sorgente(prodotti, token, shop, catalogo_sorgenti, filtro):
-    """Secondo giro: collari, bandane e medagliette, dove si va per file
-    stampato e non per titolo del prodotto."""
-    caricate = {}
-    mockup = os.path.join(STAMPE, "_mockup")
-    os.makedirs(mockup, exist_ok=True)
-    fatti = 0
-    for p in prodotti:
-        da_fare = {}
-        for pa in p.get("print_areas", []):
-            for ph in pa.get("placeholders", []):
-                for im in ph.get("images", []):
-                    nome = im.get("name")
-                    if nome not in catalogo_sorgenti:
-                        continue
-                    if filtro and filtro.lower() not in nome.lower():
-                        continue
-                    da_fare[nome] = True
-        if not da_fare:
-            continue
+def chiave_catalogo(titolo):
+    """La voce di CATALOGO per questo titolo Printify.
 
-        nuove = {}
-        saltato = False
-        for nome in da_fare:
-            if nome not in caricate:
-                f = file_da_sorgente(nome)
-                if not f:
-                    print("  manca il file costruito per " + nome)
-                    saltato = True
-                    break
-                f, ridotto = alleggerisci(f)
-                try:
-                    caricate[nome] = carica_immagine(f, token)
-                except RuntimeError as err:
-                    print("  NON CARICATO %s: %s" % (nome, err))
-                    saltato = True
-                    break
-                print("caricato %-46s %.1f MB%s" % (
-                    nome[:46], os.path.getsize(f) / 1e6, " (ricompresso)" if ridotto else ""))
-            nuove[nome] = caricate[nome]
-        if saltato:
-            continue
-
-        aree, toccate = sostituisci_per_sorgente(p, nuove)
-        r = api("PUT", "/v1/shops/%s/products/%s.json" % (shop, p["id"]),
-                token=token, corpo={"print_areas": aree})
-        if r.get("id") != p["id"]:
-            print("  ERRORE su %s: %s" % (p["title"][:40], json.dumps(r)[:160]))
-            continue
-        d = api("GET", "/v1/shops/%s/products/%s.json" % (shop, p["id"]), token=token)
-        img = next((i for i in d.get("images", []) if i.get("is_default")), None) \
-            or (d.get("images") or [None])[0]
-        if img:
-            nome_file = p["title"][:44].lower().replace(" ", "-").replace("/", "-")
-            nome_file = "".join(c for c in nome_file if c.isalnum() or c == "-")
-            subprocess.run(["curl", "-s", "-o",
-                            os.path.join(mockup, nome_file + "-mockup.jpg"), img["src"]], check=True)
-        print("  %-50s %d livelli" % (p["title"][:50], toccate))
-        fatti += 1
-    return fatti
+    La chiave e' l'INIZIO del titolo, non il titolo intero: i titoli sono
+    lunghi e cambiano in coda ("...for Dogs & Cats"). Fra due che combaciano
+    entrambe ("Perla Italy..." e "Copy of Perla Italy...") vince la piu'
+    lunga, che e' la piu' precisa.
+    """
+    ok = [k for k in costruttore.CATALOGO if titolo.startswith(k)]
+    return max(ok, key=len) if ok else None
 
 
-def file_da_sorgente(sorgente):
-    """Il file costruito per questa sorgente, qualunque tipo sia."""
-    base = os.path.splitext(sorgente)[0]
-    for tipo in ("collare", "bandana", "medaglietta", "ciotola", "cuccia"):
-        f = os.path.join(STAMPE, "%s-da-%s.jpg" % (tipo, base))
-        if os.path.exists(f):
-            return f
-    return None
+def file_costruito(tipo, identita, misura, da_catalogo):
+    """Il file costruito per questa identita' E QUESTA MISURA, o None."""
+    if da_catalogo:
+        nome = "%s-%s" % (tipo, costruttore.nome_catalogo(identita, misura))
+    else:
+        nome = costruttore.nome_uscita(identita, misura)
+    percorso = os.path.join(STAMPE, nome + ".jpg")
+    return percorso if os.path.exists(percorso) else None
+
+
+def identifica(prodotto, tipo):
+    """Cosa stampa questo prodotto: (identita', da_catalogo) oppure (None, motivo).
+
+    Sulle CUCCE si va per titolo, perche' quattro di loro stampano motivi
+    geometrici disegnati che non hanno una sorgente. Su tutto il resto si va
+    per FILE STAMPATO, perche' i titoli mentono: "Maroon Damask Dog Collar"
+    stampa collar-olive-perla-only.jpg. E' la stessa regola gia' scritta in
+    perla-usa-file-stampa.py.
+    """
+    if tipo == "cuccia":
+        chiave = chiave_catalogo(prodotto["title"])
+        return (chiave, True) if chiave else (None, "titolo non nel CATALOGO")
+
+    for pa in prodotto.get("print_areas", []):
+        for ph in pa.get("placeholders", []):
+            for im in ph.get("images", []):
+                nome = im.get("name")
+                if not nome or nome in LOGHI:
+                    continue
+                sorgente = sorgente_del_livello(nome)
+                if sorgente and (sorgente in costruttore.PER_SORGENTE
+                                 or sorgente in costruttore.DA_ARTWORK):
+                    return sorgente, False
+    return None, "nessun livello motivo riconosciuto"
+
+
+def aree_per_variante(prodotto, tipo, identita, da_catalogo, token, carica):
+    """Le print_areas nuove: UNA VOCE PER GRUPPO DI VARIANTI.
+
+    E' il cuore della correzione. Prima si scriveva una voce sola con dentro
+    tutte le varianti, e siccome `scale` e' relativa all'area, sulle varianti
+    di proporzioni diverse il file sforava o lasciava vuoto.
+
+    `carica` e' la funzione che porta un file su Printify: la si passa da
+    fuori cosi' questa funzione resta verificabile senza rete (vedi
+    tests/aree-per-variante.test.py).
+    """
+    geometria = aree.per_prodotto(prodotto, token)
+    per_id = {v["id"]: v for v in geometria}
+    abilitate = aree.abilitate(prodotto)
+    if not abilitate:
+        return None, "nessuna variante abilitata"
+
+    # Le posizioni che oggi hanno davvero un'immagine. Il retro delle
+    # medagliette e' dichiarato e vuoto: rimandarlo vuoto fa fallire il PUT
+    # con "print_areas.N.placeholders.M.images: required".
+    posizioni = []
+    for pa in prodotto.get("print_areas", []):
+        for ph in pa.get("placeholders", []):
+            if ph.get("images") and ph.get("position") not in posizioni:
+                posizioni.append(ph["position"])
+    if not posizioni:
+        return None, "nessun placeholder con immagini"
+
+    nuove = []
+    for gruppo in aree.gruppi(geometria, posizioni[0], solo_varianti=abilitate):
+        segnaposto = []
+        for posizione in posizioni:
+            misura = per_id[gruppo["variant_ids"][0]]["placeholders"].get(posizione)
+            if not misura:
+                continue
+            percorso = file_costruito(tipo, identita, misura, da_catalogo)
+            if not percorso:
+                return None, ("manca il file %dx%d: costruiscilo con "
+                              "python3 scripts/perla-usa-file-stampa.py" % misura)
+            caricata = carica(percorso)
+            segnaposto.append({
+                "position": posizione,
+                "images": [{
+                    "id": caricata["id"],
+                    "name": caricata["file_name"],
+                    "type": caricata.get("mime_type", "image/jpeg"),
+                    "height": caricata["height"],
+                    "width": caricata["width"],
+                    # il file E' della misura dell'area: scale=1 e centro esatto
+                    "x": 0.5, "y": 0.5, "scale": 1.0, "angle": 0,
+                }],
+            })
+        if segnaposto:
+            nuove.append({"variant_ids": gruppo["variant_ids"],
+                          "placeholders": segnaposto})
+
+    if not nuove:
+        return None, "nessun gruppo di varianti da scrivere"
+    return nuove, None
 
 
 def main():
     env = chiavi()
-    catalogo = _catalogo()
     token, shop = env["PRINTIFY_API_KEY"], env["PRINTIFY_SHOP_ID"]
     tutti = "--tutti" in sys.argv
     filtro = None
     if "--prova" in sys.argv:
         filtro = sys.argv[sys.argv.index("--prova") + 1]
 
-    prodotti = []
-    pagina = 1
+    prodotti, pagina = [], 1
     while True:
         d = api("GET", "/v1/shops/%s/products.json?limit=50&page=%d" % (shop, pagina), token=token)
         prodotti += d["data"]
@@ -330,49 +299,57 @@ def main():
             break
         pagina += 1
 
-    if "--sorgenti" in sys.argv:
-        import importlib.util
-        spec = importlib.util.spec_from_file_location(
-            "pufs", os.path.join(QUI, "perla-usa-file-stampa.py"))
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
-        n = per_sorgente(prodotti, token, shop, mod.PER_SORGENTE, filtro)
-        print("\n%d prodotti aggiornati" % n)
-        return
+    caricate = {}
+
+    def carica(percorso):
+        """Un file si carica UNA volta sola, anche se lo usano dieci prodotti.
+
+        La chiave e' il percorso, che ora contiene la misura: due prodotti che
+        condividono il motivo ma non la taglia sono due file diversi e vanno
+        caricati tutti e due.
+        """
+        if percorso not in caricate:
+            f, ridotto = alleggerisci(percorso)
+            caricate[percorso] = carica_immagine(f, token)
+            print("    caricato %-46s %.1f MB%s" % (
+                os.path.basename(f)[:46], os.path.getsize(f) / 1e6,
+                " (ricompresso)" if ridotto else ""))
+        return caricate[percorso]
 
     mockup = os.path.join(STAMPE, "_mockup")
     os.makedirs(mockup, exist_ok=True)
-    fatti = 0
-    mancati = []
-    for p in prodotti:
+    fatti, saltati = 0, []
+
+    for p in sorted(prodotti, key=lambda x: x["title"]):
         if filtro and filtro.lower() not in p["title"].lower():
             continue
-        f = file_per(p["title"], catalogo)
-        if not f:
+        tipo = TIPO_DI_BLUEPRINT.get(p["blueprint_id"])
+        if not tipo:
+            continue
+        identita, da_catalogo = identifica(p, tipo)
+        if not identita:
+            saltati.append((p["title"], da_catalogo))
             continue
         if not (tutti or filtro):
-            print("da fare  %-52s %s" % (p["title"][:52], os.path.basename(f)))
+            print("da fare  %-52s %s" % (p["title"][:52], identita))
             continue
 
-        f, ridotto = alleggerisci(f)
-        print("carico   %-52s %.1f MB%s" % (
-            p["title"][:52], os.path.getsize(f) / 1e6, " (ricompresso)" if ridotto else ""))
+        print("%-54s" % p["title"][:54])
         try:
-            nuova = carica_immagine(f, token)
+            nuove, errore = aree_per_variante(p, tipo, identita, da_catalogo, token, carica)
         except RuntimeError as err:
-            # un prodotto che non passa non deve fermare gli altri undici:
-            # si segnala e si va avanti, poi lo si rifa'
-            print("  NON CARICATO: %s" % err)
-            mancati.append(p["title"])
+            saltati.append((p["title"], str(err)[:90]))
             continue
-        aree, toccate = sostituisci_motivo(p, nuova)
-        if not toccate:
-            print("  saltato: nessun livello motivo da sostituire")
+        if errore:
+            print("    saltato: " + errore)
+            saltati.append((p["title"], errore))
             continue
+
         r = api("PUT", "/v1/shops/%s/products/%s.json" % (shop, p["id"]),
-                token=token, corpo={"print_areas": aree})
+                token=token, corpo={"print_areas": nuove})
         if r.get("id") != p["id"]:
-            print("  ERRORE aggiornamento: " + json.dumps(r)[:200])
+            print("    ERRORE: " + json.dumps(r)[:200])
+            saltati.append((p["title"], json.dumps(r)[:90]))
             continue
 
         # rileggi e prendi il mockup nuovo: e' l'unica prova che il file e'
@@ -381,14 +358,17 @@ def main():
         img = next((i for i in d.get("images", []) if i.get("is_default")), None) \
             or (d.get("images") or [None])[0]
         if img:
-            dove = os.path.join(mockup, os.path.basename(f).replace(".jpg", "-mockup.jpg"))
-            subprocess.run(["curl", "-s", "-o", dove, img["src"]], check=True)
-            print("  ok, %d livelli sostituiti, mockup in %s" % (toccate, os.path.basename(dove)))
+            nome_file = "".join(c for c in p["title"][:44].lower().replace(" ", "-")
+                                if c.isalnum() or c == "-") + "-mockup.jpg"
+            subprocess.run(["curl", "-s", "-o", os.path.join(mockup, nome_file),
+                            img["src"]], check=True)
+        print("    ok: %d gruppi di varianti, mockup in %s"
+              % (len(nuove), os.path.basename(mockup)))
         fatti += 1
 
     print("\n%d prodotti aggiornati" % fatti)
-    for t in mancati:
-        print("  DA RIFARE: " + t)
+    for titolo, motivo in saltati:
+        print("  saltato  %-46s %s" % (titolo[:46], motivo))
     if not (tutti or filtro):
         print("(elenco soltanto: aggiungi --tutti per applicare)")
 

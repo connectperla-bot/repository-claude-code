@@ -378,6 +378,33 @@ PER_SORGENTE = {
 
 
 # ==========================================================================
+# GLI ARTWORK CHE NON VANNO SOSTITUITI, SOLO RIMESSI IN SQUADRA
+# ==========================================================================
+# Otto medagliette stampano ancora il loro artwork originale, quadrato a
+# 1024x1024, su un'area 810x900. Il file copre la larghezza e lascia il 10%
+# di altezza vuota: e' la "fascia vuota" che l'audit conta su otto prodotti.
+#
+# Qui NON serve cambiare disegno. L'artwork e' gia' quello scelto, porta gia'
+# il marchio dentro (sono tutti "-perla.jpg", la convenzione descritta in
+# perla-usa-marchio.py) e 1024 px bastano per un'area di 810x900: si RITAGLIA
+# alla proporzione giusta e si riduce. Nessun ingrandimento, nessuna scelta di
+# immagine presa al posto della titolare.
+#
+# La medaglietta e' tonda e il ritaglio e' centrato: quello che si perde sono
+# i bordi, che sul prodotto finito sono fuori dal cerchio comunque.
+DA_ARTWORK = {
+    "tag-baroque-purple-perla.jpg":        "medaglietta",
+    "tag-border-rose-perla.jpg":           "medaglietta",
+    "tag-central-rose-perla.jpg":          "medaglietta",
+    "tag-damask-burgundy-perla.jpg":       "medaglietta",
+    "tag-floral-burgundy-perla.jpg":       "medaglietta",
+    "tag-geometric-navy-silver-perla.jpg": "medaglietta",
+    "tag-medallion-emerald-perla.jpg":     "medaglietta",
+    "tag-olive-sage-perla.jpg":            "medaglietta",
+}
+
+
+# ==========================================================================
 # COSTRUZIONE
 # ==========================================================================
 
@@ -555,6 +582,31 @@ def _porta_all_altezza(percorso, altezza, temporanei):
     return fuori
 
 
+def _da_artwork(nome, misura):
+    """Riporta un artwork esistente alla proporzione dell'area, ritagliando.
+
+    Solo riduzione: se l'artwork non ha abbastanza pixel ci si ferma, perche'
+    ingrandire e' esattamente il difetto che questo file esiste per togliere.
+    """
+    percorso = os.path.join(SORGENTI, nome)
+    if not os.path.exists(percorso):
+        raise SystemExit("artwork mancante: " + percorso)
+    im = Image.open(percorso).convert("RGB")
+    larghezza, altezza = misura
+    w, h = im.size
+    if w < larghezza or h < altezza:
+        raise SystemExit(
+            "%s e' %dx%d, l'area e' %dx%d: ingrandirlo sarebbe rifare il "
+            "difetto. Serve un artwork piu' grande." % (nome, w, h, larghezza, altezza))
+    proporzione = larghezza / float(altezza)
+    if w / float(h) > proporzione:
+        nw, nh = int(round(h * proporzione)), h
+    else:
+        nw, nh = w, int(round(w / proporzione))
+    im = im.crop(((w - nw) // 2, (h - nh) // 2, (w - nw) // 2 + nw, (h - nh) // 2 + nh))
+    return im.resize((larghezza, altezza), Image.LANCZOS)
+
+
 def costruisci(voce, tipo, misura, temporanei, passo_px=None):
     """Un file di stampa alla misura esatta dell'area, senza ingrandire nulla.
 
@@ -569,7 +621,11 @@ def costruisci(voce, tipo, misura, temporanei, passo_px=None):
     stesso nome.
     """
     larghezza, altezza = misura
-    if voce[0] == "eu":
+    if voce[0] == "artwork":
+        im = _da_artwork(voce[1], misura)
+        # gli artwork "-perla.jpg" hanno il marchio dentro per convenzione
+        nativo = None if "-perla" not in voce[1] else voce[1]
+    elif voce[0] == "eu":
         _, nome, ritocco, ritaglio = voce
         percorso = _sorgente_eu(nome, ritocco, ritaglio, temporanei)
         percorso = _taglia_margini(percorso, temporanei)
@@ -642,6 +698,12 @@ def main():
             else:
                 voce_nativo, ritocco, ritaglio = nativo
         scrivi(("eu", voce_nativo, ritocco, ritaglio), tipo, sorgente,
+               lambda m, s=sorgente: nome_uscita(s, m))
+
+    for sorgente, tipo in DA_ARTWORK.items():
+        if solo and not any(x.lower() in sorgente.lower() for x in solo):
+            continue
+        scrivi(("artwork", sorgente), tipo, sorgente,
                lambda m, s=sorgente: nome_uscita(s, m))
 
     for titolo, voce in CATALOGO.items():
