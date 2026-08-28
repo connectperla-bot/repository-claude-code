@@ -45,3 +45,6 @@ generated-designs/usa-print-files/
 # script, non il suo referto.
 generated-designs/audit-prodotti.json
 generated-designs/audit-mockup/
+
+# Uscita di scripts/perla-eu-mockup.py: mockup rigenerabili con un comando.
+generated-designs/eu-mockup/
