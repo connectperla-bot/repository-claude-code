@@ -74,6 +74,10 @@ services:
         value: "10"
       - key: CUCCIA_VARIANT_ID
         value: "61436"
+      # ROUND 47 -- tappetino e guinzaglio Printify non hanno nessun prodotto
+      # sul negozio (verificato con perla-verifica-prodotti.py). Si tengono
+      # per quando si creeranno; il guinzaglio EU e' un'altra cosa e lo fa
+      # Printful, vedi PRINTFUL_GUINZAGLIO_EU_VARIANT_ID sopra.
       - key: TAPPETINO_BLUEPRINT_ID
         value: "855"
       - key: TAPPETINO_PROVIDER_ID
@@ -174,6 +178,10 @@ services:
         value: "10"
       - key: CUCCIA_VARIANT_ID
         value: "61436"
+      # ROUND 47 -- tappetino e guinzaglio Printify non hanno nessun prodotto
+      # sul negozio (verificato con perla-verifica-prodotti.py). Si tengono
+      # per quando si creeranno; il guinzaglio EU e' un'altra cosa e lo fa
+      # Printful, vedi PRINTFUL_GUINZAGLIO_EU_VARIANT_ID sopra.
       - key: TAPPETINO_BLUEPRINT_ID
         value: "855"
       - key: TAPPETINO_PROVIDER_ID

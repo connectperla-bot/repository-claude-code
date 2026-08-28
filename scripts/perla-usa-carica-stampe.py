@@ -150,10 +150,20 @@ def alleggerisci(percorso):
     # grandezza 1:1, su quel paisley fitto oro su blu, qualita' 92, 58, 40 e 32
     # sono indistinguibili e la scritta "Perla Italia" resta nitida a tutte e
     # quattro. Guardato, non supposto.
+    # Ogni gradino della scala scriveva un file e non ne cancellava nessuno:
+    # in una cartella da 1,3 GB si erano accumulati quindici scarti, uno per
+    # ogni tentativo di ogni giro. Si tiene solo l'ultimo provato.
+    fuori = precedente = None
     for sotto, qualita in ((2, 92), (2, 88), (2, 82), (2, 76), (2, 68),
                            (2, 58), (2, 50), (2, 42), (2, 34), (2, 28)):
         fuori = percorso.replace(".jpg", "-s%dq%d.jpg" % (sotto, qualita))
         im.save(fuori, quality=qualita, subsampling=sotto, optimize=True)
+        if precedente and precedente != fuori:
+            try:
+                os.unlink(precedente)
+            except OSError:
+                pass
+        precedente = fuori
         if os.path.getsize(fuori) <= LIMITE_MB * 1e6:
             return fuori, True
     # Meglio fermarsi che caricare qualcosa che verra' rifiutato: un prodotto
@@ -392,9 +402,19 @@ def main():
         """
         if percorso not in caricate:
             f, ridotto = alleggerisci(percorso)      # puo' sollevare RuntimeError
+            peso = os.path.getsize(f) / 1e6
             caricate[percorso] = carica_immagine(f, token)
+            # La copia ricompressa e' servita solo a passare il limite di
+            # Printify: una volta caricata non serve piu' a nessuno, e
+            # lasciarla vuol dire raddoppiare una cartella che sta gia' a
+            # oltre un gigabyte. L'originale non si tocca mai.
+            if ridotto and f != percorso:
+                try:
+                    os.unlink(f)
+                except OSError:
+                    pass
             print("    caricato %-46s %.1f MB%s" % (
-                os.path.basename(f)[:46], os.path.getsize(f) / 1e6,
+                os.path.basename(f)[:46], peso,
                 " (ricompresso)" if ridotto else ""))
         return caricate[percorso]
 
