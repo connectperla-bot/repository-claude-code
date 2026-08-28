@@ -39,3 +39,9 @@ out-foto/
 # per guardare i motivi, si rifa' con `python3 scripts/perla-motivi-nuovi.py`.
 motivi/
 generated-designs/usa-print-files/
+
+# Uscita di scripts/perla-verifica-prodotti.py: e' una fotografia dello stato
+# dei prodotti in un dato momento, si rifa' con un comando. In git ci va lo
+# script, non il suo referto.
+generated-designs/audit-prodotti.json
+generated-designs/audit-mockup/
