@@ -84,6 +84,40 @@ CATEGORIE = (
 )
 
 
+# ==========================================================================
+# CIO' CHE E' GIA' STATO DECISO, E NON E' PIU' UN DIFETTO
+# ==========================================================================
+# Un audit che elenca ogni volta cose gia' viste e gia' decise smette di
+# essere letto, e il giorno che compare un difetto vero nessuno se ne
+# accorge. Queste due situazioni sono note e volute, quindi si contano a
+# parte invece che fra i difetti.
+#
+# Le regole guardano i DATI, non un elenco di titoli da tenere aggiornato a
+# mano: se domani il fornitore riabilita i collari, o se qualcuno mette un
+# disegno sul prodotto neutro, rientrano da soli fra i prodotti normali.
+
+def noto(prodotto, difetti):
+    """Perche' questo prodotto e' cosi' di proposito, o None."""
+    if not aree.abilitate(prodotto):
+        # I 18 collari: blueprint 784, fornitore 93, tutte le varianti
+        # is_enabled false E is_available false. Archiviati su Shopify il
+        # 2026-08-28 d'accordo con la titolare: non si vende una cosa che il
+        # fornitore non produce piu'.
+        return "archiviato: il fornitore non lo produce piu'"
+
+    # I quattro "Crea il Tuo Design" (medaglietta, ciotola, bandana e cuccia
+    # neutre) hanno SOLO il livello del marchio, perche' l'immagine la porta
+    # il cliente dallo studio di personalizzazione. Un prodotto senza disegno
+    # di fondo qui e' giusto, non rotto.
+    livelli = [im.get("name")
+               for pa in prodotto.get("print_areas", [])
+               for ph in pa.get("placeholders", [])
+               for im in ph.get("images", [])]
+    if livelli and all(n in marchio.LIVELLI_OBSOLETI for n in livelli if n):
+        return "neutro: il disegno lo porta il cliente"
+    return None
+
+
 def categoria(difetto):
     for prefisso, etichetta in CATEGORIE:
         if difetto.startswith(prefisso):
@@ -336,16 +370,20 @@ def main():
     manifesto = marchio_nei_file()
     if manifesto:
         print("(%d file di stampa nel manifesto del marchio)\n" % len(manifesto))
-    cache, rapporto, conteggio = {}, [], {}
+    cache, rapporto, conteggio, noti = {}, [], {}, []
     for p in sorted(prodotti, key=lambda x: x["title"]):
         difetti, dettaglio = esamina(p, token, cache, manifesto)
+        perche = noto(p, difetti) if difetti else None
+        if perche:
+            noti.append((p["title"], perche))
+            difetti = []
         for d in difetti:
             c = categoria(d)
             conteggio[c] = conteggio.get(c, 0) + 1
         voce = {"id": p["id"], "titolo": p["title"], "blueprint": p["blueprint_id"],
                 "provider": p["print_provider_id"],
                 "shopify": (p.get("external") or {}).get("id"),
-                "difetti": difetti, "dettaglio": dettaglio}
+                "difetti": difetti, "noto": perche, "dettaglio": dettaglio}
         if "--mockup" in sys.argv:
             voce["mockup"] = scarica_mockup(p, os.path.join(USCITA, "audit-mockup"))
         rapporto.append(voce)
@@ -358,8 +396,15 @@ def main():
     print("RIEPILOGO")
     for d, n in sorted(conteggio.items(), key=lambda kv: -kv[1]):
         print("  %3d prodotti  %s" % (n, d))
-    sani = sum(1 for v in rapporto if not v["difetti"])
+    sani = sum(1 for v in rapporto if not v["difetti"] and not v.get("noto"))
     print("  %3d prodotti  senza difetti" % sani)
+    if noti:
+        print("\n  gia' deciso, non sono difetti:")
+        per_motivo = {}
+        for _, perche in noti:
+            per_motivo[perche] = per_motivo.get(perche, 0) + 1
+        for perche, n in sorted(per_motivo.items(), key=lambda kv: -kv[1]):
+            print("  %3d prodotti  %s" % (n, perche))
 
     if "--printful" in sys.argv:
         print("\n" + "=" * 72)

@@ -286,8 +286,15 @@ CATALOGO = {
 # Il tipo di prodotto si legge dal prefisso della sorgente.
 PREFISSO_TIPO = {"collar-": "collare", "bandana-": "bandana", "tag-": "medaglietta"}
 
+# Il prefisso funziona per i file nati in questo progetto. Qualcuno pero' e'
+# arrivato da fuori e non segue nessuna convenzione: si dichiara qui, invece
+# di piegare la regola generale su un caso singolo.
+TIPO_ESPLICITO = {"PINATA DOLIVO.jpg": "bandana"}
+
 
 def tipo_di(sorgente):
+    if sorgente in TIPO_ESPLICITO:
+        return TIPO_ESPLICITO[sorgente]
     for pre, tipo in PREFISSO_TIPO.items():
         if sorgente.startswith(pre):
             return tipo
@@ -367,6 +374,14 @@ PER_SORGENTE = {
                                                     ("duotono", (16, 54, 42), (206, 174, 104)), None),
     "bandana-perla-only.jpg":                      ("bandana-ulivo-nuovo.jpg",
                                                     ("duotono", (18, 48, 38), (198, 168, 100)), None),
+    # ROUND 47 -- "Olive Branch Pet Bandana" stampava PINATA DOLIVO.jpg a
+    # scale 0,22 e y=0,74: un decoro singolo su bandana bianca, con il 91%
+    # dell'area vuoto e nessun marchio. Era rimasta fuori da tutte le tornate
+    # precedenti perche' il suo livello non somigliava a niente di conosciuto.
+    # bandana-ulivo-nuovo e' foglie d'ulivo tenui su crema, cioe' il nativo
+    # che corrisponde davvero al nome del prodotto, ed e' fra i tre senza
+    # marchio: quindi glielo compone marchio.py.
+    "PINATA DOLIVO.jpg":                           "bandana-ulivo-nuovo.jpg",
 
     # --- medagliette: area 810x900, il nativo si riduce e si ritaglia ------
     "tag-paisley-burgundy-perla.jpg":              "bandana-paisley-cammeo.jpg",
