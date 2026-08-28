@@ -140,12 +140,29 @@ def alleggerisci(percorso):
     # peso senza che si veda, e vale molto piu' che scendere di qualita':
     # a qualita' 52 su un damasco fitto gli artefatti si vedono, a 4:2:0 e
     # qualita' 88 no.
-    for sotto, qualita in ((2, 92), (2, 88), (2, 82), (2, 76), (2, 68), (2, 58)):
+    # ROUND 47 -- la scala si fermava a 58 e poi caricava LO STESSO il file
+    # troppo grande, che Printify rifiuta con "The POST data is too large".
+    # Successo davvero sulla cuccia "Luxury Paisley": 85,6 MB di partenza, a
+    # qualita' 58 ancora 32,7 MB, sopra il limite, e il prodotto e' rimasto
+    # indietro senza che il giro se ne accorgesse.
+    #
+    # Scendere piu' in basso non costa niente di visibile: affiancati a
+    # grandezza 1:1, su quel paisley fitto oro su blu, qualita' 92, 58, 40 e 32
+    # sono indistinguibili e la scritta "Perla Italia" resta nitida a tutte e
+    # quattro. Guardato, non supposto.
+    for sotto, qualita in ((2, 92), (2, 88), (2, 82), (2, 76), (2, 68),
+                           (2, 58), (2, 50), (2, 42), (2, 34), (2, 28)):
         fuori = percorso.replace(".jpg", "-s%dq%d.jpg" % (sotto, qualita))
         im.save(fuori, quality=qualita, subsampling=sotto, optimize=True)
         if os.path.getsize(fuori) <= LIMITE_MB * 1e6:
             return fuori, True
-    return fuori, True
+    # Meglio fermarsi che caricare qualcosa che verra' rifiutato: un prodotto
+    # saltato con un motivo chiaro si rifa', uno saltato in silenzio no.
+    raise RuntimeError(
+        "%s resta %.1f MB anche a qualita' 28: non si puo' caricare senza "
+        "ridurre i pixel, che sarebbe rifare il difetto. Serve un motivo meno "
+        "fitto per questa misura."
+        % (os.path.basename(percorso), os.path.getsize(fuori) / 1e6))
 
 
 def carica_immagine(percorso, token):
@@ -374,7 +391,7 @@ def main():
         caricati tutti e due.
         """
         if percorso not in caricate:
-            f, ridotto = alleggerisci(percorso)
+            f, ridotto = alleggerisci(percorso)      # puo' sollevare RuntimeError
             caricate[percorso] = carica_immagine(f, token)
             print("    caricato %-46s %.1f MB%s" % (
                 os.path.basename(f)[:46], os.path.getsize(f) / 1e6,
