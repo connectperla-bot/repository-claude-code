@@ -136,6 +136,38 @@ def test_il_metodo_vecchio_su_questi_dati_fallisce():
               % (bp, misura[0], misura[1], vuoto * 100, taglio * 100))
 
 
+def test_abilitate_e_vendibili_distinguono_un_prodotto_morto():
+    """Due domande diverse, e confonderle costa caro.
+
+    abilitate() dice cosa il prodotto mette in vendita; vendibili() dice cosa
+    il FORNITORE sa davvero produrre. I diciotto collari avevano tutte le
+    varianti spente E non disponibili: sono due condizioni distinte, e il
+    codice che decide se riscrivere un prodotto guarda la prima, quello che
+    decide se fermarsi guarda la seconda.
+    """
+    p = {'variants': [
+        {'id': 1, 'is_enabled': True,  'is_available': True},
+        {'id': 2, 'is_enabled': True,  'is_available': False},   # il fornitore non la fa
+        {'id': 3, 'is_enabled': False, 'is_available': True},    # non in vendita
+    ]}
+    assert aree.abilitate(p) == {1, 2}, 'abilitate: %s' % aree.abilitate(p)
+    assert aree.vendibili(p) == {1}, 'vendibili: %s' % aree.vendibili(p)
+
+    morto = {'variants': [{'id': 1, 'is_enabled': False, 'is_available': False}]}
+    assert not aree.abilitate(morto) and not aree.vendibili(morto), (
+        'un prodotto con tutto spento non ha niente da riscrivere')
+
+
+def test_i_gruppi_si_restringono_alle_varianti_chieste():
+    """solo_varianti evita di costruire file per misure che il prodotto non vende."""
+    elenco = aree.varianti(562, 70)
+    tutti = aree.gruppi(elenco, 'front')
+    uno = aree.gruppi(elenco, 'front', solo_varianti={101403})
+    assert len(tutti) == 2 and len(uno) == 1, (
+        'con solo_varianti si deve restringere: %d gruppi su %d' % (len(uno), len(tutti)))
+    assert uno[0]['variant_ids'] == [101403]
+
+
 def test_la_copertura_misura_quello_che_dice():
     """Casi calcolati a mano, per non fidarsi della funzione sulla parola."""
     # immagine larga il doppio dell'area e alta uguale: meta' esce dai lati
@@ -164,6 +196,12 @@ def test_scala_per_coprire_toglie_il_vuoto():
 def main():
     print('Raggruppamento delle varianti')
     prova('ogni variante finisce in uno e un solo gruppo', test_ogni_variante_finisce_in_un_gruppo)
+
+    print('\nAbilitate contro vendibili')
+    prova('distinguono un prodotto morto da uno vivo',
+          test_abilitate_e_vendibili_distinguono_un_prodotto_morto)
+    prova('i gruppi si restringono alle varianti chieste',
+          test_i_gruppi_si_restringono_alle_varianti_chieste)
 
     print('\nCopertura')
     prova('la copertura misura quello che dice', test_la_copertura_misura_quello_che_dice)
