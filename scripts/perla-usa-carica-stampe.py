@@ -239,6 +239,19 @@ def aree_per_variante(prodotto, tipo, identita, da_catalogo, token, carica):
     if not abilitate:
         return None, "nessuna variante abilitata"
 
+    # PRINT_AREAS DEVE ELENCARE TUTTE LE VARIANTI DEL PRODOTTO, NON SOLO QUELLE
+    # ABILITATE. Senza, Printify rifiuta l'intero aggiornamento con
+    #   8251 "Variants do not match selected blueprint and print provider"
+    # (incontrato sul primo caricamento di prova, bandana "Vintage Damask").
+    #
+    # E la differenza non e' solo "abilitate contro disabilitate": quel
+    # prodotto porta la variante 70849 ('25" x 12"'), che il blueprint 562 NON
+    # ELENCA PIU'. E' una misura ritirata dal fornitore e rimasta attaccata al
+    # prodotto. Non ha una misura di stampa da nessuna parte, quindi non puo'
+    # avere un gruppo suo: si aggrega al gruppo piu' grande. Siccome e'
+    # disabilitata non e' ordinabile, e il file che le tocca non stampera' mai.
+    tutte = [v["id"] for v in prodotto.get("variants", [])]
+
     # Le posizioni che oggi hanno davvero un'immagine. Il retro delle
     # medagliette e' dichiarato e vuoto: rimandarlo vuoto fa fallire il PUT
     # con "print_areas.N.placeholders.M.images: required".
@@ -251,16 +264,18 @@ def aree_per_variante(prodotto, tipo, identita, da_catalogo, token, carica):
         return None, "nessun placeholder con immagini"
 
     nuove = []
-    for gruppo in aree.gruppi(geometria, posizioni[0], solo_varianti=abilitate):
+    orfane = list(tutte)
+    for gruppo in aree.gruppi(geometria, posizioni[0], solo_varianti=set(tutte)):
         segnaposto = []
+        mancante = None
         for posizione in posizioni:
             misura = per_id[gruppo["variant_ids"][0]]["placeholders"].get(posizione)
             if not misura:
                 continue
             percorso = file_costruito(tipo, identita, misura, da_catalogo)
             if not percorso:
-                return None, ("manca il file %dx%d: costruiscilo con "
-                              "python3 scripts/perla-usa-file-stampa.py" % misura)
+                mancante = misura
+                break
             caricata = carica(percorso)
             segnaposto.append({
                 "position": posizione,
@@ -274,12 +289,26 @@ def aree_per_variante(prodotto, tipo, identita, da_catalogo, token, carica):
                     "x": 0.5, "y": 0.5, "scale": 1.0, "angle": 0,
                 }],
             })
+        if mancante:
+            # Se il gruppo non ha nemmeno una variante VENDIBILE, il file
+            # mancante non serve a nessuno: le sue varianti si aggregano al
+            # gruppo piu' grande e si va avanti. Se invece qualcuno la vende,
+            # fermarsi e' l'unica risposta onesta.
+            if set(gruppo["variant_ids"]) & abilitate:
+                return None, ("manca il file %dx%d: costruiscilo con "
+                              "python3 scripts/perla-usa-file-stampa.py" % mancante)
+            continue
         if segnaposto:
-            nuove.append({"variant_ids": gruppo["variant_ids"],
+            nuove.append({"variant_ids": list(gruppo["variant_ids"]),
                           "placeholders": segnaposto})
+            orfane = [v for v in orfane if v not in set(gruppo["variant_ids"])]
 
     if not nuove:
         return None, "nessun gruppo di varianti da scrivere"
+    if orfane:
+        # varianti ritirate dal blueprint, o rimaste senza file: al gruppo piu'
+        # grande, che e' il primo (aree.gruppi ordina dal piu' grande)
+        nuove[0]["variant_ids"] = sorted(set(nuove[0]["variant_ids"]) | set(orfane))
     return nuove, None
 
 

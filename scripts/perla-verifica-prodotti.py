@@ -91,6 +91,32 @@ def categoria(difetto):
     return difetto
 
 
+MANIFESTO = os.path.join(USCITA, "usa-print-files", "_marchio.json")
+
+
+def marchio_nei_file():
+    """I file di stampa che il marchio ce l'hanno DENTRO.
+
+    Da ROUND 47 il marchio non e' piu' un livello separato su Printify: e'
+    composto nel file (marchio.py). Contare i livelli direbbe "senza marchio"
+    su tutto il catalogo appena riparato, che e' il contrario della verita'.
+
+    Due fonti, tutte e due verificabili:
+      * il manifesto scritto da perla-usa-file-stampa.py, che per ogni file
+        costruito dice se il marchio era gia' nel motivo o se e' stato composto;
+      * la convenzione "-perla.jpg" sugli artwork originali, descritta in
+        perla-usa-marchio.py: quei file il marchio ce l'hanno dentro (verificato
+        aprendoli: cartella "PERLA" al centro della bandana, "Perla Italia"
+        ripetuto sul collare).
+    """
+    fuori = {}
+    if os.path.exists(MANIFESTO):
+        with open(MANIFESTO) as fh:
+            for nome, voce in json.load(fh).items():
+                fuori[nome] = voce.get("marchio", "si")
+    return fuori
+
+
 def chiavi():
     valori = {}
     with open(ENV) as fh:
@@ -131,8 +157,9 @@ def prodotti_printify(token, shop):
     return fuori
 
 
-def esamina(p, token, cache):
+def esamina(p, token, cache, manifesto=None):
     """I difetti di un prodotto. Torna (elenco_difetti, dettaglio)."""
+    manifesto = manifesto or {}
     difetti = []
     chiave = (p["blueprint_id"], p["print_provider_id"])
     if chiave not in cache:
@@ -164,6 +191,7 @@ def esamina(p, token, cache):
     marchi_dentro = 0
     marchi_totali = 0
     varianti_esaminate = 0
+    marchio_nel_motivo = 0
 
     for pa in p.get("print_areas", []):
         ids = [i for i in pa.get("variant_ids", []) if i in abilitate]
@@ -183,6 +211,8 @@ def esamina(p, token, cache):
                 e_marchio = nome in marchio.LIVELLI_OBSOLETI
                 if e_marchio:
                     marchi_totali += 1
+                elif nome in manifesto or nome.endswith("-perla.jpg"):
+                    marchio_nel_motivo += 1
                 for vid in ids:
                     misura = per_id.get(vid, {}).get("placeholders", {}).get(posizione)
                     if not misura:
@@ -215,14 +245,15 @@ def esamina(p, token, cache):
         difetti.append("sgranato: ingrandito %.1f volte" % peggio["ingrandimento"])
     # Solo se c'e' stata almeno una variante da misurare: senza, non si sa
     # dove cada il marchio e dirlo comunque sarebbe un falso positivo.
-    if varianti_esaminate:
+    if varianti_esaminate and not marchio_nel_motivo:
         if marchi_totali and not marchi_dentro:
             difetti.append("marchio fuori dall'area di stampa (c'e' il livello, non si stampa)")
         elif not marchi_totali:
-            difetti.append("senza marchio (nessun livello marchio)")
+            difetti.append("senza marchio (ne' nel motivo ne' come livello)")
 
     dettaglio["peggio"] = {k: round(v, 4) for k, v in peggio.items()}
-    dettaglio["marchi"] = {"totali": marchi_totali, "dentro": marchi_dentro}
+    dettaglio["marchi"] = {"livelli": marchi_totali, "livelli_dentro": marchi_dentro,
+                           "nel_motivo": marchio_nel_motivo}
     return difetti, dettaglio
 
 
@@ -302,9 +333,12 @@ def main():
         prodotti = [p for p in prodotti if solo in p["title"].lower()]
     print("%d prodotti su Printify\n" % len(prodotti))
 
+    manifesto = marchio_nei_file()
+    if manifesto:
+        print("(%d file di stampa nel manifesto del marchio)\n" % len(manifesto))
     cache, rapporto, conteggio = {}, [], {}
     for p in sorted(prodotti, key=lambda x: x["title"]):
-        difetti, dettaglio = esamina(p, token, cache)
+        difetti, dettaglio = esamina(p, token, cache, manifesto)
         for d in difetti:
             c = categoria(d)
             conteggio[c] = conteggio.get(c, 0) + 1

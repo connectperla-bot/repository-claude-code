@@ -51,6 +51,7 @@ I file finiscono in generated-designs/usa-print-files/ (ignorata da git:
 sono centinaia di MB rigenerabili con un comando).
 """
 import importlib.util
+import json
 import os
 import sys
 
@@ -652,7 +653,8 @@ def costruisci(voce, tipo, misura, temporanei, passo_px=None):
 
     if marchio.serve(nativo):
         im, _ = marchio.componi(im, tipo)
-    return im
+        return im, "composto"
+    return im, "nel motivo"
 
 
 def main():
@@ -663,6 +665,15 @@ def main():
     os.makedirs(USCITA, exist_ok=True)
 
     fatti = []
+    # Il manifesto dice, per ogni file costruito, se il marchio ci sta perche'
+    # era gia' nel motivo o perche' l'abbiamo composto. Serve all'audit: da
+    # ROUND 47 il marchio non e' piu' un LIVELLO su Printify, quindi contare i
+    # livelli direbbe "senza marchio" su tutto il catalogo riparato.
+    percorso_manifesto = os.path.join(USCITA, "_marchio.json")
+    manifesto = {}
+    if os.path.exists(percorso_manifesto):
+        with open(percorso_manifesto) as fh:
+            manifesto = json.load(fh)
 
     def scrivi(voce, tipo, chiave, nome_base, passo_px=None):
         """Costruisce e salva un file per OGNI misura di quel tipo."""
@@ -671,8 +682,11 @@ def main():
             if os.path.exists(fuori) and not rifai:
                 fatti.append((chiave, fuori, Image.open(fuori).size, voce[0], misura))
                 continue
-            im = costruisci(voce, tipo, misura, temporanei, passo_px)
+            im, come = costruisci(voce, tipo, misura, temporanei, passo_px)
             im.save(fuori, quality=92, subsampling=0)
+            manifesto[os.path.basename(fuori)] = {
+                "tipo": tipo, "misura": list(misura), "marchio": come,
+                "sorgente": chiave}
             fatti.append((chiave, fuori, im.size, voce[0], misura))
             print("%-44s %5dx%-5d %-11s %.1f MB" % (
                 chiave[:44], im.size[0], im.size[1], tipo,
@@ -735,6 +749,9 @@ def main():
                    ("%s %dx%d" % (titolo, misura[0], misura[1]))[:56], fill="black")
         sheet.save(os.path.join(USCITA, "_provino.jpg"), quality=90)
         print("\nprovino in", os.path.join(USCITA, "_provino.jpg"))
+
+    with open(percorso_manifesto, "w") as fh:
+        json.dump(manifesto, fh, indent=1, ensure_ascii=False)
 
     print("\n%d file di stampa in %s" % (len(fatti), USCITA))
 

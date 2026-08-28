@@ -143,8 +143,16 @@ const PRODUCT_TYPE_CONFIG = {
     // guinzaglio_eu ("Pet Leash", id catalogo 745). Nessuna opzione extra
     // richiesta per questi due (verificato leggendo lo schema prodotto via
     // API, a differenza della bandana quadrata sopra che vuole
-    // stitch_color) -- da confermare con un ordine di prova reale come gia'
-    // fatto per collare_eu/bandana_eu, vedi commento in testa al file.
+    // stitch_color).
+    //
+    // ROUND 47 -- CONFERMATO con l'ordine di prova reale che mancava. Una
+    // bozza per ognuno dei quattro tipi EU sullo store nativo 18346388,
+    // accettata da Printful con il costo quotato, poi cancellata:
+    //   collare 24,58 EUR   bandana 16,30 EUR
+    //   ciotola 41,24 EUR   guinzaglio 27,32 EUR
+    // Vale anche come prova che gli ordini partono con ZERO prodotti
+    // registrati sull'account: si ordina sul catalogo, non su un prodotto
+    // sincronizzato. Rifallo con perla-verifica-prodotti.py --printful.
     ciotola_eu: {
       storeId: Number(process.env.PRINTFUL_STORE_ID || 0),
       variantId: Number(process.env.PRINTFUL_CIOTOLA_EU_VARIANT_ID || 0),
