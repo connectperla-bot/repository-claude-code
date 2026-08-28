@@ -1,5 +1,7 @@
 'use strict';
 
+const { riferimento } = require('../riferimento-ordine');
+
 // Client Printify — logica identica a quella gia' in produzione in
 // perla-printify-order-sync.js, solo estratta in un modulo separato cosi'
 // il file principale puo' scegliere il fornitore giusto per ogni ordine
@@ -50,12 +52,13 @@ async function createProduct(order, item, front, back, config, apiKey, shopId) {
   return response.json();
 }
 
-async function createOrderOnPrintify(order, productId, variantId, quantity, apiKey, shopId) {
+async function createOrderOnPrintify(order, item, productId, variantId, quantity, apiKey, shopId) {
   const response = await fetch('https://api.printify.com/v1/shops/' + shopId + '/orders.json', {
     method: 'POST',
     headers: { Authorization: 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      external_id: String(order.id),
+      // Un riferimento per RIGA, non per ordine: vedi riferimento-ordine.js.
+      external_id: riferimento(order, item),
       line_items: [{ product_id: productId, variant_id: variantId, quantity: quantity }],
       shipping_method: 1,
       send_shipping_notification: false,
@@ -104,7 +107,7 @@ async function sendToProduction(orderId, apiKey, shopId) {
 async function fulfillOrder(ctx) {
   const { order, item, front, back, config, env } = ctx;
   const product = await createProduct(order, item, front, back, config, env.PRINTIFY_API_KEY, env.PRINTIFY_SHOP_ID);
-  const printifyOrder = await createOrderOnPrintify(order, product.id, config.variantId, item.quantity, env.PRINTIFY_API_KEY, env.PRINTIFY_SHOP_ID);
+  const printifyOrder = await createOrderOnPrintify(order, item, product.id, config.variantId, item.quantity, env.PRINTIFY_API_KEY, env.PRINTIFY_SHOP_ID);
 
   let sentToProduction = false;
   if (env.PRINTIFY_AUTO_SEND_TO_PRODUCTION === 'true') {
