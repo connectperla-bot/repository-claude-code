@@ -414,6 +414,25 @@ def _sorgente_eu(nome, ritocco, ritaglio, temporanei):
     percorso = os.path.join(NATIVI, nome)
     if not os.path.exists(percorso):
         raise SystemExit("nativo mancante: " + percorso)
+
+    # Quattro nativi hanno UN SOLO medaglione "Perla Italia", sempre a
+    # x=0,81 y=0,75. Affiancati o ritagliati, quel medaglione finisce dove
+    # capita -- sulla medaglietta "Green Geometric" e' arrivato sul bordo ed e'
+    # stato tagliato dal tondo, lasciando una falce d'oro senza senso. Si
+    # ritaglia via, e il marchio lo compone marchio.py dove deve stare.
+    if os.path.basename(nome) in marchio.NATIVI_CON_MEDAGLIONE:
+        with Image.open(percorso) as _im:
+            dimensioni = _im.size
+        if not marchio.esclude_il_medaglione(ritaglio, dimensioni):
+            s0, a0, d0, b0 = marchio.RITAGLIO_SENZA_MEDAGLIONE
+            nuovo = (round(s0 * dimensioni[0]), round(a0 * dimensioni[1]),
+                     round(d0 * dimensioni[0]), round(b0 * dimensioni[1]))
+            # se c'era gia' un ritaglio esplicito si intersecano, cosi' non si
+            # perde la ragione per cui era stato messo
+            ritaglio = nuovo if not ritaglio else (
+                max(ritaglio[0], nuovo[0]), max(ritaglio[1], nuovo[1]),
+                min(ritaglio[2], nuovo[2]), min(ritaglio[3], nuovo[3]))
+
     if not ritocco and not ritaglio:
         return percorso
 

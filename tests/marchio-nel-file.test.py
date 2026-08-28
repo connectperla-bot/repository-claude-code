@@ -85,8 +85,14 @@ def misure_reali():
 # ==========================================================================
 
 def test_non_si_aggiunge_dove_ce_gia():
-    for gia in ('bandana-barocco.jpg', 'bandana-diamanti.jpg',
-                'bandana-paisley-cammeo.jpg', 'bandana-ghirigori.jpg'):
+    """I motivi con la SCRITTA RIPETUTA il marchio ce l'hanno ovunque.
+
+    Questi sono diversi dai quattro col medaglione singolo (test sotto): qui
+    la scritta si ripete su tutto il motivo, quindi qualunque ritaglio ne
+    contiene comunque. Aggiungerne un altro sarebbe il marchio doppio.
+    """
+    for gia in ('bandana-barocco.jpg', 'bandana-floreale-elegante.jpg',
+                'bandana-ramo-dulivo.jpg', 'bandana-ghirigori.jpg'):
         assert not marchio.serve(gia), (
             '%s il marchio ce l\'ha gia\' dentro: aggiungerlo lo raddoppia' % gia)
 
@@ -95,6 +101,32 @@ def test_si_aggiunge_dove_manca():
     for manca in marchio.NATIVI_SENZA_MARCHIO:
         assert marchio.serve(manca), '%s non ha marchio: va aggiunto' % manca
     assert marchio.serve(None), 'i motivi disegnati non hanno mai marchio'
+
+
+def test_il_medaglione_singolo_viene_ritagliato_via():
+    """Quattro nativi hanno UN solo medaglione, e su un ritaglio non vale.
+
+    E' il difetto trovato sul mockup della medaglietta "Green Geometric":
+    ritagliata da bandana-diamanti, il medaglione del nativo e' finito sul
+    bordo ed e' stato mozzato dal tondo. "Il nativo ha il marchio" e' vero per
+    il nativo intero e falso per una sua porzione.
+    """
+    for n in marchio.NATIVI_CON_MEDAGLIONE:
+        assert marchio.serve(n), (
+            '%s ha un medaglione solo: va ritagliato via e il marchio ricomposto' % n)
+
+    # il ritaglio previsto deve davvero lasciare fuori il medaglione
+    s, a, d, b = marchio.RITAGLIO_SENZA_MEDAGLIONE
+    ms, ma, md, mb = marchio.MEDAGLIONE
+    assert d <= ms or b <= ma, (
+        'il ritaglio %s non esclude il medaglione %s'
+        % (marchio.RITAGLIO_SENZA_MEDAGLIONE, marchio.MEDAGLIONE))
+
+    # un ritaglio esplicito che gia' lo esclude non va rifatto (onde-dorate)
+    assert marchio.esclude_il_medaglione((0, 0, 4125, 1850), (4125, 4125)), (
+        'il ritaglio storico di onde-dorate esclude gia\' il medaglione')
+    assert not marchio.esclude_il_medaglione(None, (4125, 4125)), (
+        'senza ritaglio il medaglione c\'e\' ancora')
 
 
 def test_sta_sempre_dentro_l_area_sicura():
@@ -165,6 +197,8 @@ def main():
     print('Dove va messo e dove no')
     prova('non si aggiunge ai motivi che lo contengono gia\'', test_non_si_aggiunge_dove_ce_gia)
     prova('si aggiunge ai tre motivi che ne sono privi', test_si_aggiunge_dove_manca)
+    prova('il medaglione singolo si ritaglia via invece di fidarsene',
+          test_il_medaglione_singolo_viene_ritagliato_via)
 
     print('\nDove cade')
     prova('sta dentro l\'area sicura di ogni tipo e ogni misura',

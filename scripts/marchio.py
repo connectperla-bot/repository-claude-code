@@ -74,6 +74,51 @@ NOME = "perla-combined-logo.png"
 #                        ghirigori, onde, paisley-rosa, ramo-dulivo
 #
 # Chi rivede questa tabella rifaccia lo stesso: guardi le immagini.
+# ==========================================================================
+# I NATIVI CON UN MEDAGLIONE SOLO: il marchio c'e', ma non si puo' contarci
+# ==========================================================================
+# Quattro nativi portano UN SOLO medaglione "Perla Italia", sempre nello
+# stesso punto: centro a x=0,81 y=0,75 (misurato su tutti e quattro cercando
+# la finestra a saturazione massima -- il picco sta a 7-40 volte la media, non
+# e' un'interpretazione).
+#
+# "Il nativo ha il marchio" e' vero per il nativo INTERO e falso per un suo
+# ritaglio. Sulla medaglietta "Green Geometric" (area 810x900, ritagliata da
+# bandana-diamanti) quel medaglione e' finito sul bordo ed e' stato tagliato
+# dal tondo: si vedeva una falce d'oro a destra e nient'altro. Guardato il
+# mockup vero, non dedotto. Affiancando il nativo il medaglione si ripete a
+# caso e a volte cade sulla punta della bandana, dove viene mozzato.
+#
+# Quindi: si RITAGLIA via il medaglione dal nativo, e il marchio lo si compone
+# noi dove deve stare. Il ritaglio tiene i due terzi sinistri a piena altezza,
+# che e' la porzione piu' grande che lo esclude di sicuro.
+NATIVI_CON_MEDAGLIONE = {
+    "bandana-art-deco-rosa.jpg",
+    "bandana-diamanti.jpg",
+    "bandana-onde-dorate.jpg",
+    "bandana-paisley-cammeo.jpg",
+}
+
+# Il medaglione, in frazione del nativo: centro (0,81 - 0,75), largo circa 0,18.
+MEDAGLIONE = (0.72, 0.66, 0.90, 0.84)
+# Il ritaglio che lo esclude, in frazione del nativo (sinistra, alto, destra, basso).
+RITAGLIO_SENZA_MEDAGLIONE = (0.0, 0.0, 0.66, 1.0)
+
+
+def esclude_il_medaglione(ritaglio, dimensioni):
+    """Vero se questo ritaglio (in pixel) lascia gia' fuori il medaglione.
+
+    Serve per non ritagliare due volte: bandana-onde-dorate ha gia' un
+    ritaglio esplicito a (0, 0, 4125, 1850) messo in una tornata precedente,
+    e 1850 sta ben sopra il medaglione, che comincia a 0,66 di 4125 = 2722.
+    """
+    if not ritaglio:
+        return False
+    w, h = dimensioni
+    _, _, destra, basso = ritaglio
+    return destra <= MEDAGLIONE[0] * w or basso <= MEDAGLIONE[1] * h
+
+
 NATIVI_SENZA_MARCHIO = {
     "bandana-damasco-reale.jpg",   # rami d'ulivo verdi su crema, niente scritte
     "bandana-ulivo-nuovo.jpg",     # foglie tenui su crema, niente scritte
@@ -89,7 +134,10 @@ def serve(nativo):
     """
     if not nativo:
         return True
-    return os.path.basename(nativo) in NATIVI_SENZA_MARCHIO
+    base = os.path.basename(nativo)
+    # I quattro col medaglione singolo contano come "senza marchio": il loro
+    # viene ritagliato via, perche' su un ritaglio non ci si puo' contare.
+    return base in NATIVI_SENZA_MARCHIO or base in NATIVI_CON_MEDAGLIONE
 
 LIVELLI_OBSOLETI = ("LOGO PERLA - Copia.PNG", "logo-full.png",
                     "perla-combined-logo.png", "v2-01-logo-centrale.png",
