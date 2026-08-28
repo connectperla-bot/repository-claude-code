@@ -266,13 +266,14 @@ def riquadri(tipo, area, marchio_wh):
     return fuori
 
 
-# Oro del marchio: serve per decidere se sul fondo si vedrebbe o no.
+# I due inchiostri del marchio: il medaglione e "Perla" sono oro, "Italia" e'
+# quasi nera. Servono per verificare che la cartella li stacchi tutti e due.
 ORO = (214, 178, 96)
-# Sotto questo scarto di luminosita' fra marchio e fondo, il marchio sparisce.
-# Misurato sul caso che ha fatto nascere questa funzione: la bandana
-# "laurel navy" ha fondo senape (luminosita' 176) e l'oro sta a 178 -- scarto
-# 2 su 255, e infatti della scritta "Perla" non si vedeva niente, restava solo
-# la parola "Italia" scura che sembrava capitata li' per sbaglio.
+INCHIOSTRO_SCURO = (28, 26, 24)
+# Il fondo della cartella: la crema per cui il logo e' stato disegnato.
+CARTELLA = (243, 236, 224)
+BORDO_ESTERNO = (46, 40, 34)
+# Scarto di luminosita' sotto il quale un inchiostro sparisce nel fondo.
 CONTRASTO_MINIMO = 60
 
 
@@ -281,43 +282,50 @@ def _luminosita(rgb):
 
 
 def _cartella(base, riquadro, margine=0.14, raggio=0.10):
-    """Disegna dietro il marchio una cartella che lo renda leggibile.
+    """Disegna dietro il marchio la cartella che lo rende leggibile. SEMPRE.
 
-    PERCHE'
-    Il file del marchio e' oro su trasparente: nato per fondi scuri. Su un
-    fondo chiaro o dorato -- e ce ne sono, il damasco ritinto in senape e' uno
-    -- l'oro sull'oro non si vede, e del marchio resta solo la parola scura in
-    basso. Non e' un difetto del file: e' che manca il supporto.
+    PERCHE' SEMPRE, E PERCHE' CHIARA
+    Il file del marchio non e' monocromatico: il medaglione e la scritta
+    "Perla" sono ORO, la parola "Italia" e' quasi NERA. E' un logo disegnato
+    per la carta, cioe' per un fondo chiaro.
+
+    Questo vuol dire che non esiste un fondo del catalogo su cui si legga
+    tutto. Guardati i file costruiti, non dedotto:
+      * sulla bandana "laurel navy", fondo senape a luminosita' 176, l'oro
+        (178) spariva e restava solo "Italia";
+      * sulla medaglietta "geometric silver", fondo antracite, succedeva il
+        contrario -- l'oro si leggeva e "Italia" no.
+    Una cartella disegnata "solo quando serve" copre il primo caso e lascia
+    scoperto il secondo.
+
+    Quindi la cartella c'e' sempre ed e' CHIARA, cioe' il fondo per cui il
+    logo e' stato disegnato: l'oro ci si stacca e il nero pure. Il marchio
+    diventa anche identico su tutti i prodotti, che e' quello che un marchio
+    deve fare.
 
     NON E' UN'INVENZIONE STILISTICA. I motivi originali di questo catalogo
     mettono gia' il marchio dentro una cartella: ovale su paisley-rosa, tonda
-    su ghirigori, rettangolare con bordo dorato sulla bandana damascata. Qui
-    si fa la stessa cosa, prendendo il colore dal fondo che c'e' davvero
-    sotto, cosi' la cartella appartiene al disegno invece di esserci appoggiata.
+    su ghirigori, rettangolare con bordo dorato sulla bandana damascata.
 
-    Si disegna SOLO quando serve: su fondo gia' scuro il marchio si legge da
-    solo e una cartella sarebbe una toppa.
+    Il bordo e' doppio: un filo d'oro dentro, che e' la grammatica del
+    catalogo, e un filo scuro fuori, perche' su un fondo gia' chiaro (il
+    paisley avorio) una cartella crema senza contorno non si staccherebbe.
     """
     s, a, largo, alto = riquadro
     px, py = largo * margine, alto * margine * 0.5
     box = (s - px, a - py, s + largo + px, a + alto + py)
-    ritaglio = base.crop(tuple(round(v) for v in box)).convert("RGB")
-    piccolo = ritaglio.resize((16, 16), Image.LANCZOS)
-    n = 16 * 16
-    medio = tuple(sum(p[i] for p in piccolo.getdata()) // n for i in range(3))
-
-    if _luminosita(medio) < _luminosita(ORO) - CONTRASTO_MINIMO:
-        return None      # fondo gia' scuro: il marchio d'oro si legge da solo
-
-    # cartella scura ricavata dal fondo: stessa tinta, molto piu' cupa, cosi'
-    # non e' un rettangolo nero appiccicato ma un'ombra dello stesso tessuto
-    fondo = tuple(max(0, min(255, round(c * 0.22))) for c in medio)
     strato = Image.new("RGBA", base.size, (0, 0, 0, 0))
     d = ImageDraw.Draw(strato)
     r = round(min(box[2] - box[0], box[3] - box[1]) * raggio)
-    d.rounded_rectangle([round(v) for v in box], radius=r,
-                        fill=fondo + (238,), outline=ORO + (255,),
-                        width=max(2, round(largo * 0.012)))
+    spessore = max(2, round(largo * 0.012))
+    fuori = [round(v) for v in box]
+    d.rounded_rectangle(fuori, radius=r, fill=CARTELLA + (245,),
+                        outline=BORDO_ESTERNO + (255,), width=spessore)
+    dentro = [fuori[0] + spessore * 2, fuori[1] + spessore * 2,
+              fuori[2] - spessore * 2, fuori[3] - spessore * 2]
+    if dentro[2] > dentro[0] and dentro[3] > dentro[1]:
+        d.rounded_rectangle(dentro, radius=max(1, r - spessore * 2),
+                            outline=ORO + (255,), width=max(1, spessore // 2))
     return strato
 
 

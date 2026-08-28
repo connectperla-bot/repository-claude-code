@@ -31,7 +31,10 @@ riletto.
 USO
     python3 scripts/perla-usa-carica-stampe.py --prova "Baroque Royal"
     python3 scripts/perla-usa-carica-stampe.py --tutti
-Senza --tutti non tocca niente: elenca e basta.
+    python3 scripts/perla-usa-carica-stampe.py --tutti --riprendi
+Senza --tutti non tocca niente: elenca e basta. Con --riprendi salta i
+prodotti che portano gia' i file giusti, per riprendere un giro interrotto
+senza ricaricare centinaia di MB.
 """
 import base64
 import importlib.util
@@ -222,6 +225,37 @@ def identifica(prodotto, tipo):
     return None, "nessun livello motivo riconosciuto"
 
 
+def gia_aggiornato(prodotto, tipo, identita, da_catalogo, token):
+    """Vero se il prodotto porta gia' i file giusti, uno per gruppo.
+
+    Serve a riprendere un giro interrotto senza ricaricare centinaia di MB
+    per prodotti gia' a posto. Il confronto e' sui NOMI dei file attesi: se
+    il contenuto di un file cambia a parita' di nome (per esempio dopo un
+    --rifai) questo controllo NON se ne accorge, quindi in quel caso si usa
+    --prova sul titolo, che salta la ripresa.
+    """
+    try:
+        geometria = aree.per_prodotto(prodotto, token)
+    except RuntimeError:
+        return False
+    per_id = {v["id"]: v for v in geometria}
+    abilitate = aree.abilitate(prodotto)
+    if not abilitate:
+        return False
+    presenti = {im.get("name")
+                for pa in prodotto.get("print_areas", [])
+                for ph in pa.get("placeholders", [])
+                for im in ph.get("images", [])}
+    for gruppo in aree.gruppi(geometria, "front", solo_varianti=abilitate):
+        misura = per_id[gruppo["variant_ids"][0]]["placeholders"].get("front")
+        if not misura:
+            continue
+        percorso = file_costruito(tipo, identita, misura, da_catalogo)
+        if not percorso or os.path.basename(percorso) not in presenti:
+            return False
+    return True
+
+
 def aree_per_variante(prodotto, tipo, identita, da_catalogo, token, carica):
     """Le print_areas nuove: UNA VOCE PER GRUPPO DI VARIANTI.
 
@@ -316,6 +350,8 @@ def main():
     env = chiavi()
     token, shop = env["PRINTIFY_API_KEY"], env["PRINTIFY_SHOP_ID"]
     tutti = "--tutti" in sys.argv
+    riprendi = "--riprendi" in sys.argv
+    gia = 0
     filtro = None
     if "--prova" in sys.argv:
         filtro = sys.argv[sys.argv.index("--prova") + 1]
@@ -362,6 +398,11 @@ def main():
         if not (tutti or filtro):
             print("da fare  %-52s %s" % (p["title"][:52], identita))
             continue
+        # --riprendi vale solo senza filtro: se qualcuno nomina un prodotto,
+        # lo vuole rifare comunque (e' il caso dopo un --rifai dei file)
+        if riprendi and not filtro and gia_aggiornato(p, tipo, identita, da_catalogo, token):
+            gia += 1
+            continue
 
         print("%-54s" % p["title"][:54])
         try:
@@ -389,13 +430,22 @@ def main():
         if img:
             nome_file = "".join(c for c in p["title"][:44].lower().replace(" ", "-")
                                 if c.isalnum() or c == "-") + "-mockup.jpg"
-            subprocess.run(["curl", "-s", "-o", os.path.join(mockup, nome_file),
-                            img["src"]], check=True)
+            # SENZA check=True DI PROPOSITO. Il mockup serve a noi per
+            # guardare, il prodotto e' gia' aggiornato quando arriviamo qui.
+            # Con check=True un errore SSL passeggero di curl (visto: exit 35)
+            # fa cadere l'intero giro e i prodotti rimasti restano indietro --
+            # e' successo davvero, al quarantunesimo su settanta.
+            esito = subprocess.run(["curl", "-s", "-o", os.path.join(mockup, nome_file),
+                                    img["src"]])
+            if esito.returncode:
+                print("    (mockup non scaricato, curl %d: il prodotto e' comunque "
+                      "aggiornato)" % esito.returncode)
         print("    ok: %d gruppi di varianti, mockup in %s"
               % (len(nuove), os.path.basename(mockup)))
         fatti += 1
 
-    print("\n%d prodotti aggiornati" % fatti)
+    print("\n%d prodotti aggiornati%s" % (
+        fatti, ", %d gia' a posto" % gia if gia else ""))
     for titolo, motivo in saltati:
         print("  saltato  %-46s %s" % (titolo[:46], motivo))
     if not (tutti or filtro):
