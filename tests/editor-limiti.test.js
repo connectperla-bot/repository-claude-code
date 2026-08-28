@@ -59,7 +59,28 @@ function fintoFabric() {
   Canvas.prototype = Object.create(StaticCanvas.prototype);
   Canvas.prototype.constructor = Canvas;
   Canvas.prototype.renderAll = function () { return this; };
-  return { Canvas: Canvas, StaticCanvas: StaticCanvas };
+
+  // IText: la parte che ci interessa e' solo la textarea nascosta. In fabric
+  // 5.3 il metodo che la sposta si chiama `updateTextareaPosition`, SENZA
+  // trattino basso -- il finto usa quel nome e nessun altro, cosi' se qualcuno
+  // torna ad avvolgere solo `_updateTextareaPosition` la prova cade.
+  function IText() {}
+  IText.prototype.initHiddenTextarea = function () {
+    this.hiddenTextarea = { style: {} };
+    this.hiddenTextarea.style.cssText =
+      'position: absolute; top: 1394px; left: 1077px; width: 0; height: 0;';
+    this.hiddenTextarea.style.position = 'absolute';
+    this.hiddenTextarea.style.top = '1394px';
+    this.hiddenTextarea.style.left = '1077px';
+    this.hiddenTextarea.style.fontSize = '1px';
+  };
+  IText.prototype.updateTextareaPosition = function () {
+    // com'e' scritta in fabric: rimette la textarea sotto il cursore, in
+    // coordinate del DOCUMENTO -- ed e' esattamente cio' che allarga la pagina
+    this.hiddenTextarea.style.left = '1311px';
+    this.hiddenTextarea.style.top = '1394px';
+  };
+  return { Canvas: Canvas, StaticCanvas: StaticCanvas, IText: IText };
 }
 
 function tela(fabric, larghezza, altezza, tondo) {
@@ -95,14 +116,14 @@ function livello(kind, left, top, w, h) {
 
 // ---- si carica il file del tema una volta sola ---------------------------
 
-function caricaTema(fabric) {
+function caricaTema(fabric, doc) {
   const ascoltatori = {};
   global.window = {
     fabric: fabric,
     addEventListener: () => {},
     matchMedia: () => ({ matches: false }),
   };
-  global.document = {
+  global.document = doc || {
     readyState: 'complete',
     documentElement: { lang: 'it' },
     addEventListener: (n, fn) => { ascoltatori[n] = fn; },
@@ -342,6 +363,180 @@ function testUnSoloPulsanteSchermoIntero() {
     'la spiegazione e\' sparita: serve, dice perche\' conviene');
 }
 
+// ---- il nastro e la textarea: qui serve un pezzetto di DOM ---------------
+//
+// initNastro lavora su misure vere (offsetWidth del nastro, clientWidth della
+// finestra) e su eventi veri, quindi non si puo' provare con la sola
+// aritmetica. Il finto DOM qui sotto e' ridotto a quello che il file tocca:
+// niente layout, niente rendering, solo le misure che gli si danno.
+
+function nodo(opz) {
+  const n = Object.assign({
+    style: {}, attributi: {}, figli: {}, listener: [],
+    offsetWidth: 0, offsetHeight: 0, clientWidth: 0, clientHeight: 0,
+    scrollLeft: 0, scrollWidth: 0, hidden: false, className: '',
+    classList: { add() {}, remove() {}, toggle() {} },
+    querySelector(sel) { return this.figli[sel] || null; },
+    querySelectorAll(sel) { return this.figli[sel] ? [this.figli[sel]] : []; },
+    getAttribute(k) { return k in this.attributi ? this.attributi[k] : null; },
+    setAttribute(k, v) { this.attributi[k] = v; },
+    hasAttribute(k) { return k in this.attributi; },
+    removeAttribute(k) { delete this.attributi[k]; },
+    addEventListener(nome, fn, cattura) { this.listener.push({ nome, fn, cattura: !!cattura }); },
+    removeEventListener() {},
+    contains() { return true; },
+    appendChild() {}, insertBefore() {}, remove() {},
+    closest(sel) {
+      // basta per l'uso che ne fa il file: "sono io uno di questi?"
+      return sel.split(',').some((s) => this.hasAttribute(s.trim().replace(/[[\]]/g, '')))
+        ? this : null;
+    },
+  }, opz);
+  return n;
+}
+
+// Il collare EU su un telefono da 390: nastro 2208x97 in una finestra da 350.
+function studioFinto(nastroW, nastroH, finestraW) {
+  const wrap = nodo({ offsetWidth: nastroW, offsetHeight: nastroH });
+  const viewport = nodo({ clientWidth: finestraW, scrollWidth: nastroW });
+  viewport.parentNode = nodo({});
+  const piu = nodo({ attributi: { 'data-view-zoom-in': '' } });
+  const meno = nodo({ attributi: { 'data-view-zoom-out': '' } });
+  const reset = nodo({ attributi: { 'data-view-zoom-reset': '' } });
+  const cust = nodo({
+    attributi: { 'data-print-ratio': String(nastroW / nastroH), 'data-photo-customizer': '' },
+    figli: {
+      '[data-fabric-wrap]': wrap,
+      '[data-fabric-viewport]': viewport,
+      '[data-view-zoom-in]': piu,
+      '[data-view-zoom-out]': meno,
+      '[data-view-zoom-reset]': reset,
+    },
+  });
+
+  const doc = {
+    readyState: 'complete',
+    documentElement: { lang: 'it' },
+    addEventListener: () => {},
+    querySelector: () => null,
+    querySelectorAll: (sel) => (sel === '[data-photo-customizer]' ? [cust] : []),
+    createElement: () => nodo({}),
+    fonts: null,
+  };
+  const fabric = fintoFabric();
+  caricaTema(fabric, doc);
+  return { cust, wrap, viewport, piu, meno, reset, fabric };
+}
+
+// Un clic come lo riceve il file: in cattura sul contenitore, dove passa prima
+// che l'evento arrivi al pulsante.
+function premi(s, bottone) {
+  let fermato = false;
+  const e = {
+    target: bottone,
+    preventDefault() {},
+    stopPropagation() { fermato = true; },
+  };
+  s.cust.listener.filter((l) => l.nome === 'click' && l.cattura).forEach((l) => l.fn(e));
+  return fermato;
+}
+
+function scalaDi(wrap) {
+  const m = /scale\(([\d.]+)\)/.exec(wrap.style.transform || '');
+  return m ? parseFloat(m[1]) : null;
+}
+
+function testIlNastroSiVedeTuttoAllApertura() {
+  const s = studioFinto(2208, 97, 350);
+  // 350 / 2208 = 0,1585: la striscia intera dentro la finestra, non un pezzo
+  assert.strictEqual(s.cust.getAttribute('data-nastro-zoom'), 'tutta');
+  const k = scalaDi(s.wrap);
+  assert.ok(Math.abs(k - 350 / 2208) < 1e-3,
+    'scala ' + k + ', attesa ' + (350 / 2208).toFixed(4));
+  assert.strictEqual(s.wrap.style.transformOrigin, '0 0');
+}
+
+function testLoZoomMinimoEilTuttaNonUno() {
+  // Il difetto di prima: lo zoom del tema partiva da 1 e non scendeva, quindi
+  // l'insieme non si poteva vedere in nessun modo. Qui "-" all'apertura non
+  // deve poter rimpicciolire sotto "tutta".
+  const s = studioFinto(2208, 97, 350);
+  const prima = scalaDi(s.wrap);
+  premi(s, s.meno);
+  assert.strictEqual(scalaDi(s.wrap), prima, 'e\' sceso sotto la vista intera');
+  assert.strictEqual(s.cust.getAttribute('data-nastro-zoom'), 'tutta');
+}
+
+function testIlPiuIngrandisceEilResetTorna() {
+  const s = studioFinto(2208, 97, 350);
+  const tutta = scalaDi(s.wrap);
+  premi(s, s.piu);
+  assert.ok(scalaDi(s.wrap) > tutta, 'il "+" non ha ingrandito');
+  assert.strictEqual(s.cust.getAttribute('data-nastro-zoom'), 'ingrandita');
+  premi(s, s.reset);
+  assert.ok(Math.abs(scalaDi(s.wrap) - tutta) < 1e-6, 'il Reset non e\' tornato a tutta');
+  assert.strictEqual(s.cust.getAttribute('data-nastro-zoom'), 'tutta');
+}
+
+function testLoZoomDelTemaNonVieneChiamato() {
+  // Registrarsi sui pulsanti non bastava: lo studio di global.js si avvia dopo
+  // di noi, quindi i suoi ascoltatori parlavano per ultimi e restava il suo
+  // scale(1.5). Ora l'evento si ferma in cattura, prima del pulsante.
+  const s = studioFinto(2208, 97, 350);
+  assert.ok(premi(s, s.piu), 'la propagazione non e\' stata fermata: global.js vince ancora');
+  assert.ok(s.cust.listener.some((l) => l.nome === 'click' && l.cattura),
+    'nessun ascoltatore in cattura sul contenitore');
+}
+
+function testFincheSiVedeTuttaIlRiquadroNonScorre() {
+  // Sul guinzaglio il riquadro nasceva a scrollLeft 2088 -- meta' esatta -- e
+  // la striscia finiva a -2068, fuori schermo a sinistra.
+  const s = studioFinto(4526, 80, 350);
+  s.viewport.scrollLeft = 2088;
+  premi(s, s.reset);
+  assert.strictEqual(s.viewport.style.overflowX, 'hidden');
+  assert.strictEqual(s.viewport.scrollLeft, 0, 'la striscia resta spostata di lato');
+  premi(s, s.piu);
+  assert.strictEqual(s.viewport.style.overflowX, 'auto',
+    'ingrandita deve poter scorrere dentro il riquadro');
+}
+
+function testSuiProdottiNormaliNonSiToccaNiente() {
+  // Una bandana ci sta gia' dentro: nessuna scala, nessuno stato, niente.
+  const s = studioFinto(320, 320, 350);
+  assert.strictEqual(s.cust.getAttribute('data-nastro-zoom'), null);
+  assert.ok(!s.wrap.style.transform, 'ha scalato un prodotto che ci stava gia\'');
+}
+
+function testLaTextareaNascostaNonAllargaLaPagina() {
+  // Il difetto: fabric attacca la textarea al body in POSIZIONE ASSOLUTA alle
+  // coordinate del cursore nel documento. Sul collare sono oltre i mille pixel,
+  // e il corpo della pagina si allargava a ogni lettera -- misurato, da 390 a
+  // 1084 px, che sul telefono e' la pagina che rimpicciolisce e scorre.
+  const s = studioFinto(2208, 97, 350);
+  const t = new s.fabric.IText();
+  t.initHiddenTextarea();
+  assert.strictEqual(t.hiddenTextarea.style.position, 'fixed',
+    'la textarea e\' ancora assoluta: la pagina si allarga di nuovo');
+  assert.strictEqual(t.hiddenTextarea.style.left, '0px');
+  assert.strictEqual(t.hiddenTextarea.style.top, '0px');
+
+  // e non basta alla nascita: fabric la rimette sotto il cursore a ogni tasto
+  t.updateTextareaPosition();
+  assert.strictEqual(t.hiddenTextarea.style.position, 'fixed');
+  assert.strictEqual(t.hiddenTextarea.style.left, '0px',
+    'dopo updateTextareaPosition e\' tornata dove non deve');
+}
+
+function testLaTextareaRestaA16px() {
+  // Sotto i 16px Safari su iPhone ingrandisce la pagina da sola quando un campo
+  // prende il fuoco: sarebbe lo stesso difetto per un'altra strada.
+  const s = studioFinto(2208, 97, 350);
+  const t = new s.fabric.IText();
+  t.initHiddenTextarea();
+  assert.strictEqual(t.hiddenTextarea.style.fontSize, '16px');
+}
+
 console.log('\nEditor: limiti dell\'area di stampa');
 prova('il nome non esce di lato', testNomeNonEsceDiLato);
 prova('il nome non esce in alto', testNomeNonEsceInAlto);
@@ -352,6 +547,18 @@ prova('sulla medaglietta il limite e\' il tondo, non il quadrato', testMedagliet
 prova('chi sta gia\' dentro non viene spostato di un pixel', testChiSttaGiaDentroNonSiMuove);
 prova('sul collare il margine non si mangia mezza tela', testIlCollareNonSiMangiaMezzaTela);
 prova('un solo pulsante "Schermo intero"', testUnSoloPulsanteSchermoIntero);
+
+console.log('\nEditor: il nastro sul telefono');
+prova('la striscia si vede tutta all\'apertura', testIlNastroSiVedeTuttoAllApertura);
+prova('lo zoom minimo e\' "tutta", non 1', testLoZoomMinimoEilTuttaNonUno);
+prova('il "+" ingrandisce e il Reset torna a tutta', testIlPiuIngrandisceEilResetTorna);
+prova('lo zoom del tema non viene piu\' chiamato', testLoZoomDelTemaNonVieneChiamato);
+prova('finche\' si vede tutta il riquadro non scorre di lato', testFincheSiVedeTuttaIlRiquadroNonScorre);
+prova('sui prodotti normali non si tocca niente', testSuiProdottiNormaliNonSiToccaNiente);
+
+console.log('\nEditor: scrivere il nome non allarga la pagina');
+prova('la textarea nascosta non e\' mai assoluta', testLaTextareaNascostaNonAllargaLaPagina);
+prova('la textarea nascosta resta a 16px', testLaTextareaRestaA16px);
 
 console.log('\nEditor: risoluzione del file di stampa');
 prova('l\'anteprima a schermo resta com\'era', testLAnteprimaNonSiTocca);

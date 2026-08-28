@@ -210,3 +210,46 @@ html {
     transition: none !important;
   }
 }
+
+/* 7 — Il pannello dei filtri esce dallo schermo del telefono.
+ *
+ * `.facet__panel` e' `position:absolute; left:0; min-width:220px` dentro
+ * `.facet`, che e' un chip largo un centinaio di pixel dentro una riga che va
+ * a capo. Sul terzo chip della riga il chip parte gia' a 290px: il pannello
+ * va da 290 a 510 su uno schermo da 390. Misurato, non dedotto.
+ *
+ * Oggi non si vede perche' `base.css` mette `overflow-x:hidden` sul body --
+ * ma quello nasconde il difetto, non lo toglie: su Safari iOS l'overflow
+ * nascosto sul body non sempre impedisce lo scorrimento (il body non e'
+ * l'elemento che scorre), e in ogni caso meta' del pannello resta tagliata.
+ *
+ * Sul telefono il pannello smette di galleggiare e scende sotto il suo chip,
+ * dentro la riga dei filtri. E' il modo normale in cui si aprono i filtri su
+ * un telefono, e non puo' sbordare da nessuna parte perche' non ha piu'
+ * nessuna posizione propria: sta nel flusso, dentro il contenitore di pagina.
+ * Da tablet in su resta esattamente com'era.
+ */
+@media (max-width: 749px) {
+  .facets {
+    width: 100%;
+  }
+
+  .facet {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* Aperto prende la riga tutta per se': cosi' i chip che seguono vanno sotto
+   * il pannello invece di finirgli accanto stretti a due lettere. */
+  .facet[open] {
+    flex: 1 1 100%;
+  }
+
+  .facet__panel {
+    position: static;
+    min-width: 0;
+    width: auto;
+    margin-top: .5rem;
+    box-shadow: none;
+  }
+}

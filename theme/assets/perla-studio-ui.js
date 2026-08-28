@@ -75,8 +75,9 @@
     var fsBtn = qs(customizer, '[data-photo-fullscreen-open]');
     if (!viewport || !viewport.parentNode) return;
 
-    // Su questi prodotti lo schermo intero non e' un extra, e' la strada
-    // normale: il pulsante smette di essere un comando secondario.
+    // La striscia ora si vede tutta fin dall'apertura (sezione 9), quindi lo
+    // schermo intero non e' piu' l'unica strada: resta pero' quello che la fa
+    // vedere piu' grande, ed e' l'azione che conviene di piu' qui.
     if (fsBtn) fsBtn.classList.add('is-primary');
 
     var hint = document.createElement('div');
@@ -94,12 +95,12 @@
       hint.hidden = false;
       if (isPortrait()) {
         p.textContent = STR.rotateHint || (IT
-          ? 'Questo prodotto è una striscia molto lunga e stretta. Gira il telefono in orizzontale e apri lo schermo intero: lo vedrai il più grande possibile, tutto insieme.'
-          : 'This product is a long, narrow strip. Turn your phone sideways and open fullscreen to see all of it as large as it gets.');
+          ? 'Questo prodotto è una striscia lunga e stretta: qui sopra la vedi tutta intera. Usa «+» per ingrandire e lavorare sui dettagli, «Reset» per tornare a vederla tutta. Girando il telefono in orizzontale diventa più grande.'
+          : 'This product is a long, narrow strip: above you can see all of it. Use “+” to zoom in on the details and “Reset” to fit it back. Turning your phone sideways makes it bigger.');
       } else {
         p.textContent = STR.rotateHintLandscape || (IT
-          ? 'Apri lo schermo intero per guadagnare ancora un po’ di spazio.'
-          : 'Open fullscreen to gain a little more room.');
+          ? 'Usa «+» per ingrandire la striscia e lavorare sui dettagli, «Reset» per tornare a vederla tutta.'
+          : 'Use “+” to zoom in on the details and “Reset” to fit the whole strip back.');
       }
     }
 
@@ -625,6 +626,259 @@
     return Math.round((dataUrl.length - virgola - 1) * 0.75);
   }
 
+  /* -------------------------------------------------------------------------
+     8. SCRIVERE IL NOME NON DEVE ALLARGARE LA PAGINA
+
+     IL DIFETTO, RIPRODOTTO
+     Sui prodotti a disegno fisso non c'e' nessun campo di testo: il nome si
+     scrive DENTRO la tela. Per farlo Fabric crea una textarea invisibile e la
+     attacca al <body> alle coordinate del cursore NEL DOCUMENTO:
+
+         this.hiddenTextarea.style.cssText =
+           "position: absolute; top: " + t.top + "; left: " + t.left + ...
+
+     Su un collare la tela e' larga 2208 px, quindi quelle coordinate stanno
+     oltre i mille. Misurato a 390 px:
+
+         prima di toccare niente   body.scrollWidth   390
+         entrando in scrittura     body.scrollWidth  1084   left: 1077 px
+         digitando                                          left: 1183 -> 1311
+
+     Il corpo si allarga a ogni carattere. Su un telefono vero e' questo che fa
+     rimpicciolire la pagina e scorrere verso sinistra mentre si scrive.
+
+     LA CORREZIONE
+     La textarea diventa `fixed` e resta ancorata in alto a sinistra della
+     finestra. Fixed non partecipa al calcolo della larghezza del documento,
+     quindi la pagina non si allarga piu'; l'elemento resta a fuoco e la
+     tastiera continua a funzionare, che e' l'unica cosa per cui serve.
+
+     COSA SI PERDE
+     Fabric usa quella posizione per ancorare il riquadro di composizione delle
+     tastiere orientali (IME). Su un negozio italiano il compromesso e' facile:
+     meglio l'ancoraggio dell'IME in alto a sinistra che la pagina che scappa a
+     ogni lettera.
+     ---------------------------------------------------------------------- */
+
+  function fissaTextarea(obj) {
+    var ta = obj && obj.hiddenTextarea;
+    if (!ta) return;
+    ta.style.position = 'fixed';
+    ta.style.left = '0px';
+    ta.style.top = '0px';
+    // 16px: sotto questa misura Safari su iPhone ingrandisce la pagina da solo
+    // quando un campo prende il fuoco. La textarea e' invisibile lo stesso,
+    // perche' Fabric le mette opacity 0.
+    ta.style.fontSize = '16px';
+    ta.style.width = '1px';
+    ta.style.height = '1px';
+  }
+
+  /* -------------------------------------------------------------------------
+     9. IL NASTRO SI VEDE TUTTO, E SI INGRANDISCE PER LAVORARCI
+
+     IL DIFETTO, MISURATO
+     snippets/perla-photo-customizer-side.liquid parte dall'ALTEZZA e lascia
+     scorrere la larghezza, per non deformare le proporzioni di stampa:
+
+         studio_h = 2200 / rapporto   (poi limitato fra 80 e 200)
+         studio_w = studio_h * rapporto
+
+     Sul collare (22,76:1) vengono 2208 x 97 px dentro una finestra di 350.
+     A 390 px di schermo, misurato:
+
+         verticale                 350 x 97   su 2208 x 97   ->  16%
+         verticale schermo intero  352 x 97   su 2208 x 97   ->  16%
+         orizzontale               760 x 97   su 2208 x 97   ->  34%
+         orizzontale + intero      825 x 97   su 2208 x 97   ->  37%
+
+     Lo schermo intero NON cambia niente: sedici per cento prima, sedici dopo.
+     Il guinzaglio e' peggio: rapporto 56,57, altezza al minimo di 80, striscia
+     larga 4526 px, cioe' circa il sette per cento visibile.
+
+     COSA FA ORA
+     All'apertura la striscia sta tutta dentro: si scala di
+     `larghezza finestra / larghezza striscia` e la si centra in una banda
+     comoda. Si vede un collare intero, sottile e fermo -- che e' quello che il
+     prodotto e'. Chi vuole personalizzare ingrandisce con i pulsanti che gia'
+     ci sono, e a quel punto la striscia si sposta DENTRO il suo riquadro:
+     la pagina non si muove mai di lato.
+
+     PERCHE' CON transform E NON CAMBIANDO width/height
+     La tela ha larghezza e altezza in attributi; ridimensionarla via CSS senza
+     `height:auto` la deforma, e un riquadro fuori proporzione manda in stampa
+     il nome schiacciato. Il transform invece scala tutto insieme, ed e' anche
+     il meccanismo che global.js usa gia': fabric calcola il puntatore da
+     getBoundingClientRect, che i transform li comprende.
+
+     CHI VINCE SULLO STILE (misurato, non supposto)
+     global.js tiene il suo `viewZoom` e nella sua `applyViewZoom` riscrive
+     `fabricWrap.style.transform`. Il primo tentativo era registrare i nostri
+     ascoltatori sui pulsanti e contare di girare per ultimi: NON funziona.
+     Provato nel browser, premendo «+» restava `scale(1.5)`, cioe' il valore
+     suo -- lo studio di global.js si avvia dopo di noi, quindi i suoi
+     ascoltatori sono registrati dopo i nostri e parlano per ultimi.
+
+     Sull'ordine di registrazione non si puo' fare affidamento. Quindi i tre
+     pulsanti si prendono in FASE DI CATTURA sul contenitore, dove si passa
+     prima che l'evento arrivi al pulsante, e li' si ferma la propagazione: gli
+     ascoltatori di global.js non vengono mai chiamati. Vale solo sui nastri,
+     dove initNastro e' attivo; su tutti gli altri prodotti lo zoom del tema
+     resta quello di sempre.
+
+     L'osservatore sullo `style` resta come rete: confronta con la stringa che
+     abbiamo scritto noi e riscrive solo se qualcuno l'ha cambiata davvero --
+     cosi' non reagisce a se stesso e si ferma da solo.
+     ---------------------------------------------------------------------- */
+
+  var BANDA_MIN = 96;      // altezza minima della fascia, perche' si veda
+  var BANDA_LAVORO = 320;  // altezza a cui si arriva col massimo ingrandimento
+  var PASSO = 1.8;
+
+  function initNastro(customizer) {
+    var viewport = qs(customizer, '[data-fabric-viewport]');
+    var wrap = qs(customizer, '[data-fabric-wrap]');
+    if (!viewport || !wrap) return;
+
+    var largaW = wrap.offsetWidth;
+    var altaW = wrap.offsetHeight;
+    var finestra = viewport.clientWidth;
+    // Senza misure non si decide niente: se lo studio non e' ancora visibile
+    // meglio lasciare tutto com'e' che scalare per zero e sparire.
+    if (!largaW || !altaW || !finestra) return;
+    // Solo dove serve: se la striscia ci sta gia', non si tocca niente.
+    if (largaW <= finestra + 1) return;
+
+    var fit = finestra / largaW;
+    var massimo = Math.max(1, Math.min(6, BANDA_LAVORO / altaW));
+    var scala = fit;
+    var atteso = '';
+    var tutta = true;
+
+    function applica() {
+      var alta = Math.max(BANDA_MIN, Math.round(altaW * scala));
+      var vuoto = Math.max(0, (alta - altaW * scala) / 2);
+      atteso = 'translateY(' + vuoto.toFixed(1) + 'px) scale(' + scala.toFixed(4) + ')';
+      wrap.style.transformOrigin = '0 0';
+      wrap.style.transform = atteso;
+      viewport.style.height = alta + 'px';
+      tutta = scala <= fit + 1e-6;
+      // A "tutta" non c'e' niente da scorrere: la striscia sta gia' tutta
+      // dentro. Il riquadro pero' resta largo quanto la striscia NON scalata
+      // (il transform non cambia lo spazio occupato), quindi lo scorrimento
+      // esiste ancora e porta solo sul vuoto. Misurato sul guinzaglio: il
+      // riquadro nasce a scrollLeft 2088, cioe' esattamente a meta', e la
+      // striscia finisce a -2068 px, fuori dallo schermo a sinistra. Ecco
+      // perche' sembrava che non ci fosse niente da personalizzare.
+      //
+      // Non ho trovato chi lo sposta -- non e' nessuno degli script del tema.
+      // Invece di indovinare la causa, si toglie l'effetto: finche' si vede
+      // tutta, lo scorrimento laterale del riquadro e' chiuso e la posizione
+      // torna a zero. Appena si ingrandisce, riapre: li' serve davvero.
+      viewport.style.overflowX = tutta ? 'hidden' : 'auto';
+      if (tutta) viewport.scrollLeft = 0;
+      customizer.setAttribute('data-nastro-zoom', tutta ? 'tutta' : 'ingrandita');
+    }
+
+    function cambia(fattore) {
+      var prima = scala;
+      scala = Math.max(fit, Math.min(massimo, scala * fattore));
+      if (Math.abs(scala - prima) < 1e-6) return;
+      // si ingrandisce attorno al centro di cio' che si sta guardando, non
+      // attorno al bordo sinistro: altrimenti a ogni "+" si perde il punto
+      var centro = (viewport.scrollLeft + viewport.clientWidth / 2) / prima;
+      applica();
+      viewport.scrollLeft = Math.max(0, centro * scala - viewport.clientWidth / 2);
+    }
+
+    // In cattura sul contenitore: si passa di qui prima che l'evento arrivi al
+    // pulsante, e la propagazione si ferma. Vedi la nota sopra sul perche'
+    // registrarsi sul pulsante non basta.
+    customizer.addEventListener('click', function (e) {
+      var b = e.target && e.target.closest
+        ? e.target.closest('[data-view-zoom-in],[data-view-zoom-out],[data-view-zoom-reset]')
+        : null;
+      if (!b || !customizer.contains(b)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (b.hasAttribute('data-view-zoom-in')) cambia(PASSO);
+      else if (b.hasAttribute('data-view-zoom-out')) cambia(1 / PASSO);
+      else { scala = fit; applica(); }
+    }, true);
+
+    // `overflow:hidden` non impedisce a uno script di scorrere lo stesso
+    // (un riquadro nascosto resta scorribile da codice): se succede, si torna
+    // subito a zero. Quando e' ingrandita non si tocca: li' scorre l'utente.
+    viewport.addEventListener('scroll', function () {
+      if (tutta && viewport.scrollLeft !== 0) viewport.scrollLeft = 0;
+    });
+
+    // Rete di sicurezza: se lo stile diventa diverso da quello che abbiamo
+    // scritto noi, lo si rimette. Il confronto con `atteso` fa si' che la
+    // riscrittura non richiami l'osservatore all'infinito.
+    new MutationObserver(function () {
+      if (wrap.style.transform !== atteso) applica();
+    }).observe(wrap, { attributes: true, attributeFilter: ['style'] });
+
+    // Quando la finestra cambia misura, "tutta" cambia misura con lei.
+    //
+    // Non basta ascoltare `resize`: lo schermo intero di questo tema e' una
+    // classe CSS, non l'API del browser, quindi il riquadro si allarga senza
+    // che la finestra cambi e nessun `resize` arriva. Un ResizeObserver sul
+    // riquadro li prende tutti e due -- rotazione e schermo intero -- perche'
+    // guarda la cosa giusta: quanto spazio c'e' davvero.
+    function rimisura() {
+      var ora = viewport.clientWidth;
+      if (!ora || ora === finestra) return;
+      finestra = ora;
+      var eraTutta = scala <= fit + 1e-6;
+      fit = ora / largaW;
+      scala = eraTutta ? fit : Math.max(fit, scala);
+      applica();
+    }
+    if (typeof ResizeObserver === 'function') {
+      new ResizeObserver(rimisura).observe(viewport);
+    }
+    window.addEventListener('resize', rimisura);
+    window.addEventListener('orientationchange', function () {
+      setTimeout(rimisura, 250);   // la rotazione arriva prima della nuova misura
+    });
+
+    applica();
+    return { fit: fit, massimo: massimo };
+  }
+
+  function agganciaScrittura(F) {
+    if (!F.IText || !F.IText.prototype || F.IText.prototype.__perlaTextarea) return;
+    F.IText.prototype.__perlaTextarea = true;
+
+    var creata = F.IText.prototype.initHiddenTextarea;
+    F.IText.prototype.initHiddenTextarea = function () {
+      var r = creata.apply(this, arguments);
+      fissaTextarea(this);
+      return r;
+    };
+
+    // Fabric la rimette al posto del cursore ogni volta che il cursore si
+    // muove, quindi non basta sistemarla alla nascita.
+    //
+    // I DUE NOMI. In fabric 5.3 il metodo si chiama `updateTextareaPosition`,
+    // senza trattino basso; nelle versioni piu' vecchie era `_update...`.
+    // La prima stesura avvolgeva solo quello col trattino: la guardia
+    // `typeof === 'function'` non trovava niente e passava oltre in silenzio,
+    // e nella misura la textarea usciva con `left: 147.779px` invece di zero.
+    // Si avvolgono tutti e due, e almeno uno dei due c'e' per forza.
+    ['updateTextareaPosition', '_updateTextareaPosition'].forEach(function (nome) {
+      var spostata = F.IText.prototype[nome];
+      if (typeof spostata !== 'function') return;
+      F.IText.prototype[nome] = function () {
+        var r = spostata.apply(this, arguments);
+        fissaTextarea(this);       // Fabric l'ha appena rimessa dove non deve
+        return r;
+      };
+    });
+  }
+
   function agganciaFabric() {
     var F = window.fabric;
     if (!F || !F.Canvas || !F.Canvas.prototype) return false;
@@ -673,6 +927,7 @@
         return url;
       };
     }
+    agganciaScrittura(F);
     return true;
   }
 
@@ -690,6 +945,7 @@
   function init() {
     each(document.querySelectorAll('[data-photo-customizer]'), function (c) {
       initWideHint(c);
+      initNastro(c);
       initDragAndDrop(c);
       initEmptyState(c);
       initMockupFeedback(c);
