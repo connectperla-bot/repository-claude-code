@@ -34,6 +34,17 @@ USO
     python3 scripts/perla-verifica-prodotti.py --solo cuccia  # filtra sul titolo
     python3 scripts/perla-verifica-prodotti.py --mockup       # scarica i mockup
     python3 scripts/perla-verifica-prodotti.py --printful     # anche i due store EU
+    python3 scripts/perla-verifica-prodotti.py --eu           # i 66 prodotti EU
+
+Per il controllo delle taglie EU serve generated-designs/taglie-eu.json, una
+fotografia dei titoli delle varianti su Shopify. Va rifatta quando i prodotti
+cambiano, con questa query (gli id sono quelli di perla-eu-prodotti.json):
+
+    query($ids:[ID!]!){ nodes(ids:$ids){ ... on Product {
+        id variants(first:10){ nodes{ title } } } } }
+
+e salvando {id prodotto: [titoli delle varianti]}. Senza quel file l'audit
+controlla solo le misure dei motivi, e lo dice invece di tacere.
 
 Uscita leggibile a schermo e generated-designs/audit-prodotti.json per il
 confronto prima/dopo.
@@ -304,6 +315,115 @@ def scarica_mockup(p, cartella):
 
 
 # ==========================================================================
+# LA LINEA EU
+# ==========================================================================
+# Fino a ROUND 47 questo audit guardava SOLO Printify, e la linea europea non
+# era mai passata sotto lo stesso controllo. Rifatto a mano su tutti e 66 i
+# prodotti: erano a posto. Ma "erano a posto quel giorno" non serve a niente
+# se domani nessuno puo' rifarlo, e i due controlli che contano costano poco.
+#
+# 1. LA MISURA DEL MOTIVO. Il file EU va a Printful cosi' com'e', senza
+#    passare da un print_areas: se non ha la misura dell'area di stampa,
+#    Printful lo adatta da solo e il motivo esce deformato. E' lo stesso
+#    difetto del catalogo americano, in una forma dove non lo vedremmo.
+# 2. IL TITOLO DELLA TAGLIA. varianti-fornitore.js traduce il titolo scelto
+#    dal cliente nell'id della variante da ordinare, e se non lo riconosce
+#    SOLLEVA -- di proposito, perche' spedire la taglia sbagliata e' un reso.
+#    Un titolo cambiato su Shopify ferma quegli ordini, in silenzio finche'
+#    qualcuno non guarda i log.
+#
+# Le misure sono le stesse di PRINTFUL_MOCKUP_CONFIG in
+# perla-upload-endpoint.js, verificate contro
+# GET /mockup-generator/printfiles/<catalogo>.
+AREE_EU = {"Collare": (7169, 315), "Bandana": (4125, 4125),
+           "Ciotola": (6496, 803), "Guinzaglio": (12389, 219)}
+
+# Il tipo prodotto come lo conosce varianti-fornitore.js.
+TIPO_EU = {"Collare": "collare_eu", "Bandana": "bandana_eu",
+           "Ciotola": "ciotola_eu", "Guinzaglio": "guinzaglio_eu"}
+
+
+def _misura_remota(url):
+    """La misura di un JPEG senza scaricarlo tutto: bastano i primi 64 KB."""
+    import struct
+    dati = subprocess.run(["curl", "-s", "-r", "0-65535", url],
+                          capture_output=True).stdout
+    i = 2
+    while i < len(dati) - 9:
+        if dati[i] != 0xFF:
+            i += 1
+            continue
+        m = dati[i + 1]
+        if m in (0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7,
+                 0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF):
+            h, w = struct.unpack(">HH", dati[i + 5:i + 9])
+            return (w, h)
+        if m in (0xD8, 0xD9) or 0xD0 <= m <= 0xD7:
+            i += 2
+            continue
+        if i + 4 > len(dati):
+            break
+        i += 2 + struct.unpack(">H", dati[i + 2:i + 4])[0]
+    return None
+
+
+def verifica_eu(taglie_shopify=None):
+    """I 66 prodotti EU: misura del motivo e titoli di taglia.
+
+    `taglie_shopify` e' {id prodotto: [titoli delle varianti]}, che si legge da
+    Shopify. Se non c'e', si controlla solo la misura dei motivi -- meta'
+    verifica e' meglio di nessuna, ma va detto.
+    """
+    import re
+    percorso = os.path.join(QUI, "perla-eu-prodotti.json")
+    with open(percorso) as fh:
+        prodotti = json.load(fh)
+
+    varianti_note = {}
+    js = os.path.join(QUI, "varianti-fornitore.js")
+    if os.path.exists(js):
+        with open(js) as fh:
+            testo = fh.read()
+        for tipo in TIPO_EU.values():
+            m = re.search(r"\b%s:\s*\{(.*?)\n  \}" % tipo, testo, re.S)
+            if m:
+                varianti_note[tipo] = set(
+                    re.findall(r"'([^']+)':", m.group(1)))
+
+    fuori = {"motivi": [], "taglie": []}
+    for v in prodotti:
+        m = re.match(r'(\w+)\s+"', v.get("title", ""))
+        tipo = m.group(1) if m else None
+        if tipo not in AREE_EU:
+            continue
+        attesa = AREE_EU[tipo]
+        avuta = _misura_remota(v["pattern"])
+        if avuta != attesa:
+            fuori["motivi"].append({
+                "titolo": v["title"], "attesa": list(attesa),
+                "avuta": list(avuta) if avuta else None})
+
+        titoli = (taglie_shopify or {}).get(v["id"])
+        note = varianti_note.get(TIPO_EU[tipo])
+        if titoli is None or note is None:
+            continue
+        # guinzaglio_eu resta fuori dalla mappa di proposito: Printful lo fa
+        # in una misura sola, quindi vale la variante configurata
+        if not note:
+            continue
+        sconosciuti = [t for t in titoli if t not in note]
+        if sconosciuti:
+            fuori["taglie"].append({"titolo": v["title"], "tipo": TIPO_EU[tipo],
+                                    "sconosciuti": sconosciuti})
+    fuori["esaminati"] = sum(
+        1 for v in prodotti
+        if re.match(r'(\w+)\s+"', v.get("title", ""))
+        and re.match(r'(\w+)\s+"', v["title"]).group(1) in AREE_EU)
+    fuori["taglie_controllate"] = taglie_shopify is not None
+    return fuori
+
+
+# ==========================================================================
 # PRINTFUL
 # ==========================================================================
 
@@ -418,6 +538,36 @@ def main():
             print("  variante %-11s %-8s %s" % (v["tipo"], v.get("id", "-"),
                                                 v["esito"] + " " + str(v.get("nome") or "")))
         rapporto = {"printify": rapporto, "printful": pf}
+
+    if "--eu" in sys.argv:
+        print("\n" + "=" * 72)
+        print("LINEA EU (Printful)")
+        taglie = None
+        percorso_taglie = os.path.join(USCITA, "taglie-eu.json")
+        if os.path.exists(percorso_taglie):
+            with open(percorso_taglie) as fh:
+                taglie = json.load(fh)
+        eu = verifica_eu(taglie)
+        print("  %d motivi controllati contro l'area di stampa Printful"
+              % eu["esaminati"])
+        if eu["motivi"]:
+            for x in eu["motivi"]:
+                print("    MISURA SBAGLIATA %-34s attesa %s, e' %s"
+                      % (x["titolo"][:34], x["attesa"], x["avuta"]))
+        else:
+            print("    tutti alla misura giusta")
+        if not eu["taglie_controllate"]:
+            print("  titoli di taglia NON controllati: manca %s"
+                  % os.path.basename(percorso_taglie))
+            print("    (si scrive da Shopify: {id prodotto: [titoli varianti]})")
+        elif eu["taglie"]:
+            for x in eu["taglie"]:
+                print("    TAGLIA SCONOSCIUTA %-30s %s -> %s"
+                      % (x["titolo"][:30], x["tipo"], x["sconosciuti"]))
+        else:
+            print("    tutti i titoli di taglia sono riconosciuti da varianti-fornitore.js")
+        rapporto = rapporto if isinstance(rapporto, dict) else {"printify": rapporto}
+        rapporto["eu"] = eu
 
     os.makedirs(USCITA, exist_ok=True)
     percorso = os.path.join(USCITA, "audit-prodotti.json")

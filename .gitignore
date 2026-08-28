@@ -48,3 +48,7 @@ generated-designs/audit-mockup/
 
 # Uscita di scripts/perla-eu-mockup.py: mockup rigenerabili con un comando.
 generated-designs/eu-mockup/
+
+# Fotografia dei titoli di taglia su Shopify, per l'audit --eu. Va rifatta
+# quando i prodotti cambiano: la query sta in perla-verifica-prodotti.py.
+generated-designs/taglie-eu.json
