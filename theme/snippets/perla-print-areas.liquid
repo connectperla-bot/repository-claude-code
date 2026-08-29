@@ -1,0 +1,102 @@
+{%- comment -%}
+  Perla — dati unici per tipo di prodotto personalizzabile (print area + anteprima mockup).
+  Aggiungere un tipo prodotto, o adattare per un altro fornitore POD, significa aggiungere
+  UNA riga qui sotto: nessun altro file da toccare per i dati geometrici.
+
+  Formato riga: chiave|tag1,tag2|ratio|etichetta|left|top|right|height|radius
+  (left/top/right/height/radius sono percentuali dell'area mockup; radius% per forme rotonde,
+  ratio e' il rapporto larghezza/altezza reale dell'area di stampa Printify)
+
+  Chi consuma questi dati: sections/main-product.liquid legge la riga il cui tag
+  corrisponde ai tag del prodotto, per impostare photo_type/photo_ratio/photo_type_label
+  e le variabili CSS --ov-left/--ov-top/--ov-right/--ov-height/--ov-radius lette da
+  assets/base.css sulla classe .photo-studio__mockup-overlay.
+
+  ROUND 15 — riga cuccia ricalibrata guardando la vera foto prodotto (il
+  box precedente 22/32/22/30 copriva solo una piccola area centrale,
+  mentre il cuscino stampabile riempie quasi tutta l'inquadratura).
+
+  ROUND 16 — ratio ricontrollati uno per uno contro i dati reali scaricati
+  da Printify (printify-blueprints/*.json + catalogo live per ciotola/
+  tappetino/guinzaglio, che non avevano un file salvato). Collare, bandana,
+  medaglietta, ciotola, tappetino, guinzaglio erano gia' corretti. La cuccia
+  no: il canvas era impostato a 1.24 ma l'area di stampa reale della
+  variante 28"x18" (61436) e' 8850x5850px = ratio 1.51 — un canvas piu'
+  "stretto" del vero, quindi il design del cliente veniva stampato schiacciato.
+  Corretto a 1.51.
+
+  ROUND 16b — box ov_* (posizione del riquadro SULLA FOTO prodotto, quello
+  che si vede nel pannello "anteprima" a destra) ricalibrati scaricando le
+  foto prodotto reali e misurando a occhio dove cade davvero l'area
+  stampabile. Erano quasi tutti troppo piccoli/spostati (coprivano solo un
+  angolo invece di tutto il prodotto):
+  - medaglietta: da 39/37/39/22 (piccolo riquadro decentrato) a 20/27/20/63
+    (l'intero tondo, il ciondolo e' quasi tutta l'inquadratura).
+  - ciotola: da 18/40/18/15 (striscia troppo bassa) a 13/42/14/32 (tutta la
+    fascia laterale visibile della ciotola, dove il logo di prova compare
+    davvero).
+  - bandana: da 30/26/30/36 (rettangolo stretto in alto) a 8/37/8/44 (l'intero
+    triangolo, che copre quasi tutta la larghezza della foto).
+  - collare: da 14/45/14/9 (striscia sottilissima) a 8/30/7/38. Il collare e'
+    ad anello (non piatto): un rettangolo non puo' seguire perfettamente la
+    curva, questo e' il miglior compromesso — non influisce sulla stampa
+    reale (quella la gestisce Printify), solo sull'anteprima a schermo.
+  - cuccia: gia' ben calibrata (vedi sopra), non toccata.
+  - tappetino e guinzaglio: NON ricontrollati a vista in questo giro (nessuna
+    foto prodotto reale trovata al momento) — valori lasciati come prima, da
+    verificare quando ci sono foto reali disponibili.
+
+  ROUND 16e — BUG SERIO trovato: scripts/perla-create-neutral-products.js
+  tagga i 6 prodotti "neutri" con 'collare'/'medaglietta'/'ciotola'/'cuccia'/
+  'tappetino' (nome semplice), ma queste righe si aspettavano
+  'tipo-collare'/'tipo-medaglietta'/ecc. — nessuna riga corrispondeva per 5
+  tipi su 6 (solo bandana coincideva per caso). Risultato: su quei prodotti
+  photo_type restava VUOTO, quindi (a) il canvas usava il rapporto/riquadro
+  di default invece di quello calibrato sopra, e (b) il pulsante "Salva
+  anteprima" mandava product_type="" al server, che lo rifiuta subito con
+  "Tipo prodotto non riconosciuto" — questo e' il vero motivo per cui
+  l'anteprima Printify non partiva. Aggiunto il tag semplice come alias in
+  ogni riga, cosi' funziona sia con i tag 'tipo-*' sia con quelli gia' usati
+  sui prodotti neutri esistenti.
+
+  ROUND 18 — aggiunte collare_eu/bandana_eu: prodotti Shopify NUOVI e
+  distinti (fornitore Printful, spediti da fabbriche EU) — NON varianti dei
+  collare/bandana esistenti, perche' la forma fisica reale e' diversa
+  (collare Printful e' in tessuto/striscia, non TPU rigido; bandana Printful
+  e' quadrata, non rettangolare) — vedi scripts/provider-router.js. Ratio
+  presi dai printfile reali Printful (verificati via API): collare_eu
+  7169x315px = 22.76, bandana_eu 4125x4125px = 1.0. Riquadri ov_* di
+  partenza copiati da collare/bandana (nessuna foto prodotto Printful reale
+  ancora disponibile per calibrarli con precisione — da rifare quando ci
+  sono foto vere, come per tappetino/guinzaglio sopra).
+
+  ROUND 28 — aggiunte ciotola_eu/guinzaglio_eu, stesso ragionamento e stessa
+  fonte (API Printful, GET /products/<id> + /mockup-generator/printfiles/
+  <id> con store_id nell'header): ciotola_eu = "Pet Bowl" (id catalogo 678,
+  printfile 6496x803px = ratio 8.09), guinzaglio_eu = "Pet Leash" (id
+  catalogo 745, printfile placement "front" 12389x219px = ratio 56.57).
+  Riquadri ov_* copiati da ciotola/guinzaglio Printify per lo stesso motivo
+  di ROUND 18 (nessuna foto prodotto Printful reale ancora disponibile per
+  questi due al momento della stesura).
+
+  ROUND 47 — il "da rifare quando ci sono foto vere" di ROUND 18 e ROUND 28.
+  Adesso le foto ci sono: i 66 mockup generati via API Printful. I quattro
+  riquadri EU sono stati misurati su quelle, cercando l'area COLORATA (il
+  motivo stampato) e non la sagoma del prodotto — e' l'area di stampa che il
+  riquadro deve marcare, quindi acciaio, plastica nera e fondo bianco restano
+  fuori.
+
+    collare_eu     8|30|7|38   ->  22|33|18|32
+    bandana_eu     8|37|8|44   ->  21|20|20|58
+    ciotola_eu    13|42|14|32  ->  28|51|26|23
+    guinzaglio_eu 40|40|40|20  ->   6|38|26|36
+
+  Il piu' sbagliato era bandana_eu, che ereditava il riquadro della bandana
+  Printify — un TRIANGOLO — mentre quella Printful e' un quadrato fotografato
+  steso: il rettangolo stava per meta' fuori dal tessuto. Il guinzaglio resta
+  un'approssimazione, per lo stesso motivo scritto sopra a proposito del
+  collare: e' arrotolato, e un rettangolo non segue una spirale.
+
+  Come sempre: non influisce sulla stampa, solo sull'anteprima a schermo.
+{%- endcomment -%}
+collare|tipo-collare,collar,collare|25.2|Collare|8|30|7|38|0#bandana|tipo-bandana,bandana|1.86|Bandana|8|37|8|44|0#medaglietta|tipo-medaglietta,tag,medaglietta|0.9|Medaglietta|20|27|20|63|50#ciotola|tipo-ciotola,bowl,ciotola|3.68|Ciotola|13|42|14|32|0#cuccia|tipo-cuccia,bed,cuccia|1.51|Cuccia|6|20|5|56|0#tappetino|tipo-tappetino,mat,tappetino|1.44|Tappetino|20|30|20|34|0#guinzaglio|tipo-guinzaglio,leash,guinzaglio|1.0|Guinzaglio|40|40|40|20|0#collare_eu|tipo-collare_eu,collare-eu|22.76|Collare EU|22|33|18|32|0#bandana_eu|tipo-bandana_eu,bandana-eu|1.0|Bandana EU|21|20|20|58|0#ciotola_eu|tipo-ciotola_eu,ciotola-eu|8.09|Ciotola EU|28|51|26|23|0#guinzaglio_eu|tipo-guinzaglio_eu,guinzaglio-eu|56.57|Guinzaglio EU|6|38|26|36|0
