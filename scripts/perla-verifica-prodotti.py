@@ -367,6 +367,60 @@ def _misura_remota(url):
     return None
 
 
+def _scarica_ridotta(url, larghezza=900):
+    """L'immagine pubblicata, rimpicciolita da Cloudinary invece che da noi.
+
+    Un nativo pesa fino a 8 MB e per controllare il marchio ne bastano 900 px:
+    inserendo w_900 nella URL e' Cloudinary a ridurlo, e ne arrivano un
+    centinaio di KB. Su URL non Cloudinary si scarica l'originale.
+    """
+    from PIL import Image
+    import io as _io
+    if "/image/upload/" in url:
+        url = url.replace("/image/upload/", "/image/upload/w_%d/" % larghezza, 1)
+    dati = subprocess.run(["curl", "-sL", url], capture_output=True).stdout
+    if not dati:
+        return None
+    try:
+        return Image.open(_io.BytesIO(dati)).convert("RGB")
+    except Exception:
+        return None
+
+
+def _controlla_marchio(tipo, motivo, url):
+    """Il marchio composto c'e' davvero, e la firma vecchia non c'e' piu'.
+
+    E' il controllo che mancava. Fino a qui --eu misurava solo le DIMENSIONI
+    del motivo, e per questo diceva "66 motivi alla misura giusta" mentre la
+    bandana antracite aveva il logo semitrasparente col puntino nero e la
+    bandana cammei cipria era decentrata: nessuna delle due sbagliava misura.
+
+    Torna None se non c'e' niente da dire, altrimenti la ragione.
+    """
+    import marchio
+    nome = "%s-%s.jpg" % (tipo.lower(),
+                          motivo.lower().replace(" ", "-").replace("'", ""))
+    if tipo != "Bandana" or not marchio.serve(nome):
+        # collari, ciotole e guinzagli portano il monogramma dentro il motivo
+        return None
+    im = _scarica_ridotta(url)
+    if im is None:
+        return "immagine non scaricabile"
+    riquadri = marchio.riquadri("bandana_eu", im.size, (1360, 2288))
+    if not marchio.presente(im, riquadri, soglia=34.0):
+        return "il marchio non c'e' dove dovrebbe stare"
+    if nome in marchio.NATIVI_CON_MEDAGLIONE:
+        s, a, d, b = marchio.MEDAGLIONE
+        w, h = im.size
+        vecchia = im.crop((int(s * w), int(a * h), int(d * w), int(b * h)))
+        oro = sum(1 for p in vecchia.getdata()
+                  if p[0] > 150 and p[1] > 110 and p[2] < 110)
+        if oro > 0.06 * vecchia.width * vecchia.height:
+            return "la firma vecchia e' ancora li' (%d%% d'oro nel suo riquadro)" % (
+                100 * oro // max(1, vecchia.width * vecchia.height))
+    return None
+
+
 def verifica_eu(taglie_shopify=None):
     """I 66 prodotti EU: misura del motivo e titoli di taglia.
 
@@ -390,7 +444,7 @@ def verifica_eu(taglie_shopify=None):
                 varianti_note[tipo] = set(
                     re.findall(r"'([^']+)':", m.group(1)))
 
-    fuori = {"motivi": [], "taglie": []}
+    fuori = {"motivi": [], "taglie": [], "marchi": []}
     for v in prodotti:
         m = re.match(r'(\w+)\s+"', v.get("title", ""))
         tipo = m.group(1) if m else None
@@ -402,6 +456,10 @@ def verifica_eu(taglie_shopify=None):
             fuori["motivi"].append({
                 "titolo": v["title"], "attesa": list(attesa),
                 "avuta": list(avuta) if avuta else None})
+        motivo = re.match(r'\w+\s+"(.+)"', v["title"])
+        guaio = _controlla_marchio(tipo, motivo.group(1), v["pattern"]) if motivo else None
+        if guaio:
+            fuori["marchi"].append({"titolo": v["title"], "guaio": guaio})
 
         titoli = (taglie_shopify or {}).get(v["id"])
         note = varianti_note.get(TIPO_EU[tipo])
@@ -556,6 +614,13 @@ def main():
                       % (x["titolo"][:34], x["attesa"], x["avuta"]))
         else:
             print("    tutti alla misura giusta")
+        if eu.get("marchi"):
+            for x in eu["marchi"]:
+                print("    MARCHIO          %-34s %s"
+                      % (x["titolo"][:34], x["guaio"]))
+        else:
+            print("    il marchio c'e' su tutte le bandane che devono averlo, "
+                  "e la firma vecchia non c'e' piu'")
         if not eu["taglie_controllate"]:
             print("  titoli di taglia NON controllati: manca %s"
                   % os.path.basename(percorso_taglie))
@@ -568,6 +633,38 @@ def main():
             print("    tutti i titoli di taglia sono riconosciuti da varianti-fornitore.js")
         rapporto = rapporto if isinstance(rapporto, dict) else {"printify": rapporto}
         rapporto["eu"] = eu
+
+    if "--editor" in sys.argv:
+        print("\n" + "=" * 72)
+        print("L'EDITOR DI PERSONALIZZAZIONE")
+        catena = _modulo("editor_catena", os.path.join(QUI, "editor-catena.py"))
+        istantanea = catena.carica_istantanea()
+        if not istantanea:
+            print("  NON controllato: manca %s"
+                  % os.path.relpath(catena.ISTANTANEA, RADICE))
+            print("    (si scrive da Shopify: tabella_tipi = il testo di")
+            print("     snippets/perla-print-areas.liquid del tema PUBBLICATO,")
+            print("     prodotti = [{id, title, handle, status, tags, editor,")
+            print("     printify}] con editor = custom.editor_pattern_image)")
+        else:
+            stampe = {p["id"]: catena.stampe_correnti(p) for p in prodotti}
+            ed = catena.verifica(istantanea, stampe, catena.motivi_per_handle())
+            print("  %d prodotti attivi contro %d righe della tabella dei tipi"
+                  % (ed["esaminati"], ed["righe"]))
+            for x in ed["prodotti"]:
+                print("    %-38s" % x["titolo"][:38])
+                for g in x["guai"]:
+                    print("      - " + g)
+                if x.get("atteso"):
+                    print("      dovrebbe essere: %s" % x["atteso"])
+            if not ed["prodotti"]:
+                print("    l'editor c'e' su tutti, e lo sfondo su cui il cliente "
+                      "disegna e' il file che si stampa")
+            else:
+                print("  %d prodotti da sistemare (li allinea "
+                      "perla-editor-allinea.py)" % len(ed["prodotti"]))
+            rapporto = rapporto if isinstance(rapporto, dict) else {"printify": rapporto}
+            rapporto["editor"] = ed
 
     os.makedirs(USCITA, exist_ok=True)
     percorso = os.path.join(USCITA, "audit-prodotti.json")

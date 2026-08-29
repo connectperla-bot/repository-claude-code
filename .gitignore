@@ -52,3 +52,14 @@ generated-designs/eu-mockup/
 # Fotografia dei titoli di taglia su Shopify, per l'audit --eu. Va rifatta
 # quando i prodotti cambiano: la query sta in perla-verifica-prodotti.py.
 generated-designs/taglie-eu.json
+
+# Motivi EU corretti: 160 MB di file di stampa, si ricostruiscono con
+# scripts/perla-eu-motivi-corretti.py --costruisci --tutti. In git ci va lo
+# script, non i pixel.
+generated-designs/eu-motivi-corretti/
+
+# Fotografia di Shopify per l'audit --editor (tag, metafield, tabella dei tipi
+# dal tema pubblicato) e l'elenco delle scritture che ne discende. Come
+# taglie-eu.json: si rifanno quando i prodotti cambiano.
+generated-designs/editor-shopify.json
+generated-designs/editor-da-scrivere.json

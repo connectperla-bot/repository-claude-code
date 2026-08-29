@@ -62,14 +62,15 @@ NOME = "perla-combined-logo.png"
 # e' il difetto "marchio doppio" gia' corretto una volta su bandane e
 # medagliette (commit 962ade7). Quindi si compone SOLO dove manca davvero.
 #
-# La classificazione e' stata fatta GUARDANDO i quindici nativi europei a
-# risoluzione piena -- provino d'insieme e poi zoom centrale a 1240 px sui
-# dubbi -- e non leggendo i nomi, che su questo progetto mentono
-# regolarmente: bandana-damasco-reale.jpg non e' un damasco, e' un ramo
-# d'ulivo su crema senza un filo di marchio.
+# La classificazione e' stata fatta GUARDANDO i diciannove nativi europei a
+# risoluzione piena -- provino d'insieme e poi zoom a 1:1 sui dubbi -- e non
+# leggendo i nomi, che su questo progetto mentono regolarmente:
+# bandana-damasco-reale.jpg non e' un damasco, e' un ramo d'ulivo su crema
+# senza un filo di marchio.
 #
-# Tre modi in cui un nativo porta gia' il marchio, tutti e tre validi:
-#   medaglione singolo   art-deco-rosa, diamanti, onde-dorate, paisley-cammeo
+# Due modi in cui un nativo porta gia' il marchio, validi tutti e due:
+#   medaglione singolo   art-deco-rosa, diamanti, lino, marinara, onde-dorate,
+#                        paisley-cammeo, tartan, terracotta
 #   scritta ripetuta     barocco, damasco-diamante, erbario, floreale-elegante,
 #                        ghirigori, onde, paisley-rosa, ramo-dulivo
 #
@@ -77,10 +78,18 @@ NOME = "perla-combined-logo.png"
 # ==========================================================================
 # I NATIVI CON UN MEDAGLIONE SOLO: il marchio c'e', ma non si puo' contarci
 # ==========================================================================
-# Quattro nativi portano UN SOLO medaglione "Perla Italia", sempre nello
-# stesso punto: centro a x=0,81 y=0,75 (misurato su tutti e quattro cercando
-# la finestra a saturazione massima -- il picco sta a 7-40 volte la media, non
-# e' un'interpretazione).
+# Otto nativi portano UN SOLO medaglione "Perla Italia", sempre nello stesso
+# punto: centro a x=0,81 y=0,79 (misurato su tutti e otto cercando la finestra
+# a saturazione massima, e confermato correlando il file del logo -- non e'
+# un'interpretazione).
+#
+# E QUEL MEDAGLIONE E' ANCHE MAL COMPOSTO. Guardato a 1:1 su terracotta,
+# tartan, marinara e lino: la scritta "Perla" e' semitrasparente e sotto si
+# legge il motivo, e al centro della perla c'e' un buco che lascia passare il
+# fondo -- rosso sul terracotta, verde sul tartan, blu sul marinara. E'
+# esattamente quello che la titolare ha descritto, "il logo trasparente che fa
+# vedere un puntino nero". Un altro motivo per toglierlo e rifarlo qui, dove
+# il logo si incolla opaco.
 #
 # "Il nativo ha il marchio" e' vero per il nativo INTERO e falso per un suo
 # ritaglio. Sulla medaglietta "Green Geometric" (area 810x900, ritagliata da
@@ -92,15 +101,35 @@ NOME = "perla-combined-logo.png"
 # Quindi: si RITAGLIA via il medaglione dal nativo, e il marchio lo si compone
 # noi dove deve stare. Il ritaglio tiene i due terzi sinistri a piena altezza,
 # che e' la porzione piu' grande che lo esclude di sicuro.
+#
+# OTTO, NON QUATTRO. Questa tabella nacque con quattro nomi perche' i nativi
+# europei erano quindici. Adesso sono diciannove, e i quattro arrivati dopo
+# (lino, marinara, tartan, terracotta) portano lo stesso identico medaglione,
+# nello stesso punto. Cercarlo a occhio una volta sola e poi fidarsi della
+# lista e' come il difetto e' passato: la lista qui sotto e' stata rifatta
+# misurando tutti e diciannove i nativi in due modi indipendenti che danno lo
+# stesso risultato -- il picco di saturazione, e la correlazione con
+# perla-combined-logo.png, che nei nativi col medaglione sta fra 0,58 e 0,89 e
+# in tutti gli altri non supera 0,51.
 NATIVI_CON_MEDAGLIONE = {
     "bandana-art-deco-rosa.jpg",
     "bandana-diamanti.jpg",
+    "bandana-lino.jpg",
+    "bandana-marinara.jpg",
     "bandana-onde-dorate.jpg",
     "bandana-paisley-cammeo.jpg",
+    "bandana-tartan.jpg",
+    "bandana-terracotta.jpg",
 }
 
-# Il medaglione, in frazione del nativo: centro (0,81 - 0,75), largo circa 0,18.
-MEDAGLIONE = (0.72, 0.66, 0.90, 0.84)
+# Il medaglione, in frazione del nativo: centro (0,81 - 0,79).
+#
+# IL BASSO ERA SBAGLIATO. Fino a qui il riquadro finiva a 0,84, che taglia via
+# la parola "Italia": bastava finche' serviva solo a decidere SE un ritaglio lo
+# escludeva, non appena serve a coprirlo davvero. Misurato sul nativo dal fondo
+# piu' pulito (bandana-lino, crema uniforme): il marchio va da 0,71 a 0,94 in
+# orizzontale e da 0,61 a 0,95 in verticale.
+MEDAGLIONE = (0.70, 0.61, 0.95, 0.95)
 # Il ritaglio che lo esclude, in frazione del nativo (sinistra, alto, destra, basso).
 RITAGLIO_SENZA_MEDAGLIONE = (0.0, 0.0, 0.66, 1.0)
 
@@ -167,6 +196,16 @@ GEOMETRIA = {
     "ciotola":     {"altezza": 0.55, "ripeti": 6,  "forma": "rettangolo"},
     "bandana":     {"altezza": 0.34, "ripeti": 0, "centro": (0.50, 0.42),
                     "forma": "triangolo"},
+    # La bandana EUROPEA non e' un triangolo. Printful stampa un quadrato
+    # 44x44 e lo fotografa steso: nel mockup si vede tutto il quadrato, bordo
+    # compreso. Modellarla come la bandana americana spingerebbe il marchio
+    # nella fascia alta di un triangolo che qui non esiste.
+    #
+    # Il centro non e' quello del quadrato di proposito: e' la firma d'angolo
+    # che i motivi hanno gia' addosso (misurata a 0,81 - 0,79), tirata dentro
+    # quel tanto che basta perche' la cartella non tocchi l'orlo cucito.
+    "bandana_eu":  {"altezza": 0.22, "ripeti": 0, "centro": (0.78, 0.76),
+                    "forma": "rettangolo"},
     "medaglietta": {"altezza": 0.62, "ripeti": 0, "centro": (0.50, 0.50),
                     "forma": "cerchio"},
     "cuccia":      {"altezza": 0.22, "ripeti": 0, "centro": (0.50, 0.50),

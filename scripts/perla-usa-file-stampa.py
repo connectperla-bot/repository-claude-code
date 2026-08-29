@@ -430,8 +430,8 @@ def _sorgente_eu(nome, ritocco, ritaglio, temporanei):
     if not os.path.exists(percorso):
         raise SystemExit("nativo mancante: " + percorso)
 
-    # Quattro nativi hanno UN SOLO medaglione "Perla Italia", sempre a
-    # x=0,81 y=0,75. Affiancati o ritagliati, quel medaglione finisce dove
+    # Otto nativi hanno UN SOLO medaglione "Perla Italia", sempre a
+    # x=0,81 y=0,79. Affiancati o ritagliati, quel medaglione finisce dove
     # capita -- sulla medaglietta "Green Geometric" e' arrivato sul bordo ed e'
     # stato tagliato dal tondo, lasciando una falce d'oro senza senso. Si
     # ritaglia via, e il marchio lo compone marchio.py dove deve stare.
