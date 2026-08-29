@@ -1,0 +1,159 @@
+[
+  {
+    "name": "theme_info",
+    "theme_name": "Perla",
+    "theme_version": "1.0.0",
+    "theme_author": "Perla Italia",
+    "theme_documentation_url": "https://shopify.dev/docs/themes",
+    "theme_support_url": "https://help.shopify.com/"
+  },
+  {
+    "name": "Colori del brand",
+    "settings": [
+      { "type": "header", "content": "Palette principale" },
+      { "type": "color", "id": "color_ink", "label": "Blu notte (titoli, footer)", "default": "#132A4A" },
+      { "type": "color", "id": "color_text", "label": "Testo", "default": "#22324A" },
+      { "type": "color", "id": "color_bg", "label": "Sfondo (bianco perla)", "default": "#FCFAF6" },
+      { "type": "color", "id": "color_cream", "label": "Crema (sezioni alternate)", "default": "#F3E9DA" },
+      { "type": "color", "id": "color_gold", "label": "Amber Resin (accenti)", "default": "#C8862B" },
+      { "type": "color", "id": "color_gold_deep", "label": "Champagne Alloy (hover)", "default": "#B9986A" },
+      { "type": "color", "id": "color_sage", "label": "Accento caldo (terracotta)", "default": "#E26D5C" },
+      { "type": "color", "id": "color_line", "label": "Bordi e divisori", "default": "#E8DCC9" },
+      { "type": "header", "content": "Footer" },
+      { "type": "color", "id": "color_footer_bg", "label": "Sfondo footer", "default": "#0F2240" },
+      { "type": "color", "id": "color_footer_text", "label": "Testo footer", "default": "#EBDFC9" }
+    ]
+  },
+  {
+    "name": "Tipografia",
+    "settings": [
+      { "type": "paragraph", "content": "I font del sito sono Fraunces (titoli) e Inter (testo), impostati direttamente nel codice del tema in layout/theme.liquid. I due selettori qui sotto NON hanno piu' effetto: restano solo perche' rimuoverli darebbe errore all'editor tema. Per cambiare i font serve modificare layout/theme.liquid." },
+      { "type": "font_picker", "id": "heading_font", "label": "Font titoli (non in uso)", "info": "Non ha effetto. I titoli usano Fraunces, vedi layout/theme.liquid.", "default": "playfair_display_n7" },
+      { "type": "font_picker", "id": "body_font", "label": "Font testo (non in uso)", "info": "Non ha effetto. Il testo usa Inter, vedi layout/theme.liquid.", "default": "assistant_n4" },
+      { "type": "range", "id": "base_font_size", "min": 15, "max": 19, "step": 1, "unit": "px", "label": "Dimensione testo", "default": 17 },
+      { "type": "range", "id": "heading_scale", "min": 90, "max": 130, "step": 5, "unit": "%", "label": "Scala titoli", "default": 100 },
+      { "type": "checkbox", "id": "heading_uppercase", "label": "Titoli in maiuscolo", "default": false }
+    ]
+  },
+  {
+    "name": "Layout e animazioni",
+    "settings": [
+      { "type": "range", "id": "page_width", "min": 1100, "max": 1600, "step": 20, "unit": "px", "label": "Larghezza pagina", "default": 1340 },
+      { "type": "range", "id": "section_spacing", "min": 40, "max": 120, "step": 4, "unit": "px", "label": "Spazio tra sezioni", "default": 88 },
+      { "type": "range", "id": "card_radius", "min": 0, "max": 24, "step": 2, "unit": "px", "label": "Arrotondamento immagini", "default": 8 },
+      { "type": "range", "id": "button_radius", "min": 0, "max": 40, "step": 2, "unit": "px", "label": "Arrotondamento bottoni", "default": 4 },
+      { "type": "checkbox", "id": "enable_animations", "label": "Animazioni allo scroll", "info": "Rivela gli elementi mentre scorri la pagina", "default": true },
+      { "type": "checkbox", "id": "enable_button_sheen", "label": "Riflesso dorato sui bottoni", "default": true },
+      { "type": "header", "content": "Microinterazioni editoriali" },
+      { "type": "paragraph", "content": "Preloader, perle e cursore dorato sono ACCESI per scelta: sono la firma visiva del sito. Se un domani volessi spegnerne qualcuno, e' sicuro: verificato riga per riga che nessuna regola di base.css e nessuna funzione di global.js dipenda dagli elementi che spariscono (in particolare la classe 'is-loaded' del preloader non e' usata da nessuna parte). In quel caso spegnili uno alla volta, cosi' vedi l'effetto di ciascuno." },
+      { "type": "checkbox", "id": "enable_preloader", "label": "Preloader con emblema", "info": "Mostrato solo al primo caricamento della sessione", "default": true },
+      { "type": "checkbox", "id": "enable_parallax", "label": "Parallasse sulle immagini", "default": true },
+      { "type": "checkbox", "id": "enable_smooth_scroll", "label": "Scroll fluido con inerzia", "info": "Solo su desktop con puntatore preciso", "default": true },
+      { "type": "checkbox", "id": "enable_cursor_ring", "label": "Cursore con anello dorato", "info": "Pallino + anello che segue il mouse e si espande su link e immagini (solo desktop).", "default": true },
+      { "type": "checkbox", "id": "enable_title_rule", "label": "Linea dorata animata sotto i titoli", "default": true },
+      { "type": "checkbox", "id": "enable_blinds", "label": "Rivelazione cinematografica delle immagini", "info": "Le immagini chiave si svelano dall'alto con un leggero zoom.", "default": true },
+      { "type": "header", "content": "Spettacolo" },
+      { "type": "checkbox", "id": "enable_pearls", "label": "Perle fluttuanti animate", "info": "Perle 3D che vagano nella pagina e reagiscono al mouse, con scia luminosa sul cursore", "default": true },
+      { "type": "select", "id": "pearls_density", "label": "Densità perle", "options": [ { "value": "hero", "label": "Poche (sobrie)" }, { "value": "moderate", "label": "Media" }, { "value": "many", "label": "Tante (massimo)" } ], "default": "many" },
+      { "type": "checkbox", "id": "enable_spectacle", "label": "Animazioni cinematografiche", "info": "Reveal vistosi, maschere creative, sezioni orizzontali e movimenti ampi anche su desktop", "default": true }
+    ]
+  },
+  {
+    "name": "Schede prodotto",
+    "settings": [
+      { "type": "checkbox", "id": "card_hover_second_image", "label": "Mostra 2a immagine al passaggio", "default": true },
+      { "type": "checkbox", "id": "card_quick_add", "label": "Aggiunta rapida al carrello", "default": true },
+      { "type": "select", "id": "card_image_ratio", "label": "Formato immagine", "options": [ { "value": "portrait", "label": "Verticale (4:5)" }, { "value": "square", "label": "Quadrata (1:1)" } ], "default": "portrait" }
+    ]
+  },
+  {
+    "name": "Funzioni extra (senza app)",
+    "settings": [
+      { "type": "paragraph", "content": "Funzioni native incluse nel tema, senza costi e senza app esterne. Attive di default." },
+      { "type": "checkbox", "id": "enable_wishlist", "label": "Lista dei desideri (salvati)", "info": "Cuore sulle schede prodotto. I preferiti restano salvati sul dispositivo del cliente.", "default": true },
+      { "type": "checkbox", "id": "enable_quick_view", "label": "Anteprima rapida prodotto", "info": "Apre una modale con l'essenziale del prodotto senza lasciare la pagina.", "default": true },
+      { "type": "checkbox", "id": "enable_recently_viewed", "label": "Visti di recente", "info": "Mostra gli ultimi prodotti visitati dal cliente.", "default": true },
+      { "type": "checkbox", "id": "enable_back_in_stock", "label": "Avvisami quando disponibile", "info": "Sui prodotti esauriti, raccoglie l'email del cliente (richiede collegamento email/Shopify Forms — vedi guida).", "default": true },
+      { "type": "checkbox", "id": "enable_prefetch", "label": "Precaricamento al passaggio del mouse", "info": "Carica in anticipo le pagine al passaggio del mouse per una navigazione più veloce.", "default": true }
+    ]
+  },
+  {
+    "name": "Carrello",
+    "settings": [
+      { "type": "select", "id": "cart_type", "label": "Tipo carrello", "options": [ { "value": "drawer", "label": "A scomparsa (laterale)" }, { "value": "page", "label": "Pagina" } ], "default": "drawer" },
+      { "type": "paragraph", "content": "Spento per scelta. Nonostante il nome storico non e' una barra di avanzamento: la logica della soglia era gia' stata tolta da assets/global.js (funzione shipBarHtml) perche' la spedizione e' sempre gratuita col costo incluso nel prezzo, quindi accendendolo comparirebbe solo un riquadro fisso con scritto 'Spedizione gratuita'. Lo stesso messaggio e' gia' presente fra i punti di forza in homepage e nella scheda prodotto." },
+      { "type": "checkbox", "id": "cart_free_shipping_bar", "label": "Conferma spedizione gratuita nel carrello", "default": false },
+      { "type": "range", "id": "cart_free_shipping_threshold", "min": 0, "max": 100, "step": 1, "unit": "€", "label": "Soglia spedizione gratuita (non in uso)", "info": "Nessun effetto: la soglia e' stata rimossa dal codice del carrello. Resta qui solo nel caso un domani si reintroduca un minimo d'ordine.", "default": 49 },
+      { "type": "header", "content": "Ti potrebbe piacere anche" },
+      { "type": "checkbox", "id": "cart_show_upsell", "label": "Mostra suggerimenti nel carrello", "info": "Consigli automatici (stesso motore di 'Prodotti correlati') mostrati sotto la lista del carrello a scomparsa.", "default": true }
+    ]
+  },
+  {
+    "name": "Social",
+    "settings": [
+      { "type": "text", "id": "social_instagram_link", "label": "Instagram", "info": "https://instagram.com/perlaitaly" },
+      { "type": "text", "id": "social_tiktok_link", "label": "TikTok" },
+      { "type": "text", "id": "social_pinterest_link", "label": "Pinterest" },
+      { "type": "text", "id": "social_facebook_link", "label": "Facebook" },
+      { "type": "text", "id": "social_whatsapp_link", "label": "WhatsApp", "info": "https://wa.me/39..." }
+    ]
+  },
+  {
+    "name": "Assistente",
+    "settings": [
+      { "type": "checkbox", "id": "assistant_enabled", "label": "Attiva assistente chat", "default": true },
+      { "type": "paragraph", "content": "Risposte predefinite, nessun costo. Personalizza qui sotto domande e risposte." },
+      { "type": "text", "id": "assistant_name", "label": "Nome assistente", "default": "Perla" },
+      { "type": "text", "id": "assistant_bubble_label", "label": "Etichetta bolla", "default": "Aiuto?" },
+      { "type": "text", "id": "assistant_status", "label": "Stato", "default": "Di solito risponde in pochi secondi" },
+      { "type": "textarea", "id": "assistant_welcome", "label": "Messaggio di benvenuto", "default": "Ciao! Sono qui per aiutarti. Su cosa hai bisogno?" },
+      { "type": "header", "content": "Domande rapide" },
+      { "type": "text", "id": "assistant_q_shipping", "label": "Chip 1 — etichetta", "default": "Spedizioni" },
+      { "type": "textarea", "id": "assistant_a_shipping", "label": "Chip 1 — risposta", "default": "Spediamo in tutta Italia in 4-8 giorni e in Europa in 5-12 giorni. La spedizione e' gratuita senza minimo d'ordine e ricevi sempre un codice di tracciamento via email." },
+      { "type": "text", "id": "assistant_q_returns", "label": "Chip 2 — etichetta", "default": "Resi" },
+      { "type": "textarea", "id": "assistant_a_returns", "label": "Chip 2 — risposta", "default": "Hai 30 giorni dalla consegna per il reso. Scrivici e ti guidiamo passo passo." },
+      { "type": "text", "id": "assistant_q_sizes", "label": "Chip 3 — etichetta", "default": "Taglie" },
+      { "type": "textarea", "id": "assistant_a_sizes", "label": "Chip 3 — risposta", "default": "Ogni prodotto ha una guida taglie nella scheda. Se hai dubbi, scrivici razza e peso del tuo cane: ti consigliamo noi." },
+      { "type": "text", "id": "assistant_q_payment", "label": "Chip 4 — etichetta", "default": "Pagamenti" },
+      { "type": "textarea", "id": "assistant_a_payment", "label": "Chip 4 — risposta", "default": "Accettiamo carte (Visa, Mastercard, Amex), PayPal, Apple Pay e Google Pay. Puoi pagare anche in 3 rate con Scalapay o Klarna." },
+      { "type": "text", "id": "assistant_q_track", "label": "Chip 5 — etichetta", "default": "Traccia ordine" },
+      { "type": "textarea", "id": "assistant_a_track", "label": "Chip 5 — risposta", "default": "Trovi il link di tracciamento nell'email di spedizione. Non lo trovi? Scrivici il numero d'ordine e controlliamo subito." },
+      { "type": "header", "content": "Risposte reali (AI)" },
+      { "type": "url", "id": "assistant_ai_endpoint", "label": "Indirizzo servizio risposte AI (opzionale)", "info": "Incolla qui l'indirizzo del servizio scripts/perla-assistant-bot.js una volta pubblicato online. Se vuoto, il cliente può scrivere una domanda libera ma vedrà solo le risposte rapide qui sotto." },
+      { "type": "header", "content": "Contatto diretto" },
+      { "type": "text", "id": "assistant_fallback_text", "label": "Testo fallback", "default": "Non hai trovato risposta?" },
+      { "type": "url", "id": "assistant_contact_link", "label": "Link contatti" },
+      { "type": "text", "id": "assistant_contact_label", "label": "Etichetta contatti", "default": "Scrivici" }
+    ]
+  },
+  {
+    "name": "Foto personalizzata (Printify)",
+    "settings": [
+      { "type": "paragraph", "content": "Attiva il caricamento foto sui prodotti con tag \"personalizzabile\", \"POD\" o \"custom\"." },
+      { "type": "url", "id": "photo_upload_endpoint", "label": "Indirizzo servizio caricamento foto (opzionale)", "info": "Incolla qui l'indirizzo del servizio scripts/perla-upload-endpoint.js una volta pubblicato online. Se vuoto, il cliente vede comunque l'anteprima della foto ma non viene caricata per la produzione." }
+    ]
+  },
+  {
+    "name": "Recensioni con foto",
+    "settings": [
+      { "type": "paragraph", "content": "Recensioni native con foto, senza app esterne. Vuota finché i clienti non inviano recensioni reali (nessuna recensione finta pre-caricata)." },
+      { "type": "checkbox", "id": "reviews_enabled", "label": "Mostra recensioni sulla scheda prodotto", "default": true },
+      { "type": "url", "id": "reviews_submit_endpoint", "label": "Indirizzo servizio invio recensioni (opzionale)", "info": "Incolla qui l'indirizzo del servizio scripts/perla-reviews-endpoint.js una volta pubblicato online. Se vuoto, il modulo di invio recensioni resta nascosto." }
+    ]
+  },
+  {
+    "name": "Marketing & Analytics",
+    "settings": [
+      { "type": "paragraph", "content": "Collega qui gli strumenti di misurazione. Nessuno script viene caricato finché non incolli un ID, e nessuno parte prima che il cliente abbia accettato i cookie di analisi (snippets/perla-analytics.liquid)." },
+      { "type": "text", "id": "clarity_project_id", "label": "Microsoft Clarity — ID progetto", "info": "Da clarity.microsoft.com > il progetto > Settings > Overview. Mappe di calore e registrazione delle sessioni; parte solo dopo il consenso." },
+      { "type": "text", "id": "ga4_measurement_id", "label": "Google Analytics 4 — Measurement ID", "info": "LASCIALO VUOTO se hai installato il pixel GA4 in Impostazioni > Eventi cliente: riempirli tutti e due conta ogni visita due volte. Serve solo se preferisci misurare dal tema invece che dal pixel. Es. G-XXXXXXXXXX." },
+      { "type": "text", "id": "meta_pixel_id", "label": "Meta Pixel ID", "info": "Da Gestione Eventi di Meta Business Suite. Attiva il tracciamento per campagne Facebook/Instagram." }
+    ]
+  },
+  {
+    "name": "Favicon",
+    "settings": [
+      { "type": "image_picker", "id": "favicon", "label": "Favicon", "info": "Quadrata, almeno 96x96px. Se vuota usa l'emblema Perla." }
+    ]
+  }
+]

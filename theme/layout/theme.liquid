@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="{{ request.locale.iso_code }}" dir="{% if settings.heading_uppercase %}{% endif %}ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="theme-color" content="{{ settings.color_ink }}">
+    <link rel="canonical" href="{{ canonical_url }}">
+
+    {%- if settings.favicon != blank -%}
+      <link rel="icon" type="image/png" href="{{ settings.favicon | image_url: width: 32, height: 32 }}">
+      <link rel="apple-touch-icon" href="{{ settings.favicon | image_url: width: 180, height: 180 }}">
+    {%- else -%}
+      <link rel="icon" type="image/png" href="{{ 'favicon.png' | asset_url }}">
+      <link rel="apple-touch-icon" href="{{ 'favicon.png' | asset_url }}">
+    {%- endif -%}
+
+    <title>
+      {{ page_title }}{% if current_tags %} &ndash; {{ 'general.meta.tags' | t: tags: current_tags | join: ', ' }}{% endif %}{% if current_page != 1 %} &ndash; {{ 'general.meta.page' | t: page: current_page }}{% endif %}{% unless page_title contains shop.name %} &ndash; {{ shop.name }}{% endunless %}
+    </title>
+
+    {% if page_description %}<meta name="description" content="{{ page_description | escape }}">{% endif %}
+
+    {% render 'meta-tags' %}
+
+    {%- comment -%}
+      TIPOGRAFIA: tre font, tre mestieri.
+        - Marcellus          -> titoli e wordmark. Un peso solo, nessun corsivo.
+        - Jost               -> testo corrente e controlli dell'editor foto.
+        - Cormorant Garamond -> solo corsivo, solo per gli accenti scritti a
+                                mano (firma, motto, recensioni).
+
+      ROUND 26 — si cambia di nuovo, e stavolta per il motivo giusto.
+
+      Storia breve: il Round 18 aveva messo Bodoni Moda e il difetto segnalato
+      ("in alcuni punti sembra che la lettera si interrompe") era esattamente
+      quello -- Bodoni e' un didone, sotto i 16px le aste sottili spariscono.
+      Il Round 24 era tornato a Playfair, che regge; ma Playfair e' il serif
+      piu' usato del web, e "si legge bene" non era piu' l'unica richiesta.
+
+      Il Round 24 aveva gia' guardato Marcellus e l'aveva scartato, con una
+      ragione buona: un peso solo, e il tema ne usa 500, 600 e 700, piu' otto
+      regole in corsivo. Quella ragione non e' sbagliata -- e' un lavoro da
+      fare, e adesso e' fatto: assets/perla-type.css §6 toglie ogni richiesta
+      di grassetto e spegne font-synthesis, §12a manda il virgolettato
+      sull'accento che il corsivo ce l'ha davvero, §12b rimette presenza al
+      wordmark con la spaziatura invece che col peso.
+
+      Confrontati a video sui titoli veri del sito, alla misura vera: Fraunces
+      (con l'asse "wonk" acceso "glielo" si legge "gliclo"), Cormorant e
+      Instrument Serif (aste sottili, lo stesso difetto di Bodoni un'altra
+      volta), Playfair, Marcellus. Marcellus e' l'unico che a 13px su fondo
+      navy -- il punto esatto dove Bodoni cedeva -- non perde un tratto: e'
+      una capitale romana, le aste hanno tutte lo stesso spessore, non c'e'
+      niente di sottile che possa sparire.
+
+      E costa poco cambiare: misurata contro Playfair, Marcellus ha altezza-x
+      0,971 e maiuscole 0,993. Praticamente identiche, quindi le crenature dei
+      titoli e le misure in base.css restano valide come sono. Cormorant (x
+      0,757) e Jost (x 0,836) invece no, e perla-type.css §5 e §12c le
+      pareggiano con i numeri misurati, non a occhio.
+{%- endcomment -%}
+    <link rel="preconnect" href="https://cdn.shopify.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.shopify.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Jost:ital,wght@0,300..700;1,300..700&family=Cormorant+Garamond:ital,wght@1,400;1,500&display=swap">
+
+    {%- comment -%}
+      ROUND 13 — font curati per il nome stampato sul prodotto (studio di
+      personalizzazione). Caricati solo sulla pagina prodotto (non su tutto il
+      sito) per non pagare il costo di rete altrove. Vedi sections/main-product.liquid
+      (selettore font) e assets/global.js (composeAndUpload, disegna il font scelto
+      su canvas prima dell'upload cosi' viene STAMPATO davvero, non solo mostrato).
+
+      ROUND 17 — Cormorant Garamond si e' spostato dal link globale a QUESTA
+      lista. Non e' piu' un font del sito, ma resta la prima opzione (e quella
+      attiva di default) del selettore del nome inciso in
+      snippets/perla-photo-customizer-side.liquid: senza questo caricamento il
+      canvas di composeAndUpload ripiegherebbe su Georgia e verrebbe stampato
+      un font diverso da quello scelto dal cliente.
+    {%- endcomment -%}
+    {%- if template.name == 'product' -%}
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Poppins:wght@700&family=Caveat:wght@600;700&family=Pacifico&family=Playfair+Display:wght@600;700&family=Montserrat:wght@600;700&display=swap">
+    {%- endif -%}
+
+    {%- liquid
+      assign ink = settings.color_ink
+      assign txt = settings.color_text
+      assign bg = settings.color_bg
+      assign cream = settings.color_cream
+      assign gold = settings.color_gold
+      assign gold_deep = settings.color_gold_deep
+      assign sage = settings.color_sage
+      assign line = settings.color_line
+      assign foot_bg = settings.color_footer_bg
+      assign foot_tx = settings.color_footer_text
+    -%}
+
+    <style>
+      :root {
+        --color-ink: {{ ink }};
+        --color-text: {{ txt }};
+        --color-bg: {{ bg }};
+        --color-cream: {{ cream }};
+        --color-navy: {{ ink }};
+        --color-tan: {{ gold_deep }};
+        --color-gold: {{ gold }};
+        --color-gold-deep: {{ gold_deep }};
+        --color-sage: {{ sage }};
+        --color-terra: {{ sage }};
+        --color-line: {{ line }};
+        --color-footer-bg: {{ foot_bg }};
+        --color-footer-text: {{ foot_tx }};
+
+        --color-ink-rgb: {{ ink | color_to_rgb | remove: 'rgb(' | remove: ')' }};
+        --color-bg-rgb: {{ bg | color_to_rgb | remove: 'rgb(' | remove: ')' }};
+        --color-gold-rgb: {{ gold | color_to_rgb | remove: 'rgb(' | remove: ')' }};
+
+        {%- comment -%}
+          ROUND 26 -- tre font, tre mestieri diversi.
+
+          MARCELLUS sui titoli. E' una capitale romana, della famiglia delle
+          iscrizioni: le aste hanno tutte lo stesso spessore, quindi non c'e'
+          niente che possa sparire. Prima Bodoni si rompeva sotto i 16px e
+          Playfair reggeva ma somigliava a mezzo internet; provati fianco a
+          fianco sui titoli veri del sito, a 13px su fondo navy -- il punto
+          esatto dove Bodoni cedeva -- Marcellus non perde un tratto.
+
+          --font-heading-weight resta 400 ed e' obbligatorio, non una
+          preferenza: Marcellus ha UN SOLO peso. Chiedergliene 600 o 700 non
+          carica niente, fa disegnare al browser un finto grassetto ingrossando
+          le lettere, e su una capitale romana si vede subito. Per questo
+          perla-type.css spegne font-synthesis dove il titolo e' Marcellus.
+
+          JOST sul testo. Geometrico sul modello del Futura: e' il sans delle
+          case di moda, e accanto a una romana antica fa la coppia giusta --
+          uno antico, uno moderno, nessuno dei due timido. Ha l'occhio medio
+          piu' piccolo di Inter, quindi perla-type.css alza di un filo il corpo.
+
+          CORMORANT GARAMOND, solo corsivo, e solo per gli accenti scritti a
+          mano: la firma di Emanuele e Nicola, il motto nel footer, le
+          recensioni. Marcellus il corsivo non ce l'ha proprio, e lasciarglielo
+          inclinare al browser sarebbe la stessa bruttura del finto grassetto.
+          Qui la delicatezza e' voluta: sono due righe grandi, non testo lungo.
+
+          Il secondo <link> qui sopra (solo sulle pagine prodotto) NON si tocca:
+          quelli sono i font che il cliente sceglie per il nome inciso e che
+          finiscono stampati davvero. Playfair resta li' per quello.
+        {%- endcomment -%}
+        --font-heading: "Marcellus", "Times New Roman", Georgia, serif;
+        --font-body: "Jost", system-ui, -apple-system, "Segoe UI", sans-serif;
+        --font-accent: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+        --font-heading-weight: 400;
+
+        --base-size: {{ settings.base_font_size }}px;
+        --h-scale: {{ settings.heading_scale | divided_by: 100.0 }};
+        --page-width: {{ settings.page_width }}px;
+        --gutter: clamp(20px, 5vw, 56px);
+        --section-spacing: {{ settings.section_spacing }}px;
+        --card-radius: {{ settings.card_radius }}px;
+        --button-radius: {{ settings.button_radius }}px;
+        --heading-transform: {% if settings.heading_uppercase %}uppercase{% else %}none{% endif %};
+        --heading-tracking: {% if settings.heading_uppercase %}0.04em{% else %}-0.01em{% endif %};
+      }
+    </style>
+
+    {{ 'base.css' | asset_url | stylesheet_tag }}
+    {%- comment -%}
+      ROUND 17/18 — effetti collaterali del cambio di font (crenature tarate su
+      Playfair, dimensioni tarate sull'altezza-x di Cormorant, h6 mai
+      assegnato) e soprattutto la correzione del difetto che tagliava le
+      lettere basse dei titoli. Caricato DOPO base.css: vince per ordine a
+      parita' di specificita'.
+    {%- endcomment -%}
+    {{ 'perla-type.css' | asset_url | stylesheet_tag }}
+    {{ 'perla-studio.css' | asset_url | stylesheet_tag }}
+    {%- comment -%}
+      ROUND 47 — come si comporta il sito sotto il dito. Ultimo di proposito:
+      corregge regole che stanno in base.css e perla-studio.css, e a parita' di
+      specificita' vince chi arriva dopo. Le regole toccate sono sei in tutto,
+      e riscrivere centocinquanta chilobyte di foglio per cambiarne sei e' il
+      modo piu' rapido di rompere il negozio.
+    {%- endcomment -%}
+    {{ 'perla-tocco.css' | asset_url | stylesheet_tag }}
+
+    {%- comment -%}
+      ROUND 47 — Google Analytics e il pixel di Meta stavano scritti qui, in
+      chiaro, e partivano appena la pagina apriva. Due problemi in uno: nel
+      <head> window.Shopify.customerPrivacy non esiste ancora (arriva con
+      content_for_header, qualche riga piu' sotto), quindi non c'era modo di
+      chiedere il consenso nemmeno volendo — e infatti non glielo si chiedeva.
+      Sono passati in snippets/perla-analytics.liquid, richiamato in fondo al
+      <body>, insieme a Microsoft Clarity: li' l'API del consenso c'e', e
+      niente parte prima che il cliente abbia detto di si'.
+    {%- endcomment -%}
+
+    <script>
+      window.Perla = {
+        routes: {
+          cart_add_url: "{{ routes.cart_add_url }}",
+          cart_change_url: "{{ routes.cart_change_url }}",
+          cart_url: "{{ routes.cart_url }}",
+          predictive_search_url: "{{ routes.predictive_search_url }}"
+        },
+        cart: {
+          type: "{{ settings.cart_type }}",
+          freeShippingBar: {{ settings.cart_free_shipping_bar | json }},
+          freeShippingThreshold: {{ settings.cart_free_shipping_threshold | times: 100 }},
+          currency: "{{ cart.currency.iso_code }}"
+        },
+        moneyFormat: {{ shop.money_format | json }},
+        animations: {{ settings.enable_animations | json }},
+        strings: {
+          addToCart: {{ 'products.product.add_to_cart' | t | json }},
+          adding: {{ 'products.product.adding' | t | json }},
+          added: {{ 'products.product.added' | t | json }},
+          soldOut: {{ 'products.product.sold_out' | t | json }},
+          unavailable: {{ 'products.product.unavailable' | t | json }},
+          freeShippingUnlocked: {{ 'cart.free_shipping.unlocked' | t | json }},
+          freeShippingRemaining: {{ 'cart.free_shipping.remaining_html' | t: amount: '[amount]' | json }},
+          cartError: {{ 'cart.general.error' | t | json }},
+          quizDiscount: "BENVENUTO10",
+          discover: {{ 'general.search.discover' | t | json }},
+          noResults: {{ 'general.search.no_results' | t | json }},
+          noResultsPrefix: {{ 'general.search.no_results_prefix' | t | json }},
+          viewAll: {{ 'general.search.view_all' | t | json }},
+          searching: {{ 'general.search.searching' | t | json }},
+          wishAdded: {{ 'products.product.wishlist_added' | t | json }},
+          wishRemoved: {{ 'products.product.wishlist_removed' | t | json }},
+          chooseOptions: {{ 'products.product.choose_options' | t | json }},
+          notifyMe: {{ 'products.product.notify_me' | t | json }},
+          notifySent: {{ 'products.product.notify_sent' | t | json }},
+          savedCount: {{ 'customer.saved.count' | t: count: '[count]' | json }},
+          composing: {{ 'sections.product.photo_composing' | t | json }},
+          composeError: {{ 'sections.product.photo_compose_error' | t | json }},
+          mockupPending: {{ 'sections.product.mockup_pending' | t | json }},
+          mockupRetry: {{ 'sections.product.mockup_retry' | t | json }}
+        },
+        features: {
+          wishlist: {{ settings.enable_wishlist | default: true | json }},
+          quickView: {{ settings.enable_quick_view | default: true | json }},
+          recentlyViewed: {{ settings.enable_recently_viewed | default: true | json }},
+          backInStock: {{ settings.enable_back_in_stock | default: true | json }},
+          prefetch: {{ settings.enable_prefetch | default: true | json }}
+        },
+        shopUrl: "{{ shop.url }}",
+        savedPageUrl: {{ pages.salvati.url | default: '/pages/salvati' | json }},
+        enablePreloader: {{ settings.enable_preloader | default: true | json }},
+        enableParallax: {{ settings.enable_parallax | default: true | json }},
+        enableSmoothScroll: {{ settings.enable_smooth_scroll | default: true | json }},
+        pearls: {{ settings.enable_pearls | default: true | json }},
+        pearlsDensity: {{ settings.pearls_density | default: 'many' | json }},
+        spectacle: {{ settings.enable_spectacle | default: true | json }},
+        cursorRing: {{ settings.enable_cursor_ring | default: true | json }},
+        titleRule: {{ settings.enable_title_rule | default: true | json }},
+        blinds: {{ settings.enable_blinds | default: true | json }}
+      };
+    </script>
+
+    {{ content_for_header }}
+  </head>
+
+  <body class="template-{{ request.page_type | handle }}{% if settings.enable_button_sheen %} sheen-on{% endif %}">
+    <a class="skip-to-content" href="#MainContent">{{ 'accessibility.skip_to_text' | t }}</a>
+
+    {%- comment -%}
+      ROUND 24 — l'emblema che gira mentre la pagina carica.
+
+      Va sparito COMUNQUE: un velo rimasto sopra il negozio e' peggio di
+      nessun velo. Per questo se ne occupa il CSS con un'animazione che finisce
+      da sola dopo 1,8s (vedi perla-type.css §9); il JS qui sotto serve solo ad
+      accorciare l'attesa quando la pagina e' gia' pronta prima. Se il JS non
+      parte, o parte in ritardo, il velo se ne va lo stesso.
+
+      aria-hidden e inert: un lettore di schermo e la tastiera non ci finiscono
+      mai dentro, nemmeno nei millisecondi in cui e' visibile.
+    {%- endcomment -%}
+    <div class="perla-loader" data-perla-loader aria-hidden="true" inert>
+      <img class="perla-loader__mark" src="{{ 'emblem-mark.png' | asset_url }}" alt="" width="72" height="72">
+    </div>
+    {%- comment -%}
+      ROUND 24 — la striscia lunga dell'editor parte dal centro.
+
+      Su collare, ciotola e guinzaglio l'area di stampa e' un nastro (fino a
+      56:1): il riquadro dell'editor tiene le proporzioni vere e scorre in
+      orizzontale, quindi e' piu' largo della colonna -- 4526px sul guinzaglio.
+      Il nome pero' nasce al centro del canvas. Senza questa riga il cliente
+      aprirebbe l'editor guardando il primo mezzo metro di guinzaglio vuoto e
+      penserebbe che non funziona.
+
+      Sta qui e non nello snippet perche' i riquadri possono essere due (la
+      medaglietta ha fronte e retro): una query sola li prende tutti.
+    {%- endcomment -%}
+    <script>
+      (function () {
+        function centra() {
+          document.querySelectorAll('.fabric-studio__viewport--nastro').forEach(function (v) {
+            if (v.scrollWidth > v.clientWidth) v.scrollLeft = (v.scrollWidth - v.clientWidth) / 2;
+          });
+        }
+        if (document.readyState !== 'loading') centra();
+        else document.addEventListener('DOMContentLoaded', centra, { once: true });
+        window.addEventListener('load', centra, { once: true });
+      })();
+    </script>
+    <script>
+      (function () {
+        var velo = document.querySelector('[data-perla-loader]');
+        if (!velo) return;
+        function via() { velo.classList.add('is-out'); }
+        if (document.readyState === 'complete') { via(); }
+        else { window.addEventListener('load', via, { once: true }); }
+        setTimeout(via, 1800);
+      })();
+    </script>
+
+    {%- if settings.enable_pearls -%}
+      <canvas id="perla-pearls" aria-hidden="true"></canvas>
+    {%- endif -%}
+
+    {%- if settings.enable_preloader -%}
+      <div class="preloader" data-preloader aria-hidden="true">
+        <div class="preloader__inner">
+          <div class="preloader__emblem">
+            {%- if settings.logo != blank -%}
+              {{ settings.logo | image_url: width: 168 | image_tag: alt: shop.name, loading: 'eager' }}
+            {%- else -%}
+              <img src="{{ 'emblem-mark.png' | asset_url }}" alt="{{ shop.name | escape }}" width="84" height="84" loading="eager">
+            {%- endif -%}
+          </div>
+          <div class="preloader__word"><span>{{ shop.name | escape }}</span></div>
+          <div class="preloader__bar"><i></i></div>
+        </div>
+      </div>
+    {%- endif -%}
+
+    <div class="read-progress" data-progress aria-hidden="true"><i></i></div>
+    <div class="page-fade" aria-hidden="true"></div>
+
+    {% sections 'header-group' %}
+
+    <div class="scroll-wrap" data-scroll-wrap>
+      <main id="MainContent" class="main" role="main" tabindex="-1">
+        {{ content_for_layout }}
+      </main>
+
+      {% sections 'footer-group' %}
+    </div>
+
+    {%- # Fullscreen predictive search overlay -%}
+    <div class="search-overlay" data-search-overlay role="dialog" aria-modal="true" aria-label="{{ 'general.search.search' | t }}" aria-hidden="true">
+      <div class="search-overlay__head">
+        <span class="search-overlay__brand">{{ shop.name }}</span>
+        <button class="search-overlay__close" type="button" data-search-close aria-label="{{ 'general.search.close' | t | default: 'Close' }}">&times;</button>
+      </div>
+      <div class="search-overlay__body">
+        <form class="search-overlay__field" action="{{ routes.search_url }}" method="get" role="search">
+          <input type="search" name="q" class="search-overlay__input" data-search-input placeholder="{{ 'general.search.placeholder' | t | default: 'Cerca…' }}" autocomplete="off">
+        </form>
+        <p class="search-overlay__hint" data-search-hint></p>
+        <div class="search-overlay__results" data-search-results></div>
+      </div>
+    </div>
+
+    {%- # Fullscreen mobile menu -%}
+    <div class="fullmenu" data-fullmenu role="dialog" aria-modal="true" aria-label="{{ 'sections.header.menu' | t | default: 'Menu' }}" aria-hidden="true">
+      <div class="fullmenu__head">
+        <span class="fullmenu__brand">{{ shop.name }}</span>
+        <button class="fullmenu__close" type="button" data-fullmenu-close aria-label="{{ 'general.search.close' | t | default: 'Close' }}">&times;</button>
+      </div>
+      <nav class="fullmenu__nav">
+        {%- assign main_menu = linklists['main-menu'] -%}
+        {%- for link in main_menu.links -%}
+          {%- capture link_hidden -%}{% render 'perla-region-hidden', link_url: link.url %}{%- endcapture -%}
+          {%- unless link_hidden contains '1' -%}
+            <a class="fullmenu__link" href="{{ link.url }}"><span>{{ link.title }}</span></a>
+          {%- endunless -%}
+        {%- endfor -%}
+        {%- comment -%}
+          "Salvati" c'era solo come cuoricino fra le icone in alto, che sul
+          telefono e' minuscolo e senza etichetta: chi apre il menu non lo
+          trovava. Qui ha un nome, accanto all'account.
+        {%- endcomment -%}
+        {%- if settings.enable_wishlist -%}
+          <a class="fullmenu__link" href="{{ pages.salvati.url | default: '/pages/salvati' }}"><span>{{ 'customer.saved.title' | t | default: 'Salvati' }}</span></a>
+        {%- endif -%}
+        <a class="fullmenu__link" href="{{ routes.account_url | default: routes.account_login_url }}"><span>{{ 'customer.account.title' | t | default: 'Account' }}</span></a>
+      </nav>
+      <div class="fullmenu__foot">{{ shop.name }} · Italia</div>
+    </div>
+
+    {%- if settings.cart_type == 'drawer' -%}
+      {% render 'cart-drawer' %}
+    {%- endif -%}
+
+    {% render 'newsletter-popup' %}
+    {% render 'assistant' %}
+
+    {%- if settings.enable_quick_view -%}
+      <div class="qv-modal" data-qv-modal hidden aria-hidden="true" role="dialog" aria-modal="true" aria-label="{{ 'products.product.quick_view' | t }}">
+        <div class="qv-modal__overlay" data-qv-close></div>
+        <div class="qv-modal__panel" role="document">
+          <button type="button" class="qv-modal__close" data-qv-close aria-label="{{ 'accessibility.close' | t }}">{% render 'icon', icon: 'close' %}</button>
+          <div class="qv-modal__body" data-qv-body>
+            <div class="qv-modal__loading"><span class="qv-spinner"></span></div>
+          </div>
+        </div>
+      </div>
+    {%- endif -%}
+
+    {%- comment -%}
+      ROUND 12 — modale studio di personalizzazione a schermo intero. Contenitore
+      vuoto: assets/global.js (initPhotoStudioFullscreen) sposta qui dentro (via
+      appendChild, non fetch/clone) il sottoalbero .photo-studio__panels gia'
+      presente e collegato in sections/main-product.liquid, e lo rimette al suo
+      posto alla chiusura. Deliberatamente FUORI da .scroll-wrap: lo smooth-scroll
+      desktop in assets/motion.js applica un transform a .scroll-wrap, che crea
+      un nuovo containing block per gli elementi position:fixed al suo interno —
+      esattamente come .qv-modal qui sopra, per lo stesso motivo.
+    {%- endcomment -%}
+    <div class="pd-modal" data-pd-modal hidden aria-hidden="true" role="dialog" aria-modal="true" aria-label="{{ 'sections.product.photo_studio_title' | t }}">
+      <div class="pd-modal__overlay" data-pd-close></div>
+      <div class="pd-modal__panel" role="document">
+        <div class="pd-modal__head">
+          <h2 class="pd-modal__title">{{ 'sections.product.photo_studio_title' | t }}</h2>
+          <button type="button" class="pd-modal__close" data-pd-close aria-label="{{ 'accessibility.close' | t }}">{% render 'icon', icon: 'close' %}</button>
+        </div>
+        <div class="pd-modal__body" data-pd-body></div>
+      </div>
+    </div>
+
+    <div class="perla-toasts" data-toasts aria-live="polite" aria-atomic="true"></div>
+
+    {%- if template.name == 'product' and product -%}
+      <script type="application/json" data-rv-current>{{ product.handle | json }}</script>
+    {%- endif -%}
+
+    {%- comment -%}
+      ROUND 25 -- Fabric.js non e' piu' un <script defer> statico qui: essendo
+      elencato prima di global.js, il browser deve finire di eseguirlo (defer
+      mantiene l'ordine documento) prima di eseguire global.js, quindi TUTTO il
+      resto del sito (header, carrello, galleria, quiz, ecc.) su ogni pagina
+      prodotto personalizzabile aspettava inutilmente il parsing di 306KB di
+      libreria solo per l'editor foto. Ora e' assets/global.js
+      (loadFabric/initPhotoCustomizer) che lo inietta via JS appena parte,
+      cosi' il resto del file esegue subito e l'editor si avvia comunque non
+      appena la libreria arriva.
+    {%- endcomment -%}
+
+    <script src="{{ 'global.js' | asset_url }}" defer></script>
+    {%- comment -%}
+      ROUND 33 — miglioramenti dell'editor che NON entrano in global.js:
+      trascina-e-rilascia, stato vuoto, anteprima del nome che segue il font
+      scelto, stati di caricamento/errore sull'anteprima reale, invito a
+      ruotare il telefono sui prodotti a striscia. File separato e caricato
+      DOPO global.js, si aggancia solo agli hook data-* gia' esistenti —
+      nessuna riga di global.js e' stata toccata, quindi il percorso che porta
+      il file alla stampa resta identico.
+    {%- endcomment -%}
+    <script src="{{ 'perla-studio-ui.js' | asset_url }}" defer></script>
+    <script src="{{ 'motion.js' | asset_url }}" defer></script>
+    {%- if settings.enable_pearls -%}<script src="{{ 'pearls.js' | asset_url }}" defer></script>{%- endif -%}
+    <script>document.addEventListener('DOMContentLoaded',function(){window.PerlaMotionInit&&window.PerlaMotionInit();window.PerlaPearlsInit&&window.PerlaPearlsInit();});</script>
+
+    {%- comment -%}
+      Clarity, Google Analytics e il pixel di Meta: tutti e tre col consenso,
+      tutti e tre spenti finche' il relativo ID non e' compilato in
+      Impostazioni tema -> Marketing e Analytics.
+    {%- endcomment -%}
+    {% render 'perla-analytics' %}
+
+    <ul hidden>
+      <li id="a11y-refresh-page-message">{{ 'accessibility.refresh_page' | t }}</li>
+    </ul>
+  </body>
+</html>
