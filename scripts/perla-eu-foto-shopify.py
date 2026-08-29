@@ -29,6 +29,23 @@ un prodotto senza foto in vetrina e' peggio di un prodotto con la foto
 sbagliata. E' la stessa lezione della finestra cieca di venti minuti
 documentata in perla-usa-foto-shopify.py.
 
+QUALI SONO ANCORA DA FARE
+Qui esce TUTTO cio' che ha una foto rigenerata, anche quello gia' attaccato:
+senza un token Admin questo script non puo' guardare il negozio, quindi non
+lo sa. A saperlo e' Shopify, e il modo per chiederglielo e' guardare gli id
+dei media: quelli creati in un giro sono tutti piu' alti di quelli che
+c'erano prima, quindi un prodotto che ha ancora un id vecchio e' un prodotto
+rimasto indietro.
+
+    query { products(first: 70, query: "handle:*fornitore-europeo*") {
+      nodes { handle media(first: 12) { nodes { ... on MediaImage { id } } } } } }
+
+Serve davvero: Printful risponde "Impossibile generare l'anteprima" su una
+parte dei prodotti a ogni giro -- diciassette su sessantasei la prima volta,
+poi sei, poi due -- e sono sempre gli stessi finche' non passano. Quindi si
+attacca a scaglioni, e senza questo controllo si riattaccherebbero foto gia'
+attaccate, lasciando doppioni.
+
 USO
     python3 scripts/perla-eu-foto-shopify.py
 """
