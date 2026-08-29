@@ -222,10 +222,15 @@ def main():
     if os.path.exists(percorso_indice):
         with open(percorso_indice) as fh:
             indice = json.load(fh)
+    # --rifai: quando il MOTIVO e' cambiato, il mockup vecchio mostra ancora
+    # quello di prima e la ripresa lo terrebbe cosi' per sempre. Senza questa
+    # opzione l'unico modo era cancellare indice.json a mano, e chi lo faceva
+    # perdeva anche le URL dei mockup gia' caricati su Shopify.
+    rifai = "--rifai" in sys.argv
     for v in prodotti:
         # ripresa: un mockup gia' scaricato non si rifa'
         gia = indice.get(v["id"])
-        if gia and os.path.exists(gia.get("mockup", "")):
+        if gia and not rifai and os.path.exists(gia.get("mockup", "")):
             print("  %-46s gia' fatto" % v["title"][:46])
             continue
         try:

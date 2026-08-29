@@ -108,7 +108,15 @@ GEOMETRIA_EU = {"Bandana": "bandana_eu"}
 
 # Sopra questa frazione di periodo la ripetizione e' visibilmente storta. Sotto,
 # ricentrare sarebbe un cambio gratuito su un prodotto gia' in vendita.
-SBILANCIO_MASSIMO = 0.25
+#
+# 0,15 e non 0,25. Su "Cammei Cipria" -- la bandana che la titolare ha
+# segnalato per nome -- i margini sono 352 px a sinistra e 1040 a destra su un
+# periodo di 1366: uno sbilancio di 0,25 tondo, che con la soglia a 0,25 non
+# faceva scattare niente. Guardata a 1:1, la differenza fra i due margini e'
+# il 17% della larghezza della bandana, e si vede. La correzione d'altra parte
+# non costa niente in qualita': bordo_disegnato() la impedisce dove si
+# vedrebbe, e le giunzioni cadono a un periodo esatto.
+SBILANCIO_MASSIMO = 0.15
 
 # Sopra questo rapporto la linea di margine non si ripete un periodo piu' in
 # dentro: e' un bordo disegnato, e la fase su quell'asse non si tocca.
@@ -215,7 +223,20 @@ def fase(p, k):
     # dall'altra parte. La media circolare, che e' la fase della prima
     # armonica, non ha nessuno dei due problemi: su una barra centrata a 8 px
     # che scavalca lo zero risponde 8, dove max() rispondeva 0.
-    peso = [abs(v - media) for v in f]
+    #
+    # UN LOBO SOLO, PERO'. Pesare il valore ASSOLUTO dello scarto mette sullo
+    # stesso piano le parti chiare e quelle scure del disegno, e quando sono
+    # di forza simile il baricentro cade a meta' strada, cioe' su niente. Su
+    # "Cammei Cipria" il profilo piegato ha la cartella chiara a 197 (+9,2) e
+    # una zona scura del paisley a 630 (-8,8): il baricentro rispondeva 398,
+    # dove non c'e' nessun motivo, lo sbilancio risultava 0,22 -- sotto la
+    # soglia -- e la bandana restava com'era, con le cartelle tagliate a
+    # sinistra. Era il prodotto che la titolare aveva segnalato per nome.
+    # Si tiene percio' solo il lobo del segno dominante: quello che l'occhio
+    # legge come "il motivo".
+    scarti = [v - media for v in f]
+    verso = 1.0 if abs(max(scarti)) >= abs(min(scarti)) else -1.0
+    peso = [max(0.0, verso * d) for d in scarti]
     sn = sum(w * math.sin(2 * math.pi * i / k) for i, w in enumerate(peso))
     cs = sum(w * math.cos(2 * math.pi * i / k) for i, w in enumerate(peso))
     m = (math.atan2(sn, cs) * k / (2 * math.pi)) % k
