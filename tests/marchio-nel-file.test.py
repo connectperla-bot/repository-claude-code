@@ -171,36 +171,75 @@ def test_composto_e_ritrovato():
         'presente() trova il marchio anche dove non c\'e\': non protegge niente')
 
 
-def test_la_cartella_stacca_tutti_e_due_gli_inchiostri():
-    """Il marchio ha DUE inchiostri, e la cartella deve staccarli entrambi.
+def test_niente_cartella_dietro_al_marchio():
+    """Il difetto che ROUND 47 chiude: "uno sfondo bianco gigantesco".
 
-    Il medaglione e "Perla" sono oro, "Italia" e' quasi nera. Non esiste un
-    fondo del catalogo su cui si leggano tutti e due: sulla bandana "laurel
-    navy" (senape) spariva l'oro, sulla medaglietta "geometric silver"
-    (antracite) spariva "Italia". Per questo la cartella c'e' SEMPRE ed e'
-    chiara, cioe' il fondo per cui il logo e' stato disegnato.
+    Il marchio deve stare DIRETTAMENTE sul tessuto. Si guarda un punto dentro
+    il riquadro del marchio ma fuori dalla sua sagoma: li' deve esserci ancora
+    la stoffa, non il crema di una toppa. Il collare e' il caso peggiore --
+    otto marchi su una fettuccia alta 315 px -- ed e' quello che si misura.
     """
-    scarto_oro = marchio._luminosita(marchio.CARTELLA) - marchio._luminosita(marchio.ORO)
-    scarto_scuro = marchio._luminosita(marchio.CARTELLA) - marchio._luminosita(marchio.INCHIOSTRO_SCURO)
-    assert scarto_oro > 40, 'oro contro cartella: scarto %.0f, troppo poco' % scarto_oro
-    assert scarto_scuro > 120, "'Italia' contro cartella: scarto %.0f, troppo poco" % scarto_scuro
+    tessuto = (22, 32, 64)
+    finito, box = marchio.componi(Image.new('RGB', (7169, 315), tessuto), 'collare')
+    x, y, largo, alto = box[0]
+    # angolo in alto a sinistra del riquadro: la sagoma del logo li' non arriva
+    punto = finito.convert('RGB').getpixel((round(x + largo * 0.03), round(y + alto * 0.02)))
+    scarto = abs(marchio._luminosita(punto) - marchio._luminosita(tessuto))
+    assert scarto < 12, (
+        'dentro il riquadro del marchio, fuori dalla sagoma, il fondo e\' cambiato '
+        'di %.0f: c\'e\' ancora una cartella dietro' % scarto)
 
 
-def test_la_cartella_c_e_su_qualunque_fondo():
-    """Chiaro, scuro, dorato: il marchio deve venire uguale su tutti."""
-    def fuori_dal_logo(im, box):
-        """Un punto dentro la cartella ma fuori dalla sagoma del marchio."""
-        x, y, largo, alto = box[0]
-        return im.convert('RGB').getpixel((round(x + largo * 0.04), round(y + alto * 0.02)))
+def test_l_inchiostro_si_adatta_al_fondo():
+    """Su fondo scuro "Italia" schiarisce; su fondo chiaro l'oro si incupisce.
 
-    atteso = marchio._luminosita(marchio.CARTELLA)
+    Sono le due sparizioni documentate in _adatta(): senza la prima regola,
+    "Italia" nera su navy non si legge; senza la seconda, l'oro su senape si
+    confonde col fondo. Si misura sul pezzo, non a occhio.
+    """
+    logo = marchio._marchio().resize((120, 200), Image.LANCZOS)
+
+    def piu_scuro(im):
+        rgb = im.convert('RGB')
+        alfa = im.getchannel('A')
+        return min(marchio._luminosita(p) for p, a in zip(rgb.getdata(), alfa.getdata()) if a > 200)
+
+    def piu_chiaro(im):
+        rgb = im.convert('RGB')
+        alfa = im.getchannel('A')
+        return max(marchio._luminosita(p) for p, a in zip(rgb.getdata(), alfa.getdata()) if a > 200)
+
+    su_scuro = marchio._adatta(logo, 40)
+    assert piu_scuro(su_scuro) > piu_scuro(logo) + 60, (
+        'su fondo scuro l\'inchiostro nero non e\' stato schiarito: '
+        'resta a %.0f' % piu_scuro(su_scuro))
+
+    su_medio = marchio._adatta(logo, 168)
+    assert piu_chiaro(su_medio) < piu_chiaro(logo) - 30, (
+        'su fondo medio l\'oro non e\' stato incupito: resta a %.0f'
+        % piu_chiaro(su_medio))
+
+
+def test_si_legge_su_qualunque_fondo():
+    """Chiaro, scuro, dorato: dopo l'adattamento il marchio stacca sempre.
+
+    E' la promessa che la cartella manteneva e che adesso deve mantenere
+    l'inchiostro da solo. Si misura il contrasto fra il pixel piu' estremo del
+    marchio e il fondo su cui e' posato.
+    """
+    logo = marchio._marchio().resize((120, 200), Image.LANCZOS)
     for nome, rgb in (('antracite', (38, 38, 40)), ('senape', (206, 178, 110)),
-                      ('avorio', (238, 232, 220)), ('navy', (22, 32, 64))):
-        finito, box = marchio.componi(Image.new('RGB', (900, 1000), rgb), 'medaglietta')
-        misurata = marchio._luminosita(fuori_dal_logo(finito, box))
-        assert abs(misurata - atteso) < 30, (
-            'su fondo %s la cartella non e\' quella prevista: luminosita\' %.0f invece di %.0f'
-            % (nome, misurata, atteso))
+                      ('avorio', (238, 232, 220)), ('navy', (22, 32, 64)),
+                      ('bordeaux', (120, 40, 45)), ('salvia', (150, 163, 132))):
+        fondo = marchio._luminosita(rgb)
+        pezzo = marchio._adatta(logo, fondo)
+        colori = pezzo.convert('RGB')
+        alfa = pezzo.getchannel('A')
+        scarti = [abs(marchio._luminosita(p) - fondo)
+                  for p, a in zip(colori.getdata(), alfa.getdata()) if a > 200]
+        assert max(scarti) >= marchio.CONTRASTO_MINIMO, (
+            'su fondo %s il marchio non stacca: scarto massimo %.0f, ne servono %d'
+            % (nome, max(scarti), marchio.CONTRASTO_MINIMO))
 
 
 def main():
@@ -218,10 +257,10 @@ def main():
 
     print('\nChe si veda davvero')
     prova('composto e poi ritrovato nel file', test_composto_e_ritrovato)
-    prova('la cartella stacca sia l\'oro sia "Italia"',
-          test_la_cartella_stacca_tutti_e_due_gli_inchiostri)
-    prova('la cartella viene uguale su qualunque fondo',
-          test_la_cartella_c_e_su_qualunque_fondo)
+    prova('niente cartella: il marchio sta sul tessuto',
+          test_niente_cartella_dietro_al_marchio)
+    prova('l\'inchiostro si adatta al fondo', test_l_inchiostro_si_adatta_al_fondo)
+    prova('si legge su qualunque fondo', test_si_legge_su_qualunque_fondo)
 
     print('\n%d verifiche superate.' % passati +
           (' %d FALLITE.' % falliti if falliti else ''))

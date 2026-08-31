@@ -45,7 +45,7 @@ capo il difetto che questo modulo esiste per togliere.
 """
 import os
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageStat
 
 QUI = os.path.dirname(os.path.abspath(__file__))
 RADICE = os.path.dirname(QUI)
@@ -306,66 +306,93 @@ def riquadri(tipo, area, marchio_wh):
 
 
 # I due inchiostri del marchio: il medaglione e "Perla" sono oro, "Italia" e'
-# quasi nera. Servono per verificare che la cartella li stacchi tutti e due.
+# quasi nera. Da qui nasce tutto il problema risolto sotto.
 ORO = (214, 178, 96)
 INCHIOSTRO_SCURO = (28, 26, 24)
-# Il fondo della cartella: la crema per cui il logo e' stato disegnato.
-CARTELLA = (243, 236, 224)
-BORDO_ESTERNO = (46, 40, 34)
+# Il crema per cui il logo e' stato disegnato: e' il colore in cui l'inchiostro
+# scuro si trasforma quando il tessuto sotto e' troppo buio per contenerlo.
+CREMA = (246, 240, 230)
 # Scarto di luminosita' sotto il quale un inchiostro sparisce nel fondo.
 CONTRASTO_MINIMO = 60
+# Sotto questa luminosita' il fondo e' "scuro": l'inchiostro nero non si legge
+# piu' e va schiarito. Sopra, il nero si legge e semmai e' l'oro a soffrire.
+FONDO_SCURO = 120
+# Sopra questa, il fondo e' cosi' chiaro che all'oro basta pochissimo aiuto.
+FONDO_CHIARISSIMO = 205
+# Di quanto si incupisce l'oro sui fondi medi e su quelli chiarissimi.
+CUPEZZA_MEDIO = 0.62
+CUPEZZA_CHIARO = 0.80
+# Sotto questa luminosita' un pixel del logo e' "inchiostro scuro".
+SOGLIA_INCHIOSTRO = 100
+# Un pixel del marchio con alfa sotto questa soglia lascia vedere il tessuto:
+# sono quelli che presente() usa per capire su che fondo sta guardando.
+ALFA_TRASPARENTE = 20
 
 
 def _luminosita(rgb):
     return 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]
 
 
-def _cartella(base, riquadro, margine=0.14, raggio=0.10):
-    """Disegna dietro il marchio la cartella che lo rende leggibile. SEMPRE.
-
-    PERCHE' SEMPRE, E PERCHE' CHIARA
-    Il file del marchio non e' monocromatico: il medaglione e la scritta
-    "Perla" sono ORO, la parola "Italia" e' quasi NERA. E' un logo disegnato
-    per la carta, cioe' per un fondo chiaro.
-
-    Questo vuol dire che non esiste un fondo del catalogo su cui si legga
-    tutto. Guardati i file costruiti, non dedotto:
-      * sulla bandana "laurel navy", fondo senape a luminosita' 176, l'oro
-        (178) spariva e restava solo "Italia";
-      * sulla medaglietta "geometric silver", fondo antracite, succedeva il
-        contrario -- l'oro si leggeva e "Italia" no.
-    Una cartella disegnata "solo quando serve" copre il primo caso e lascia
-    scoperto il secondo.
-
-    Quindi la cartella c'e' sempre ed e' CHIARA, cioe' il fondo per cui il
-    logo e' stato disegnato: l'oro ci si stacca e il nero pure. Il marchio
-    diventa anche identico su tutti i prodotti, che e' quello che un marchio
-    deve fare.
-
-    NON E' UN'INVENZIONE STILISTICA. I motivi originali di questo catalogo
-    mettono gia' il marchio dentro una cartella: ovale su paisley-rosa, tonda
-    su ghirigori, rettangolare con bordo dorato sulla bandana damascata.
-
-    Il bordo e' doppio: un filo d'oro dentro, che e' la grammatica del
-    catalogo, e un filo scuro fuori, perche' su un fondo gia' chiaro (il
-    paisley avorio) una cartella crema senza contorno non si staccherebbe.
-    """
+def _fondo_medio(base, riquadro):
+    """La luminosita' media del tessuto sotto il riquadro del marchio."""
     s, a, largo, alto = riquadro
-    px, py = largo * margine, alto * margine * 0.5
-    box = (s - px, a - py, s + largo + px, a + alto + py)
-    strato = Image.new("RGBA", base.size, (0, 0, 0, 0))
-    d = ImageDraw.Draw(strato)
-    r = round(min(box[2] - box[0], box[3] - box[1]) * raggio)
-    spessore = max(2, round(largo * 0.012))
-    fuori = [round(v) for v in box]
-    d.rounded_rectangle(fuori, radius=r, fill=CARTELLA + (245,),
-                        outline=BORDO_ESTERNO + (255,), width=spessore)
-    dentro = [fuori[0] + spessore * 2, fuori[1] + spessore * 2,
-              fuori[2] - spessore * 2, fuori[3] - spessore * 2]
-    if dentro[2] > dentro[0] and dentro[3] > dentro[1]:
-        d.rounded_rectangle(dentro, radius=max(1, r - spessore * 2),
-                            outline=ORO + (255,), width=max(1, spessore // 2))
-    return strato
+    ritaglio = base.convert("RGB").crop(
+        (round(s), round(a), round(s) + round(largo), round(a) + round(alto)))
+    return _luminosita(ImageStat.Stat(ritaglio).mean)
+
+
+def _adatta(pezzo, fondo):
+    """Il marchio con l'inchiostro giusto per il fondo su cui cade. Niente altro.
+
+    PERCHE' NON C'E' PIU' LA CARTELLA
+    Fino a ROUND 47 dietro al marchio si disegnava sempre una cartella crema
+    con doppio bordo. La ragione era buona: il logo ha DUE inchiostri, l'oro e
+    il quasi-nero, e non esiste un fondo del catalogo su cui si leggano tutti e
+    due -- sulla bandana senape spariva l'oro, sulla medaglietta antracite
+    spariva "Italia". La cartella li staccava tutti e due in un colpo solo.
+
+    La soluzione pero' costava piu' del problema. Sul collare la cartella e'
+    alta il 72% di una fettuccia di 315 px e si ripete otto volte: misurata,
+    copriva quasi tutto il nastro, e il motivo per cui il cliente compra quel
+    collare spariva sotto otto etichette color panna. La proprietaria l'ha
+    detta cosi': "il logo e' stato appiccicato con uno sfondo bianco gigantesco
+    e non mi piace, vorrei solo il logo con la scritta".
+
+    Quindi il contrasto se lo porta addosso il marchio, invece di appoggiarsi a
+    una toppa. Due regole, misurate guardando il marchio su navy, antracite,
+    bordeaux, senape, salvia e avorio:
+
+      fondo scuro (< 120)   l'inchiostro quasi nero diventa crema, in
+                            proporzione a quanto e' scuro. "Italia" si legge
+                            senza toccare l'oro, che sul buio gia' brilla.
+      fondo chiaro (>= 120) l'oro si incupisce: sul senape (luminosita' 168)
+                            l'oro nativo sta a 178 e sparisce, portato a 0,62
+                            si stacca. Il quasi-nero li' si legge gia' da solo.
+
+    Non e' una scelta stilistica travestita: le due soglie inseguono le due
+    sparizioni documentate sopra, una per ciascuna.
+    """
+    grigio = pezzo.convert("L")
+    rgb = pezzo.convert("RGB")
+
+    if fondo < FONDO_SCURO:
+        # Quanto ogni pixel e' "scuro", da 0 a 255: e' la forza con cui viene
+        # tirato verso il crema. Sfumato e non a gradino, se no il bordo
+        # antialiasato delle lettere si stacca come un ritaglio di carta.
+        forza = grigio.point(
+            lambda v: int(255 * (1.0 - v / float(SOGLIA_INCHIOSTRO)))
+            if v < SOGLIA_INCHIOSTRO else 0)
+        rgb = Image.composite(Image.new("RGB", pezzo.size, CREMA), rgb, forza)
+    else:
+        k = CUPEZZA_CHIARO if fondo >= FONDO_CHIARISSIMO else CUPEZZA_MEDIO
+        cupo = rgb.point(lambda v: int(v * k))
+        # solo sull'inchiostro chiaro: il quasi-nero non va incupito ancora
+        chiaro = grigio.point(lambda v: 255 if v >= SOGLIA_INCHIOSTRO else 0)
+        rgb = Image.composite(cupo, rgb, chiaro)
+
+    fuori = rgb.convert("RGBA")
+    fuori.putalpha(pezzo.getchannel("A"))
+    return fuori
 
 
 def componi(immagine, tipo, percorso_marchio=None):
@@ -381,11 +408,13 @@ def componi(immagine, tipo, percorso_marchio=None):
 
     for s, a, largo, alto in box:
         largo, alto = max(1, round(largo)), max(1, round(alto))
-        cartella = _cartella(base, (s, a, largo, alto))
-        if cartella is not None:
-            base.alpha_composite(cartella, (0, 0))
         # solo riduzione: riquadri() ha gia' impedito il caso contrario
         pezzo = logo.resize((largo, alto), Image.LANCZOS)
+        # Il fondo si misura PRIMA di posare il marchio: dopo sarebbe coperto
+        # proprio dove conta. E si misura riquadro per riquadro, non una volta
+        # sola: sul collare il marchio si ripete otto volte lungo la fettuccia
+        # e il motivo sotto cambia da un capo all'altro.
+        pezzo = _adatta(pezzo, _fondo_medio(base, (s, a, largo, alto)))
         base.alpha_composite(pezzo, (round(s), round(a)))
 
     return base.convert("RGB"), box
@@ -407,8 +436,18 @@ def presente(immagine, box, percorso_marchio=None, soglia=18.0):
         largo, alto = max(1, round(largo)), max(1, round(alto))
         ritaglio = rgb.crop((round(s), round(a), round(s) + largo, round(a) + alto))
         pezzo = logo.resize((largo, alto), Image.LANCZOS)
+        # L'INCHIOSTRO ATTESO DIPENDE DAL FONDO, quindi va ricavato anche qui.
+        # Il fondo pero' adesso e' coperto dal marchio: lo si legge dove il
+        # marchio e' trasparente, che e' esattamente il tessuto rimasto in
+        # vista. Senza questo, dopo ROUND 47 presente() direbbe "manca" su ogni
+        # prodotto scuro, perche' cerca un "Italia" nero che li' e' crema.
+        alfa = pezzo.getchannel("A")
+        vista = alfa.point(lambda v: 255 if v < ALFA_TRASPARENTE else 0)
+        if vista.getbbox():
+            fondo = _luminosita(ImageStat.Stat(ritaglio, mask=vista).mean)
+            pezzo = _adatta(pezzo, fondo)
         # dove il marchio e' opaco, il file finito deve somigliare al marchio
-        maschera = pezzo.getchannel("A").point(lambda v: 255 if v > 200 else 0)
+        maschera = alfa.point(lambda v: 255 if v > 200 else 0)
         if not maschera.getbbox():
             continue
         atteso = pezzo.convert("RGB")
