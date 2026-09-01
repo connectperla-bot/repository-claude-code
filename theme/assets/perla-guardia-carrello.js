@@ -46,10 +46,51 @@
   // stopImmediatePropagation() impedisce che il gestore del tema parta del
   // tutto -- altrimenti la riga finirebbe in carrello lo stesso.
 
+  // ROUND 48 -- DUE MOTIVI IN PIU' PER FERMARSI.
+  //
+  // Il difetto segnalato: "quando provo a personalizzare la prima volta esce
+  // 'testo' bianco e spostato invece della scritta". La causa sta in
+  // assets/global.js e si legge per esteso in assets/perla-editor-sveglia.js;
+  // qui interessa cosa arriva in carrello.
+  //
+  //   1. COMPOSIZIONE ANCORA IN CORSO. composeAndUpload ha una guardia
+  //      `composing` che, mentre un caricamento e' in volo, restituisce la
+  //      PROMESSA VECCHIA invece di comporre di nuovo. Quando quella vecchia
+  //      atterra, writePropData scrive il SUO composito nel campo del carrello
+  //      e lo stato dice "Design pronto." -- anche se intanto il cliente ha
+  //      cambiato il disegno. Comprare in quella finestra vuol dire pagare una
+  //      cosa e riceverne un'altra.
+  //
+  //   2. IL SEGNAPOSTO MAI SOSTITUITO. "+ Testo" crea il livello gia' pieno:
+  //      new fabric.IText("Testo", {left: canvasW/2 + cascadeOffset(), top:
+  //      canvasH/2 + cascadeOffset(), ...}). Chi lo aggiunge e non ci scrive
+  //      dentro manda in stampa la parola "Testo", al centro del prodotto --
+  //      ed e' anche il "spostato" della segnalazione, perche' il nome vero
+  //      nasce invece a canvasH*.85.
+  //
+  // Tutti e due si riconoscono dal DOM, senza toccare global.js: writePropData
+  // riversa collectNameText() dentro [data-photo-prop-name-text] a ogni giro,
+  // quindi quel campo e' uno specchio vivo di cosa c'e' scritto sul riquadro.
+  //
+  // SUL FALSO POSITIVO DEL PUNTO 2
+  // Chi volesse davvero stampare la parola "Testo" viene fermato a torto. Su
+  // un collare per cani non capitera', e i due errori non pesano uguale:
+  // fermarlo a torto costa un messaggio da leggere, lasciarlo passare costa un
+  // ordine pagato e sbagliato.
+
   var CLASSE_ERRORE = 'product-personalize__status--error';
+  var SEGNAPOSTO = 'Testo';
+  var COMPONENDO_DI_SCORTA = 'Preparazione dell\'immagine...';
+
   var MESSAGGIO = 'Il tuo design non è stato caricato, quindi non possiamo ' +
     'stamparlo. Aspetta qualche secondo e riprova: se l’errore resta, ' +
     'ricarica la pagina.';
+  var MESSAGGIO_ATTESA = 'Sto ancora preparando il disegno: se lo aggiungi ' +
+    'adesso rischi di ordinare la versione di un attimo fa. Un secondo e ' +
+    'riprova.';
+  var MESSAGGIO_SEGNAPOSTO = 'C’è un riquadro di testo con scritto ancora ' +
+    '«Testo»: tocca la scritta e cambiala, oppure cancella il riquadro. ' +
+    'Altrimenti «Testo» verrebbe stampato davvero.';
 
   function eUnFormCarrello(form) {
     if (!form || form.nodeName !== 'FORM') return false;
@@ -70,10 +111,54 @@
     return !!form.querySelector('[data-photo-status].' + CLASSE_ERRORE);
   }
 
-  function avvisa(form) {
+  // Il testo che global.js mette mentre compone. Si legge dalle stringhe del
+  // tema (che seguono la lingua della vetrina) con lo stesso ripiego che usa
+  // global.js, cosi' i due non possono divergere. Letto a ogni controllo e non
+  // una volta sola: window.Perla e' definito nel <head>, ma dipendere
+  // dall'ordine di caricamento per una stringa non vale il rischio.
+  function testoComponendo() {
+    var P = window.Perla || {};
+    return ((P.strings && P.strings.composing) || COMPONENDO_DI_SCORTA).trim();
+  }
+
+  function composizioneInCorso(form) {
+    var atteso = testoComponendo();
+    var stati = form.querySelectorAll('[data-photo-status]');
+    for (var i = 0; i < stati.length; i++) {
+      if ((stati[i].textContent || '').trim() === atteso) return true;
+    }
+    return false;
+  }
+
+  function segnapostoRimasto(form) {
+    // collectNameText() unisce i livelli con " / ": va guardato pezzo per
+    // pezzo, altrimenti "Rocky / Testo" -- nome scritto sul primo riquadro e
+    // segnaposto dimenticato sul secondo -- passerebbe liscio.
+    var campi = form.querySelectorAll('[data-photo-prop-name-text]');
+    for (var i = 0; i < campi.length; i++) {
+      var pezzi = (campi[i].value || '').split(' / ');
+      for (var j = 0; j < pezzi.length; j++) {
+        if (pezzi[j].trim() === SEGNAPOSTO) return true;
+      }
+    }
+    return false;
+  }
+
+  // Un motivo solo per volta, nell'ordine in cui conviene dirli: prima il
+  // guasto, poi l'attesa, poi la svista. Restituisce null quando si puo'
+  // comprare.
+  function motivoPerFermare(form) {
+    if (!form.querySelectorAll('[data-photo-prop-data]').length) return null;
+    if (designMancante(form)) return MESSAGGIO;
+    if (composizioneInCorso(form)) return MESSAGGIO_ATTESA;
+    if (segnapostoRimasto(form)) return MESSAGGIO_SEGNAPOSTO;
+    return null;
+  }
+
+  function avvisa(form, messaggio) {
     var stato = form.querySelector('[data-photo-status]');
     if (stato) {
-      stato.textContent = MESSAGGIO;
+      stato.textContent = messaggio || MESSAGGIO;
       stato.classList.add(CLASSE_ERRORE);
       if (typeof stato.scrollIntoView === 'function') {
         stato.scrollIntoView({ block: 'center', behavior: 'smooth' });
@@ -91,9 +176,10 @@
   document.addEventListener('submit', function (e) {
     var form = e.target;
     if (!eUnFormCarrello(form)) return;
-    if (!designMancante(form)) return;
+    var motivo = motivoPerFermare(form);
+    if (!motivo) return;
     e.preventDefault();
     e.stopImmediatePropagation();
-    avvisa(form);
+    avvisa(form, motivo);
   }, true);
 })();

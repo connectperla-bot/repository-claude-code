@@ -69,12 +69,19 @@ function bottone() {
  *   personalizzabile  il form ha i campi del design
  *   designPresente    quei campi hanno un valore
  *   editorInErrore    lo studio sta mostrando l'errore di caricamento
+ *   componendo        lo studio sta mostrando "Preparazione dell'immagine..."
+ *   nomeInciso        cosa c'e' scritto sul riquadro (ROUND 48); il tema lo
+ *                     riversa in [data-photo-prop-name-text] a ogni giro
  */
 function form(opt) {
   const campi = opt.personalizzabile
     ? [{ value: opt.designPresente ? '{"printify_image_id":"abc"}' : '' }]
     : [];
   const stato = statoEditor(opt.editorInErrore);
+  if (opt.componendo) stato.textContent = COMPONENDO;
+  const nomi = opt.personalizzabile
+    ? [{ value: opt.nomeInciso === undefined ? 'Rocky' : opt.nomeInciso }]
+    : [];
   const btn = bottone();
   return {
     nodeName: 'FORM',
@@ -83,6 +90,8 @@ function form(opt) {
     getAttribute: function (n) { return n === 'action' ? '/cart/add' : null; },
     querySelectorAll: function (sel) {
       if (sel === '[data-photo-prop-data]') return campi;
+      if (sel === '[data-photo-prop-name-text]') return nomi;
+      if (sel === '[data-photo-status]') return [stato];
       return [];
     },
     querySelector: function (sel) {
@@ -97,6 +106,14 @@ function form(opt) {
 }
 
 // ---- caricamento del file del tema ---------------------------------------
+
+// ROUND 48 -- la guardia legge window.Perla.strings.composing per riconoscere
+// "sto componendo" nella lingua della vetrina, con lo stesso ripiego di
+// global.js. Qui si finge quel minimo: senza, il file del tema (che e' codice
+// da browser, dove window esiste sempre) fallirebbe su una mancanza del
+// finto ambiente, non su un suo difetto.
+const COMPONENDO = 'Preparazione dell\'immagine...';
+global.window = { Perla: { strings: { composing: COMPONENDO } } };
 
 let handler = null;
 global.document = {
@@ -179,6 +196,63 @@ prova('un form che non e\' quello del carrello viene ignorato', function () {
 prova('un submit senza form non fa esplodere niente', function () {
   const e = { target: null, preventDefault: function () {}, stopImmediatePropagation: function () {} };
   assert.doesNotThrow(function () { handler(e); });
+});
+
+console.log('\nROUND 48 — comprare mentre il disegno si sta ancora preparando');
+
+// La guardia `composing` di global.js, mentre un caricamento e' in volo,
+// restituisce la promessa VECCHIA invece di comporre di nuovo: quando quella
+// atterra scrive il suo composito e dice "Design pronto.". Comprare in quella
+// finestra vuol dire pagare una cosa e riceverne un'altra.
+prova('composizione in corso: si ferma, anche col design gia\' presente', function () {
+  const f = form({ personalizzabile: true, designPresente: true, componendo: true });
+  const e = invia(f);
+  assert.strictEqual(e._prevenuto, true,
+    'il design che c\'e\' adesso potrebbe essere quello di un attimo fa');
+  assert.ok(/ancora preparando/.test(f._stato.textContent),
+    'deve dire di aspettare, invece: ' + f._stato.textContent);
+});
+
+prova('finita la composizione si compra', function () {
+  const f = form({ personalizzabile: true, designPresente: true, componendo: false });
+  assert.strictEqual(invia(f)._prevenuto, false);
+});
+
+console.log('\nROUND 48 — il segnaposto "Testo" mai sostituito');
+
+// "+ Testo" crea il livello gia' pieno: new fabric.IText("Testo", ...). Chi lo
+// aggiunge e non ci scrive dentro manda in stampa la parola "Testo".
+prova('nome inciso ancora "Testo": si ferma e si spiega cosa fare', function () {
+  const f = form({ personalizzabile: true, designPresente: true, nomeInciso: 'Testo' });
+  const e = invia(f);
+  assert.strictEqual(e._prevenuto, true, '"Testo" verrebbe stampato davvero');
+  assert.ok(/riquadro di testo/.test(f._stato.textContent),
+    'deve dire come rimediare, invece: ' + f._stato.textContent);
+});
+
+// Il caso che una ricerca sull'intera stringa si perderebbe: nome scritto sul
+// primo riquadro, segnaposto dimenticato sul secondo. collectNameText() li
+// unisce con " / ".
+prova('"Rocky / Testo": il segnaposto dimenticato sul secondo riquadro si vede', function () {
+  const f = form({ personalizzabile: true, designPresente: true, nomeInciso: 'Rocky / Testo' });
+  assert.strictEqual(invia(f)._prevenuto, true);
+});
+
+prova('un nome vero passa', function () {
+  const f = form({ personalizzabile: true, designPresente: true, nomeInciso: 'Rocky' });
+  assert.strictEqual(invia(f)._prevenuto, false);
+});
+
+prova('un nome che CONTIENE la parola passa: si guarda il pezzo intero', function () {
+  const f = form({ personalizzabile: true, designPresente: true, nomeInciso: 'Testolina' });
+  assert.strictEqual(invia(f)._prevenuto, false,
+    '"Testolina" e\' un nome, non il segnaposto');
+});
+
+prova('nessun testo sul riquadro non e\' un motivo per fermarsi', function () {
+  const f = form({ personalizzabile: true, designPresente: true, nomeInciso: '' });
+  assert.strictEqual(invia(f)._prevenuto, false,
+    'si puo\' personalizzare con una foto e nessuna scritta');
 });
 
 console.log('\n' + fatte + ' verifiche superate.' +
