@@ -47,10 +47,10 @@
 
     <div class="assistant__quick" data-assistant-quick>
       {%- comment -%} chip = risposte predefinite. data-answer letto dal JS {%- endcomment -%}
-      <button type="button" class="assistant__chip" data-assistant-answer="{{ settings.assistant_a_shipping | default: 'Spediamo in tutta Italia in 4-8 giorni e in Europa in 5-12 giorni. Ricevi sempre un codice di tracciamento via email.' | escape }}">{{ settings.assistant_q_shipping | default: 'Spedizioni' }}</button>
+      <button type="button" class="assistant__chip" data-assistant-answer="{{ settings.assistant_a_shipping | default: 'I tempi cambiano da prodotto a prodotto: li trovi sulla scheda, sotto il pulsante. Bandane 5-9 giorni, ciotole 7-15, collari e guinzagli 20-28. Ricevi sempre un codice di tracciamento via email.' | escape }}">{{ settings.assistant_q_shipping | default: 'Spedizioni' }}</button>
       <button type="button" class="assistant__chip" data-assistant-answer="{{ settings.assistant_a_returns | default: 'Hai 30 giorni dalla consegna per il reso. Scrivici e ti guidiamo passo passo.' | escape }}">{{ settings.assistant_q_returns | default: 'Resi' }}</button>
       <button type="button" class="assistant__chip" data-assistant-answer="{{ settings.assistant_a_sizes | default: 'Ogni prodotto ha una guida taglie nella scheda. Se hai dubbi, scrivici razza e peso del tuo cane: ti consigliamo noi.' | escape }}">{{ settings.assistant_q_sizes | default: 'Taglie' }}</button>
-      <button type="button" class="assistant__chip" data-assistant-answer="{{ settings.assistant_a_payment | default: 'Accettiamo carte (Visa, Mastercard, Amex), PayPal, Apple Pay e Google Pay. Pagamenti sempre sicuri.' | escape }}">{{ settings.assistant_q_payment | default: 'Pagamenti' }}</button>
+      <button type="button" class="assistant__chip" data-assistant-answer="{{ settings.assistant_a_payment | default: 'Accettiamo carte (Visa, Mastercard, American Express), Apple Pay, Google Pay e Shop Pay. Pagamenti sempre sicuri.' | escape }}">{{ settings.assistant_q_payment | default: 'Pagamenti' }}</button>
       <button type="button" class="assistant__chip" data-assistant-answer="{{ settings.assistant_a_track | default: 'Trovi il link di tracciamento nell\'email di spedizione. Non lo trovi? Scrivici il numero d\'ordine e controlliamo subito.' | escape }}">{{ settings.assistant_q_track | default: 'Traccia ordine' }}</button>
     </div>
 

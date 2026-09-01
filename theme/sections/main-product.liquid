@@ -1,0 +1,734 @@
+{%- liquid
+  assign current_variant = product.selected_or_first_available_variant
+  assign is_custom = false
+  if product.tags contains 'personalizzabile' or product.tags contains 'POD' or product.tags contains 'custom'
+    assign is_custom = true
+  endif
+  assign is_blank_design = false
+  if is_custom and product.tags contains 'tipo-neutro'
+    assign is_blank_design = true
+  endif
+  capture perla_print_areas_raw
+    render 'perla-print-areas'
+  endcapture
+  assign perla_print_areas = perla_print_areas_raw | strip | split: '#'
+
+  assign photo_type = ''
+  assign photo_ratio = 1
+  assign photo_type_label = 'Prodotto'
+  assign ov_left = 28
+  assign ov_top = 28
+  assign ov_right = 28
+  assign ov_height = 30
+  assign ov_radius = 0
+
+  for row in perla_print_areas
+    assign cols = row | split: '|'
+    assign row_tags = cols[1] | split: ','
+    assign row_matched = false
+    for t in row_tags
+      if product.tags contains t
+        assign row_matched = true
+      endif
+    endfor
+    if row_matched
+      assign photo_type = cols[0]
+      assign photo_ratio = cols[2]
+      assign photo_type_label = cols[3]
+      assign ov_left = cols[4]
+      assign ov_top = cols[5]
+      assign ov_right = cols[6]
+      assign ov_height = cols[7]
+      assign ov_radius = cols[8]
+      break
+    endif
+  endfor
+
+  comment
+    ROUND 47 -- quanti giorni ci mette DAVVERO questo tipo di prodotto.
+    Stessa forma della tabella dei riquadri qui sopra, tabella separata:
+    sono due dati che cambiano per ragioni diverse (la geometria cambia se
+    cambia il prodotto, i giorni se cambia il fornitore), e tenerli insieme
+    vorrebbe dire rileggere la geometria ogni volta che Printful sposta una
+    fabbrica. Vedi snippets/perla-tempi-consegna.liquid per i numeri e per
+    come sono stati misurati.
+  endcomment
+  assign consegna_min = 0
+  assign consegna_max = 0
+  assign consegna_misurata = false
+  capture perla_tempi_raw
+    render 'perla-tempi-consegna'
+  endcapture
+  assign perla_tempi = perla_tempi_raw | strip | split: '#'
+  for row in perla_tempi
+    assign cols = row | split: '|'
+    if cols[0] == photo_type
+      assign consegna_min = cols[1] | times: 1
+      assign consegna_max = cols[2] | times: 1
+      if cols[3] == '1'
+        assign consegna_misurata = true
+      endif
+      break
+    endif
+  endfor
+
+  comment
+    photo_type_label sopra viene dal file dati (solo italiano). Qui lo
+    sostituiamo con una stringa tradotta in base allo slug photo_type,
+    cosi' l'etichetta "Area di stampa — X" si traduce correttamente in EN.
+  endcomment
+  case photo_type
+    when 'collare'
+      assign photo_type_label = 'sections.product.type_collare' | t
+    when 'bandana'
+      assign photo_type_label = 'sections.product.type_bandana' | t
+    when 'medaglietta'
+      assign photo_type_label = 'sections.product.type_medaglietta' | t
+    when 'ciotola'
+      assign photo_type_label = 'sections.product.type_ciotola' | t
+    when 'cuccia'
+      assign photo_type_label = 'sections.product.type_cuccia' | t
+    when 'tappetino'
+      assign photo_type_label = 'sections.product.type_tappetino' | t
+    when 'guinzaglio'
+      assign photo_type_label = 'sections.product.type_guinzaglio' | t
+  endcase
+
+  assign is_double_sided = false
+  if photo_type == 'medaglietta'
+    assign is_double_sided = true
+  endif
+
+  comment
+    ROUND 18 -- rimando al gemello interamente personalizzabile. Su questo
+    prodotto si puo' aggiungere solo il nome sopra un disegno gia' fatto; il
+    "neutro" dello stesso tipo parte invece da una tela bianca. La mappa
+    tipo -> handle sta in snippets/perla-neutro-map.liquid.
+    Il rimando compare solo se il prodotto di destinazione esiste ED e'
+    disponibile: se lo metti in bozza, sparisce da solo.
+  endcomment
+  assign neutro_handle = ''
+  if is_custom and is_blank_design == false and photo_type != ''
+    capture perla_neutro_raw
+      render 'perla-neutro-map'
+    endcapture
+    assign perla_neutro_rows = perla_neutro_raw | strip | split: '#'
+    for nrow in perla_neutro_rows
+      assign ncols = nrow | split: '|'
+      if ncols[0] == photo_type
+        assign neutro_handle = ncols[1]
+        break
+      endif
+    endfor
+  endif
+  assign neutro_product = blank
+  if neutro_handle != ''
+    assign neutro_product = all_products[neutro_handle]
+  endif
+
+  assign preset_b1 = blank
+  assign preset_b2 = blank
+  assign preset_heading = blank
+  if section.settings.show_bundle and section.settings.bundle_products.count == 0
+    capture perla_bundle_presets_raw
+      render 'perla-bundle-presets'
+    endcapture
+    assign perla_bundle_presets = perla_bundle_presets_raw | strip | split: '#'
+    for preset_row in perla_bundle_presets
+      assign preset_cols = preset_row | split: '|'
+      assign coll_a = collections[preset_cols[1]]
+      assign coll_b = collections[preset_cols[2]]
+      assign in_a = false
+      assign in_b = false
+      if coll_a.products contains product
+        assign in_a = true
+      endif
+      if coll_b.products contains product
+        assign in_b = true
+      endif
+      if in_a or in_b
+        if in_a
+          assign other_collection = coll_b
+        else
+          assign other_collection = coll_a
+        endif
+        for candidate in other_collection.products
+          if candidate.id != product.id and candidate.available
+            assign preset_b1 = candidate
+            break
+          endif
+        endfor
+        if preset_b1 != blank
+          assign preset_heading = preset_cols[0]
+          break
+        endif
+      endif
+    endfor
+  endif
+
+  assign show_bundle_final = false
+  if section.settings.show_bundle and section.settings.bundle_products.count > 0
+    assign show_bundle_final = true
+  endif
+  if section.settings.show_bundle and preset_b1 != blank
+    assign show_bundle_final = true
+  endif
+-%}
+<section class="section" data-product>
+  <div class="page-width">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href="{{ routes.root_url }}">{{ 'general.breadcrumb.home' | t }}</a><span>/</span>
+      {%- if collection -%}<a href="{{ collection.url }}">{{ collection.title }}</a><span>/</span>{%- endif -%}
+      <span>{{ product.title }}</span>
+    </nav>
+
+    <div class="product">
+      <!-- MEDIA -->
+      <div class="product__media" data-gallery>
+        <div class="product__gallery">
+          <div class="product__main-image" data-zoomable role="img" aria-label="{{ product.featured_media.alt | escape }}">
+            {%- if product.media.size > 1 -%}
+              <div class="product__slides" data-slides>
+                {%- for media in product.media limit: 10 -%}
+                  <div class="product__slide{% if forloop.first %} is-active{% endif %}" data-slide="{{ forloop.index0 }}">
+                    <img {% if forloop.first %}data-main-image fetchpriority="high"{% else %}loading="lazy"{% endif %} src="{{ media | image_url: width: 1200 }}"
+                      srcset="{{ media | image_url: width: 800 }} 800w, {{ media | image_url: width: 1200 }} 1200w"
+                      sizes="(max-width:990px) 100vw, 52vw" width="1000" height="1250" alt="{{ media.alt | escape }}">
+                  </div>
+                {%- endfor -%}
+              </div>
+            {%- elsif product.featured_media -%}
+              <img data-main-image src="{{ product.featured_media | image_url: width: 1200 }}"
+                srcset="{{ product.featured_media | image_url: width: 800 }} 800w, {{ product.featured_media | image_url: width: 1200 }} 1200w"
+                sizes="(max-width:990px) 100vw, 52vw" width="1000" height="1250" alt="{{ product.featured_media.alt | escape }}" fetchpriority="high">
+            {%- else -%}
+              {{ 'product-apparel-1' | placeholder_svg_tag: 'placeholder-svg' }}
+            {%- endif -%}
+            {%- if product.media.size > 1 -%}
+              <div class="product__dots" data-gallery-dots>
+                {%- for media in product.media limit: 10 -%}
+                  <button type="button" class="product__dot{% if forloop.first %} is-active{% endif %}" data-gallery-dot="{{ forloop.index0 }}" aria-label="{{ forloop.index }}"></button>
+                {%- endfor -%}
+              </div>
+            {%- endif -%}
+            <span class="product__zoom-hint" aria-hidden="true">{% render 'icon', icon: 'search' %}</span>
+          </div>
+          {%- if product.media.size > 1 -%}
+            <div class="product__thumbs">
+              {%- for media in product.media limit: 10 -%}
+                <button type="button" class="product__thumb{% if forloop.first %} is-active{% endif %}" data-thumb data-index="{{ forloop.index0 }}" data-full="{{ media | image_url: width: 1400 }}" aria-label="{{ 'products.product.media' | t }} {{ forloop.index }}">
+                  <img src="{{ media | image_url: width: 200 }}" width="100" height="100" alt="" loading="lazy">
+                </button>
+              {%- endfor -%}
+            </div>
+          {%- endif -%}
+        </div>
+      </div>
+
+      <!-- INFO -->
+      <div class="product__info">
+        {%- if section.settings.show_vendor and product.vendor != blank -%}<span class="product__vendor">{{ product.vendor }}</span>{%- endif -%}
+        <div class="product__title-row">
+          <h1 class="product__title">{{ product.title }}</h1>
+          {%- if settings.enable_wishlist -%}
+            {% render 'wishlist-btn', handle: product.handle, title: product.title %}
+          {%- endif -%}
+        </div>
+
+        <div class="product__price" data-price>{% render 'price', product: product, large: true %}</div>
+        <p class="product__pay-note">{{ 'sections.product.pay_note' | t }}</p>
+
+        {%- comment -%}
+          Solo il paragrafo di apertura, non le prime 32 parole della descrizione
+          intera: il taglio a 32 parole spezzava la frase a meta' e poi la stessa
+          introduzione ricompariva dentro la tendina "Descrizione". Da qui in giu'
+          la descrizione e' divisa per argomento da 'perla-desc-tabs'.
+        {%- endcomment -%}
+        {%- assign perla_intro = product.description | split: '<p><strong>' | first -%}
+        {%- if perla_intro != blank -%}
+          <div class="product__desc-short">{{ perla_intro | strip_html | strip | truncatewords: 55 }}</div>
+        {%- endif -%}
+
+        <div class="product__divider"></div>
+
+        <!-- FORM -->
+        {%- form 'product', product, id: 'ProductForm', class: 'product-form', novalidate: 'novalidate' -%}
+          <div data-product-form>
+            <input type="hidden" name="id" value="{{ current_variant.id }}" data-variant-id>
+
+            {%- unless product.has_only_default_variant -%}
+              {%- for option in product.options_with_values -%}
+                <div class="variant-group">
+                  <span class="variant-group__label">{{ option.name }} <span class="value" data-option-value-label="{{ forloop.index0 }}">{{ option.selected_value }}</span></span>
+                  <div class="variant-pills">
+                    {%- for value in option.values -%}
+                      {%- assign opt_id = 'opt-' | append: forloop.parentloop.index0 | append: '-' | append: forloop.index0 -%}
+                      <label class="variant-pill{% if option.selected_value == value %} is-active{% endif %}" for="{{ opt_id }}">
+                        <input type="radio" id="{{ opt_id }}" name="option-{{ forloop.parentloop.index0 }}" value="{{ value | escape }}" data-option-index="{{ forloop.parentloop.index0 }}" {% if option.selected_value == value %}checked{% endif %}>
+                        {{ value }}
+                      </label>
+                    {%- endfor -%}
+                  </div>
+                </div>
+              {%- endfor -%}
+            {%- endunless -%}
+
+            {%- if is_custom -%}
+              <div class="product-personalize">
+                {%- if is_double_sided -%}
+                  <div class="fabric-studio__toolbar fabric-studio__toolbar--toggle fabric-studio__toolbar--sides" role="group" aria-label="{{ 'sections.product.side_group' | t }}" data-side-tabs>
+                    <button type="button" class="fabric-studio__add-btn is-active" data-side-tab="front">{{ 'sections.product.side_front' | t }}</button>
+                    <button type="button" class="fabric-studio__add-btn" data-side-tab="back">{{ 'sections.product.side_back' | t }}</button>
+                  </div>
+                  <div data-side-panel="front">
+                    {%- render 'perla-photo-customizer-side', product: product, photo_type: photo_type, photo_ratio: photo_ratio, photo_type_label: photo_type_label, ov_radius: ov_radius, side: 'front', prop_name: '_Personalizzazione', allow_full_editor: is_blank_design, is_blank_design: is_blank_design -%}
+                  </div>
+                  <div data-side-panel="back" hidden>
+                    {%- assign medaglietta_back_label = 'sections.product.medaglietta_back_type' | t -%}
+                    {%- comment -%}
+                      ROUND 30 -- is_blank_design (non allow_full_editor, sempre
+                      false qui) decide se mostrare lo sfondo: e' un flag di
+                      PRODOTTO, non di lato. Prima riusava allow_full_editor e
+                      sul retro lo sfondo restava mostrato anche su un prodotto
+                      neutro, disallineato dal fronte.
+                    {%- endcomment -%}
+                    {%- render 'perla-photo-customizer-side', product: product, photo_type: photo_type, photo_ratio: photo_ratio, photo_type_label: medaglietta_back_label, ov_radius: ov_radius, side: 'back', prop_name: '_Personalizzazione_Retro', allow_full_editor: false, is_blank_design: is_blank_design -%}
+                  </div>
+                  <div class="photo-studio__panel photo-studio__panel--mockup" data-shared-mockup data-product-type="{{ photo_type }}" data-upload-endpoint="{{ settings.photo_upload_endpoint | escape }}">
+                    <p class="photo-studio__panel-label">{{ 'sections.product.photo_mockup_label' | t }}</p>
+                    <p class="photo-studio__note">{{ 'sections.product.photo_mockup_note' | t }}</p>
+                    <button type="button" class="fabric-studio__add-btn" data-generate-mockup-shared disabled>{{ 'sections.product.generate_mockup' | t }}</button>
+                    <p class="product-personalize__status" data-mockup-gen-status-shared role="status" aria-live="polite"></p>
+                    <div class="photo-studio__real-mockups" data-real-mockups-shared hidden></div>
+                  </div>
+                {%- else -%}
+                <div class="product-personalize__photo" data-photo-customizer
+                  data-side="front"
+                  data-upload-endpoint="{{ settings.photo_upload_endpoint | escape }}"
+                  data-product-id="{{ product.id }}"
+                  data-product-type="{{ photo_type }}"
+                  data-print-ratio="{{ photo_ratio }}"
+                  data-printify-product-id="{{ product.metafields.printify_custom.printify_product_id }}"
+                  data-blank-design="{{ is_blank_design }}"
+                  {%- comment -%}
+                    ROUND 22 -- il motivo viaggia con l'ordine. buildComposite()
+                    esporta solo il livello del cliente (nome su trasparente);
+                    sui prodotti Printful non esiste il base_image_id che sui
+                    Printify porta il motivo, quindi in stampa finiva il nome su
+                    un accessorio bianco. Passando qui la URL del file di stampa
+                    a piena risoluzione, writePropData la salva nell'ordine e
+                    scripts/providers/printful-client.js sovrappone i due livelli
+                    prima di mandarli a Printful.
+                  {%- endcomment -%}
+                  data-pattern-url="{{ product.metafields.custom.editor_pattern_image.value }}"
+                  {%- if is_blank_design %}
+                  data-logo-url="{{ 'emblem-mark.png' | asset_url }}"
+                  {%- endif %}
+                >
+                  <button type="button" class="photo-studio__tool photo-studio__tool--fullscreen" data-photo-fullscreen-open>
+                    {% render 'icon', icon: 'fullscreen-expand' %}<span>{{ 'sections.product.photo_fullscreen' | t }}</span>
+                  </button>
+
+                  <div class="photo-studio__panels" data-photo-panels>
+                    <div class="photo-studio__panel">
+                      <p class="photo-studio__panel-label">{{ 'sections.product.photo_area_label' | t }} — {{ photo_type_label }}</p>
+
+                      {%- comment -%}
+                      ROUND 24 -- l'editor era alto undici pixel.
+
+                      .fabric-studio prende la larghezza della colonna e ne ricava
+                      l'altezza dividendo per il rapporto dell'area di stampa. Sul
+                      guinzaglio quel rapporto e' 12389/219 = 56,6: misurato, l'area
+                      dell'editor risultava 597 x 11 px sul computer e 350 x 6 sul
+                      telefono. Non e' scomodo, e' inutilizzabile -- e anche a schermo
+                      intero restava 922 x 16.
+
+                      Non si puo' semplicemente allargare in altezza tenendo la larghezza
+                      al 100%: il canvas Fabric si costruisce su clientWidth/clientHeight
+                      del riquadro (vedi initPhotoCustomizer in assets/global.js) e
+                      l'export viene poi rimappato sull'area di stampa. Se le proporzioni
+                      del riquadro non sono quelle dell'area, il nome finisce stampato
+                      deformato. Le proporzioni vanno tenute.
+
+                      Quindi si parte dall'altezza invece che dalla larghezza, e la
+                      striscia scorre in orizzontale dentro il viewport (che ha gia'
+                      overflow:auto). L'altezza si sceglie perche' la striscia resti
+                      larga circa 2200px: sul collare vengono 96px di altezza, sulla
+                      ciotola 200 (il tetto), sul guinzaglio 80 (il minimo) -- sotto gli
+                      80 non ci si scrive dentro nemmeno con lo zoom.
+                      {%- endcomment -%}
+                      {%- assign ratio_num = photo_ratio | times: 1.0 -%}
+                      {%- assign studio_nastro = false -%}
+                      {%- assign studio_h = 0 -%}
+                      {%- if ratio_num > 4 -%}
+                      {%- assign studio_nastro = true -%}
+                      {%- assign studio_h = 2200 | divided_by: ratio_num | round -%}
+                      {%- if studio_h < 80 -%}{%- assign studio_h = 80 -%}{%- endif -%}
+                      {%- if studio_h > 200 -%}{%- assign studio_h = 200 -%}{%- endif -%}
+                      {%- comment -%}
+                      Anche la larghezza si scrive qui in pixel. In CSS non basterebbe width:auto:
+                      su un blocco "auto" vuol dire "riempi il contenitore", e aspect-ratio cede il
+                      passo -- misurato, la striscia tornava a 597px schiacciata, e un riquadro
+                      fuori proporzione manda in stampa il nome deformato.
+                      {%- endcomment -%}
+                      {%- assign studio_w = studio_h | times: ratio_num | round -%}
+                      {%- endif -%}
+                      <div class="fabric-studio__viewport{% if studio_nastro %} fabric-studio__viewport--nastro{% endif %}" data-fabric-viewport>
+                        <div class="fabric-studio{% if studio_nastro %} fabric-studio--nastro{% endif %}" data-fabric-wrap style="aspect-ratio: {{ photo_ratio }} / 1;{% if studio_nastro %} height: {{ studio_h }}px; width: {{ studio_w }}px;{% endif %}">
+                          {%- comment -%}
+                            ROUND 29/30/32 -- sfondo di riferimento dell'editor.
+                            Sui prodotti Printful il metafield
+                            printify_custom.printify_product_id e' vuoto, quindi
+                            il fetch di pattern-source non parte mai: senza
+                            questo sfondo il cliente EU vedeva una tela vuota.
+                            Sui prodotti "neutro" invece NON va mostrato niente
+                            (la featured_image e' una foto lifestyle del
+                            catalogo fornitore, fuorviante dietro una tela
+                            vuota). La fonte giusta e' il metafield
+                            custom.editor_pattern_image, cioe' la texture
+                            piatta; la cover ora puo' essere un mockup
+                            fotografico, inadatto allo scopo.
+                          {%- endcomment -%}
+                          {%- liquid
+                            assign pattern_mf = product.metafields.custom.editor_pattern_image.value
+                            assign pattern_bg_url = pattern_mf | default: product.featured_image
+                            assign show_pattern_bg = false
+                            if pattern_bg_url and is_blank_design == false
+                              assign show_pattern_bg = true
+                            endif
+
+                            comment
+                              ROUND 34 -- la larghezza va chiesta come la vuole
+                              l'host che ospita il file, non appendendo sempre
+                              "&width=800". Quella forma vale solo per la CDN di
+                              Shopify, dove l'URL ha gia' un "?v=...". Da quando
+                              i file di stampa nativi stanno su Cloudinary (Round
+                              19) lo stesso URL tornava 400 e lo sfondo dell'area
+                              di stampa non caricava affatto: Cloudinary vuole la
+                              trasformazione dentro al percorso (w_800).
+                              Il metafield resta a piena risoluzione -- serve
+                              cosi' per la stampa: qui si ridimensiona solo la
+                              copia mostrata a video.
+                            endcomment
+                            assign pattern_bg_src = ''
+                            if pattern_mf != blank
+                              if pattern_mf contains '/image/upload/'
+                                assign pattern_bg_src = pattern_mf | replace: '/image/upload/', '/image/upload/w_800/'
+                              elsif pattern_mf contains '?'
+                                assign pattern_bg_src = pattern_mf | append: '&width=800'
+                              else
+                                assign pattern_bg_src = pattern_mf | append: '?width=800'
+                              endif
+                            else
+                              assign pattern_bg_src = pattern_bg_url | image_url: width: 800
+                            endif
+                          -%}
+                          <img class="photo-studio__pattern-bg" data-pattern-source-img alt="" draggable="false" {% if show_pattern_bg %}src="{{ pattern_bg_src }}"{% else %}hidden{% endif %}>
+                          <canvas data-fabric-canvas></canvas>
+
+                          {%- if is_blank_design -%}
+                            <div class="photo-studio__empty" data-studio-empty aria-hidden="true">
+                              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.4"/>
+                                <path d="M3 16l4.5-4.5a1.5 1.5 0 012.1 0L14 16" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                                <path d="M14 14l1.7-1.7a1.5 1.5 0 012.1 0L21 15.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                                <circle cx="15.5" cy="9" r="1.4" stroke="currentColor" stroke-width="1.4"/>
+                              </svg>
+                              <p class="photo-studio__empty-text">{{ 'sections.product.empty_hint' | t }}</p>
+                            </div>
+                          {%- endif -%}
+
+                          <div class="fabric-studio__shape-guide" aria-hidden="true">
+                            {%- if photo_type == 'bandana' -%}
+                              <svg class="fabric-studio__shape-guide-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                <polygon points="4,8 96,8 50,92"></polygon>
+                              </svg>
+                            {%- else -%}
+                              <span class="fabric-studio__shape-guide-rect" style="border-radius: {{ ov_radius }}%;"></span>
+                            {%- endif -%}
+                          </div>
+                          <span class="fabric-studio__snap-line fabric-studio__snap-line--v" data-snap-v hidden aria-hidden="true"></span>
+                          <span class="fabric-studio__snap-line fabric-studio__snap-line--h" data-snap-h hidden aria-hidden="true"></span>
+                        </div>
+                      </div>
+                      <div class="fabric-studio__toolbar fabric-studio__toolbar--view" role="group" aria-label="{{ 'sections.product.view_zoom_group' | t }}">
+                        <button type="button" class="photo-studio__tool" data-view-zoom-out aria-label="{{ 'sections.product.view_zoom_out' | t }}">{% render 'icon', icon: 'zoom-out' %}</button>
+                        <button type="button" class="photo-studio__tool" data-view-zoom-reset aria-label="{{ 'sections.product.view_zoom_reset_label' | t }}">{{ 'sections.product.view_zoom_reset' | t }}</button>
+                        <button type="button" class="photo-studio__tool" data-view-zoom-in aria-label="{{ 'sections.product.view_zoom_in' | t }}">{% render 'icon', icon: 'zoom-in' %}</button>
+                      </div>
+
+                      {%- if is_blank_design -%}
+                        <div class="fabric-studio__toolbar fabric-studio__toolbar--toggle" role="group" aria-label="{{ 'sections.product.logo_variant_group' | t }}" data-logo-variant-row>
+                          <button type="button" class="fabric-studio__add-btn is-active" data-logo-variant="icon">{{ 'sections.product.logo_icon_only' | t }}</button>
+                          <button type="button" class="fabric-studio__add-btn" data-logo-variant="full">{{ 'sections.product.logo_with_name' | t }}</button>
+                        </div>
+                      {%- endif -%}
+
+                      {%- capture add_btn_icon -%}<svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>{%- endcapture -%}
+                      <div class="fabric-studio__toolbar" role="group" aria-label="{{ 'sections.product.photo_toolbar' | t }}">
+                        {%- if is_blank_design -%}
+                          <label class="fabric-studio__add-btn" for="PetPhoto-{{ product.id }}">
+                            {{ add_btn_icon }}<span>{{ 'sections.product.add_photo' | t }}</span>
+                            <input type="file" id="PetPhoto-{{ product.id }}" accept="image/png,image/jpeg,image/webp" data-photo-input multiple hidden>
+                          </label>
+                        {%- endif -%}
+                        <button type="button" class="fabric-studio__add-btn" data-add-text>{{ add_btn_icon }}{{ 'sections.product.add_text' | t }}</button>
+                        {%- if is_blank_design -%}
+                          <button type="button" class="fabric-studio__add-btn" data-sticker-toggle>{{ add_btn_icon }}{{ 'sections.product.add_sticker' | t }}</button>
+                        {%- endif -%}
+                        <button type="button" class="photo-studio__tool" data-undo disabled aria-label="{{ 'sections.product.photo_undo' | t }}">{% render 'icon', icon: 'return' %}</button>
+                        <button type="button" class="photo-studio__tool photo-studio__tool--danger" data-clear-all aria-label="{{ 'sections.product.photo_clear_all' | t }}">{% render 'icon', icon: 'delete-photo' %}</button>
+                      </div>
+
+                      {%- if is_blank_design -%}
+                      <div class="fabric-studio__stickers" data-sticker-picker hidden>
+                        <button type="button" class="fabric-studio__sticker" data-add-sticker="star" aria-label="{{ 'sections.product.sticker_star' | t }}">★</button>
+                        <button type="button" class="fabric-studio__sticker" data-add-sticker="heart" aria-label="{{ 'sections.product.sticker_heart' | t }}">♥</button>
+                        <button type="button" class="fabric-studio__sticker" data-add-sticker="dot" aria-label="{{ 'sections.product.sticker_dot' | t }}">●</button>
+                        <button type="button" class="fabric-studio__sticker" data-add-sticker="diamond" aria-label="{{ 'sections.product.sticker_diamond' | t }}">◆</button>
+                        <button type="button" class="fabric-studio__sticker" data-add-sticker="flower" aria-label="{{ 'sections.product.sticker_flower' | t }}">✿</button>
+                        <button type="button" class="fabric-studio__sticker" data-add-sticker="paw" aria-label="{{ 'sections.product.sticker_paw' | t }}">🐾</button>
+                        <button type="button" class="fabric-studio__sticker" data-add-sticker="bone" aria-label="{{ 'sections.product.sticker_bone' | t }}">🦴</button>
+                        <button type="button" class="fabric-studio__sticker" data-add-sticker="crown" aria-label="{{ 'sections.product.sticker_crown' | t }}">👑</button>
+                        <button type="button" class="fabric-studio__sticker" data-add-sticker="sparkle" aria-label="{{ 'sections.product.sticker_sparkle' | t }}">✨</button>
+                        <button type="button" class="fabric-studio__sticker" data-add-sticker="leaf" aria-label="{{ 'sections.product.sticker_leaf' | t }}">🍃</button>
+                        <button type="button" class="fabric-studio__sticker" data-add-sticker="bow" aria-label="{{ 'sections.product.sticker_bow' | t }}">🎀</button>
+                        <button type="button" class="fabric-studio__sticker" data-add-sticker="cloud" aria-label="{{ 'sections.product.sticker_cloud' | t }}">☁</button>
+                        <button type="button" class="fabric-studio__sticker" data-add-sticker="butterfly" aria-label="{{ 'sections.product.sticker_butterfly' | t }}">🦋</button>
+                        <button type="button" class="fabric-studio__sticker" data-add-sticker="bell" aria-label="{{ 'sections.product.sticker_bell' | t }}">🔔</button>
+                        <button type="button" class="fabric-studio__sticker" data-add-sticker="ring" aria-label="{{ 'sections.product.sticker_ring' | t }}">◯</button>
+                      </div>
+                      {%- endif -%}
+
+                      <div class="photo-studio__layers" data-layer-panel hidden>
+                        <p class="photo-studio__panel-label">{{ 'sections.product.layers_label' | t }}</p>
+                        <ul class="photo-studio__layer-list" data-layer-list role="list"></ul>
+                      </div>
+
+                      <div class="photo-studio__toolbar" data-layer-toolbar hidden role="group" aria-label="{{ 'sections.product.layer_toolbar' | t }}">
+                        <button type="button" class="photo-studio__tool" data-edit-text-sel hidden aria-label="{{ 'sections.product.edit_text' | t }}">Aa</button>
+                        <button type="button" class="photo-studio__tool" data-zoom-out-sel aria-label="{{ 'sections.product.photo_zoom_out' | t }}">{% render 'icon', icon: 'zoom-out' %}</button>
+                        <button type="button" class="photo-studio__tool" data-zoom-in-sel aria-label="{{ 'sections.product.photo_zoom_in' | t }}">{% render 'icon', icon: 'zoom-in' %}</button>
+                        <button type="button" class="photo-studio__tool" data-rotate-left-sel aria-label="{{ 'sections.product.photo_rotate_left' | t }}">{% render 'icon', icon: 'rotate-left' %}</button>
+                        <button type="button" class="photo-studio__tool" data-rotate-right-sel aria-label="{{ 'sections.product.photo_rotate_right' | t }}">{% render 'icon', icon: 'rotate-right' %}</button>
+                        <button type="button" class="photo-studio__tool photo-studio__tool--danger" data-delete-sel aria-label="{{ 'sections.product.photo_delete' | t }}">{% render 'icon', icon: 'delete-photo' %}</button>
+                      </div>
+
+                      <div class="photo-studio__precise" data-precise-controls hidden>
+                        <label>{{ 'sections.product.precise_x' | t }}<input type="number" data-precise-x min="0" max="100" step="1" inputmode="numeric"></label>
+                        <label>{{ 'sections.product.precise_y' | t }}<input type="number" data-precise-y min="0" max="100" step="1" inputmode="numeric"></label>
+                        <label>{{ 'sections.product.precise_rotate' | t }}<input type="number" data-precise-rotate min="0" max="359" step="1" inputmode="numeric"></label>
+                      </div>
+
+                      <div class="photo-studio__name-style" data-name-style>
+                        <p class="photo-studio__panel-label photo-studio__panel-label--spaced" data-font-row-label>{{ 'sections.product.name_font_label' | t }}</p>
+                        <div class="name-font-row" data-font-row role="group" aria-label="{{ 'sections.product.name_font_label' | t }}">
+                          <button type="button" class="name-font-swatch is-active" data-name-font="'Cormorant Garamond', Georgia, serif" data-name-weight="600" style="font-family:'Cormorant Garamond', Georgia, serif">Aa</button>
+                          <button type="button" class="name-font-swatch" data-name-font="'Poppins', sans-serif" data-name-weight="700" style="font-family:'Poppins', sans-serif;font-weight:700">Aa</button>
+                          <button type="button" class="name-font-swatch" data-name-font="'Caveat', cursive" data-name-weight="700" style="font-family:'Caveat', cursive;font-weight:700">Aa</button>
+                          <button type="button" class="name-font-swatch" data-name-font="'Pacifico', cursive" data-name-weight="400" style="font-family:'Pacifico', cursive">Aa</button>
+                          <button type="button" class="name-font-swatch" data-name-font="'Playfair Display', Georgia, serif" data-name-weight="700" style="font-family:'Playfair Display', Georgia, serif;font-weight:700">Aa</button>
+                          <button type="button" class="name-font-swatch" data-name-font="'Montserrat', sans-serif" data-name-weight="600" style="font-family:'Montserrat', sans-serif;font-weight:600">Aa</button>
+                        </div>
+                        <p class="photo-studio__panel-label photo-studio__panel-label--spaced" data-color-label>{{ 'sections.product.name_color_label' | t }}</p>
+                        <div class="name-color-row" role="group" aria-label="{{ 'sections.product.name_color_label' | t }}">
+                          {%- comment -%}
+                            ROUND 29 -- palette curata sui colori reali del brand
+                            (le stesse variabili che colorano tutto il resto del
+                            sito) invece del solo selettore nativo del browser,
+                            che non suggerisce nulla di coerente. Il picker
+                            nativo resta per chi vuole un colore preciso.
+                          {%- endcomment -%}
+                          <button type="button" class="name-color-swatch" data-name-color-swatch="{{ settings.color_ink }}" style="background:{{ settings.color_ink }}" aria-label="{{ 'sections.product.color_ink' | t }}"></button>
+                          <button type="button" class="name-color-swatch" data-name-color-swatch="#ffffff" style="background:#ffffff" aria-label="{{ 'sections.product.color_white' | t }}"></button>
+                          <button type="button" class="name-color-swatch" data-name-color-swatch="{{ settings.color_gold }}" style="background:{{ settings.color_gold }}" aria-label="{{ 'sections.product.color_gold' | t }}"></button>
+                          <button type="button" class="name-color-swatch" data-name-color-swatch="{{ settings.color_gold_deep }}" style="background:{{ settings.color_gold_deep }}" aria-label="{{ 'sections.product.color_gold_deep' | t }}"></button>
+                          <button type="button" class="name-color-swatch" data-name-color-swatch="{{ settings.color_sage }}" style="background:{{ settings.color_sage }}" aria-label="{{ 'sections.product.color_sage' | t }}"></button>
+                          <button type="button" class="name-color-swatch" data-name-color-swatch="{{ settings.color_cream }}" style="background:{{ settings.color_cream }}" aria-label="{{ 'sections.product.color_cream' | t }}"></button>
+                          <label class="name-color-swatch name-color-swatch--custom" aria-label="{{ 'sections.product.color_custom' | t }}">
+                            <input type="color" class="name-color-picker" data-name-color-picker value="#1c1c1c" aria-label="{{ 'sections.product.name_color_label' | t }}">
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="photo-studio__panel photo-studio__panel--mockup">
+                      <p class="photo-studio__panel-label">{{ 'sections.product.photo_mockup_label' | t }}</p>
+                      <p class="photo-studio__note">{{ 'sections.product.photo_mockup_note' | t }}</p>
+                      <button type="button" class="fabric-studio__add-btn" data-generate-mockup disabled>{{ 'sections.product.generate_mockup' | t }}</button>
+                      <p class="product-personalize__status" data-mockup-gen-status role="status" aria-live="polite"></p>
+                      <div class="photo-studio__real-mockups" data-real-mockups hidden></div>
+                    </div>
+                  </div>
+
+                  <p class="product-personalize__status" data-photo-status role="status" aria-live="polite"></p>
+                  <input type="hidden" name="properties[{{ 'sections.product.photo_key' | t }}]" data-photo-prop-name value="">
+                  <input type="hidden" name="properties[_Personalizzazione]" data-photo-prop-data value="">
+                  <input type="hidden" name="properties[Nome inciso]" data-photo-prop-name-text value="">
+                </div>
+                {%- endif -%}
+
+                {%- comment -%}
+                  ROUND 18 -- su questo prodotto si aggiunge solo il nome sopra
+                  un disegno gia' fatto. Chi voleva partire da zero non aveva
+                  modo di scoprire che esiste il gemello "Crea il Tuo Design":
+                  bisognava tornare al catalogo e riconoscerlo dal titolo.
+                  Vedi snippets/perla-neutro-map.liquid per la mappa.
+                {%- endcomment -%}
+                {%- if neutro_product != blank and neutro_product.available -%}
+                  <div class="product__neutro-link">
+                    <p>{{ 'sections.product.neutro_hint' | t }}</p>
+                    <a href="{{ neutro_product.url }}">{{ 'sections.product.neutro_cta' | t }}</a>
+                  </div>
+                {%- endif -%}
+              </div>
+            {%- endif -%}
+
+            {%- if section.settings.show_low_stock and current_variant.available and current_variant.inventory_management == 'shopify' and current_variant.inventory_policy == 'deny' and current_variant.inventory_quantity > 0 and current_variant.inventory_quantity <= section.settings.low_stock_threshold -%}
+              <p class="product__stock" data-low-stock>
+                <span class="product__stock-dot" aria-hidden="true"></span>
+                {{ 'sections.product.low_stock' | t: count: current_variant.inventory_quantity }}
+              </p>
+            {%- endif -%}
+
+            <div class="qty-row qty-row--tight">
+              <div class="qty">
+                <button type="button" data-qty="minus" aria-label="-">&minus;</button>
+                <input type="text" name="quantity" value="1" min="1" inputmode="numeric" aria-label="{{ 'sections.product.quantity' | t }}">
+                <button type="button" data-qty="plus" aria-label="+">+</button>
+              </div>
+              <button type="submit" class="btn product__atc" data-add-btn {% unless current_variant.available %}disabled{% endunless %}>
+                <span data-btn-text>{% if current_variant.available %}{{ 'products.product.add_to_cart' | t }}{% else %}{{ 'products.product.sold_out' | t }}{% endif %}</span>
+              </button>
+            </div>
+
+          </div>
+        {%- endform -%}
+
+        {%- if settings.enable_back_in_stock and current_variant.available == false -%}
+          <div class="bis" data-bis>
+            <p class="bis__title">{{ 'products.product.notify_me' | t }}</p>
+            <form class="bis__form" data-bis-form action="{{ section.settings.bis_action }}" method="post">
+              <input type="hidden" name="contact[tags]" value="back-in-stock, {{ product.handle }}">
+              <input type="hidden" name="contact[body]" value="Avvisami: {{ product.title }} ({{ current_variant.title }})">
+              <input type="email" name="contact[email]" placeholder="{{ 'products.product.notify_email_ph' | t }}" required>
+              <button type="submit" class="btn btn--small">{{ 'products.product.notify_send' | t }}</button>
+            </form>
+            <p class="bis__msg" data-bis-msg hidden></p>
+          </div>
+        {%- endif -%}
+
+        <!-- TRUST ROW under ATC -->
+        <div class="product__assurance">
+          <div class="product__assurance-item">{% render 'icon', icon: 'shield' %}<span>{{ 'sections.product.assure_secure' | t }}</span></div>
+          <div class="product__assurance-item">{% render 'icon', icon: 'return' %}<span>{{ 'sections.product.assure_returns' | t }}</span></div>
+          <div class="product__assurance-item">{% render 'icon', icon: 'truck' %}<span>{{ 'sections.product.assure_tracked' | t }}</span></div>
+          {%- if is_custom -%}<div class="product__assurance-item">{% render 'icon', icon: 'sparkle' %}<span>{{ 'sections.product.meta_custom' | t }}</span></div>{%- endif -%}
+        </div>
+
+        {%- comment -%}
+          ROUND 47 -- il tempo di consegna di QUESTO prodotto, non una media.
+          Sta qui sotto le rassicurazioni e non nella tendina "Spedizione e
+          resi" perche' e' il numero che decide l'acquisto: chi compra un
+          regalo vuole sapere se arriva in tempo, e scoprirlo dopo il
+          checkout e' il momento sbagliato. Compare solo dove il numero c'e'
+          davvero.
+        {%- endcomment -%}
+        {%- if consegna_max > 0 -%}
+          <p class="product__consegna">
+            {% render 'icon', icon: 'truck' %}
+            <span>{{ 'sections.product.delivery_estimate' | t: min: consegna_min, max: consegna_max }}</span>
+          </p>
+        {%- endif -%}
+
+        {%- if section.settings.show_payment_badges -%}
+          {% render 'payment-badges' %}
+        {%- endif -%}
+
+        {%- comment -%}
+          ROUND 34 -- le tendine erano una sola, e conteneva tutto.
+
+          "Descrizione" ripeteva l'introduzione appena letta sopra il pulsante e
+          poi ci schiacciava dentro Dettagli, Taglie, Cura e Personalizzazione,
+          mentre accanto c'erano tendine con gli stessi nomi alimentate dalle
+          impostazioni qui sotto. Adesso la descrizione viene divisa per
+          argomento al momento di stamparla: la logica sta in
+          'perla-desc-tabs', insieme alla spiegazione di come riconosce i pezzi
+          e di cosa fa quando una descrizione non segue lo schema.
+
+          Le impostazioni della sezione non spariscono: si SOMMANO a quello che
+          dice gia' la descrizione (i materiali in fondo a Dettagli, il "come
+          misurare" in fondo a Taglie) invece di stare in una tendina gemella.
+        {%- endcomment -%}
+        {% render 'perla-desc-tabs', product: product, s: section.settings %}
+
+        {%- if section.settings.compliance_note != blank -%}
+          <p class="product__compliance">{{ section.settings.compliance_note }}</p>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+
+  {%- if show_bundle_final -%}
+    {% render 'bundle', section: section, product: product, preset_b1: preset_b1, preset_b2: preset_b2, preset_heading: preset_heading %}
+  {%- endif -%}
+
+  {%- if section.blocks.size > 0 -%}
+    <div class="page-width product__app-blocks" data-reveal>
+      {%- for block in section.blocks -%}
+        {%- case block.type -%}
+          {%- when '@app' -%}
+            <div class="product__app-block" {{ block.shopify_attributes }}>{% render block %}</div>
+        {%- endcase -%}
+      {%- endfor -%}
+    </div>
+  {%- endif -%}
+
+  <!-- product data for JS -->
+  <script type="application/json" data-product-json>{{ product | json }}</script>
+</section>
+
+<!-- gallery lightbox -->
+<div class="lightbox" data-lightbox hidden aria-hidden="true">
+  <button type="button" class="lightbox__close" data-lightbox-close aria-label="{{ 'accessibility.close' | t | default: 'Chiudi' }}">{% render 'icon', icon: 'close' %}</button>
+  <div class="lightbox__stage" data-lightbox-stage><img src="" alt="" data-lightbox-img></div>
+</div>
+
+<!-- sticky mobile ATC -->
+<div class="sticky-atc">
+  <div class="sticky-atc__inner">
+    <div class="sticky-atc__info">
+      <div class="sticky-atc__title">{{ product.title }}</div>
+      <span data-sticky-price>{% render 'price', product: product %}</span>
+    </div>
+    <button type="button" class="btn btn--small" data-sticky-add {% unless current_variant.available %}disabled{% endunless %}>
+      <span data-sticky-btn-text>{% if current_variant.available %}{{ 'products.product.add_to_cart' | t }}{% else %}{{ 'products.product.sold_out' | t }}{% endif %}</span>
+    </button>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Pagina prodotto",
+  "settings": [
+    { "type": "checkbox", "id": "show_vendor", "label": "Mostra brand/vendor", "default": false },
+    { "type": "header", "content": "Conversione & fiducia" },
+    { "type": "checkbox", "id": "show_payment_badges", "label": "Mostra badge metodi di pagamento", "default": true },
+    { "type": "checkbox", "id": "show_low_stock", "label": "Mostra \"Ultimi disponibili\" (solo stock reale)", "info": "Appare solo se l'inventario è tracciato in Shopify e sotto la soglia. Mai inventato.", "default": true },
+    { "type": "range", "id": "low_stock_threshold", "min": 1, "max": 20, "step": 1, "label": "Soglia scorte basse", "default": 6 },
+    { "type": "header", "content": "Tendine sotto al prodotto" },
+    { "type": "paragraph", "content": "Le tendine si costruiscono da sole dalla descrizione del prodotto, divisa per argomento (Dettagli, Taglie, Cura, Personalizzazione). I campi qui sotto NON creano una tendina gemella: si aggiungono in fondo a quella giusta. Lasciali vuoti se la descrizione dice gia' tutto." },
+    { "type": "richtext", "id": "details_text", "label": "Da aggiungere a \"Dettagli & materiali\"", "info": "Compare in fondo alla tendina Dettagli, dopo quello che dice la descrizione. Per un singolo prodotto puoi usare il metafield custom.materiali, che ha la precedenza su questo campo." },
+    { "type": "richtext", "id": "size_guide", "label": "Da aggiungere a \"Taglie & come misurare\"", "info": "Deve spiegare COME misurare: le misure del singolo prodotto arrivano gia' dalla descrizione, nella stessa tendina.", "default": "<p><strong>Come misurare il collo</strong> (collari, bandane, guinzagli): fai passare un metro da sarta attorno al collo, all'altezza in cui poggia il collare. Tienilo aderente ma non stretto, tanto da poterci infilare due dita. Se la misura cade fra due taglie, prendi la più grande.</p><p>Se hai un dubbio scrivici razza e peso del tuo cane: ti diciamo noi quale prendere.</p>" },
+    { "type": "richtext", "id": "shipping_returns", "label": "Spedizione & resi", "default": "<p>Spedizione gratuita in Europa, senza minimo d'ordine. I tempi cambiano molto da prodotto a prodotto perche' cambiano le fabbriche: il tempo di questo prodotto e' scritto qui sopra, sotto il pulsante. Fuori dalla UE la spedizione si calcola al checkout. Quando l'ordine parte ricevi il codice di tracciamento via email.</p><p>Reso entro 30 giorni dalla consegna sui prodotti non personalizzati. Sui prodotti personalizzati il reso per ripensamento non è previsto (art. 59 Codice del Consumo), ma se arriva un pezzo difettoso o con un errore nostro lo rifacciamo noi.</p>" },
+    { "type": "textarea", "id": "compliance_note", "label": "Nota conformità (GPSR/Prop65)" },
+    { "type": "url", "id": "bis_action", "label": "Endpoint \"Avvisami\" (opzionale)", "info": "Lascia vuoto per la conferma a video. Per ricevere le email collega Shopify Forms o un servizio email (vedi guida)." },
+    { "type": "header", "content": "Spesso acquistati insieme" },
+    { "type": "checkbox", "id": "show_bundle", "label": "Mostra sezione bundle", "info": "Se non scegli prodotti qui sotto, Perla suggerisce automaticamente un abbinamento in base al tipo di prodotto (es. collare + medaglietta). Vedi snippets/perla-bundle-presets.liquid.", "default": false },
+    { "type": "text", "id": "bundle_heading", "label": "Titolo", "default": "Spesso acquistati insieme" },
+    { "type": "product_list", "id": "bundle_products", "label": "Prodotti abbinati (opzionale)", "info": "Scegli fino a 2 prodotti reali da abbinare a mano. Lascia vuoto per usare l'abbinamento automatico per tipo.", "limit": 2 }
+  ],
+  "blocks": [
+    { "type": "@app" }
+  ]
+}
+{% endschema %}

@@ -210,3 +210,91 @@ html {
     transition: none !important;
   }
 }
+
+/* 7 — Il pannello dei filtri esce dallo schermo del telefono.
+ *
+ * `.facet__panel` e' `position:absolute; left:0; min-width:220px` dentro
+ * `.facet`, che e' un chip largo un centinaio di pixel dentro una riga che va
+ * a capo. Sul terzo chip della riga il chip parte gia' a 290px: il pannello
+ * va da 290 a 510 su uno schermo da 390. Misurato, non dedotto.
+ *
+ * Oggi non si vede perche' `base.css` mette `overflow-x:hidden` sul body --
+ * ma quello nasconde il difetto, non lo toglie: su Safari iOS l'overflow
+ * nascosto sul body non sempre impedisce lo scorrimento (il body non e'
+ * l'elemento che scorre), e in ogni caso meta' del pannello resta tagliata.
+ *
+ * Sul telefono il pannello smette di galleggiare e scende sotto il suo chip,
+ * dentro la riga dei filtri. E' il modo normale in cui si aprono i filtri su
+ * un telefono, e non puo' sbordare da nessuna parte perche' non ha piu'
+ * nessuna posizione propria: sta nel flusso, dentro il contenitore di pagina.
+ * Da tablet in su resta esattamente com'era.
+ */
+@media (max-width: 749px) {
+  .facets {
+    width: 100%;
+  }
+
+  .facet {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* Aperto prende la riga tutta per se': cosi' i chip che seguono vanno sotto
+   * il pannello invece di finirgli accanto stretti a due lettere. */
+  .facet[open] {
+    flex: 1 1 100%;
+  }
+
+  .facet__panel {
+    position: static;
+    min-width: 0;
+    width: auto;
+    margin-top: .5rem;
+    box-shadow: none;
+  }
+}
+
+/* 8 — L'avviso sul recesso, in fondo al riquadro di personalizzazione.
+ *
+ * Lo mette perla-studio-ui.js (sezione 10): sui beni fatti su misura il
+ * recesso non si applica, ma solo se il cliente lo sa PRIMA di pagare.
+ * Scriverlo solo nella pagina Resi non basta -- nessuno la apre prima di
+ * comprare -- e senza quell'informazione l'esclusione non opera.
+ *
+ * Deliberatamente sottotono: nessun rosso, nessun bordo d'allarme. Non stiamo
+ * avvertendo di un pericolo, stiamo dicendo com'e' fatto il prodotto. Un
+ * riquadro giallo qui farebbe esitare chi stava comprando, e per una cosa che
+ * gioca a nostro favore: e' fatto apposta per lui.
+ */
+.photo-studio__note {
+  margin: .9rem 0 0;
+  padding-top: .8rem;
+  border-top: 1px solid var(--color-line);
+  font-family: var(--font-body);
+  font-size: .78rem;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--color-text) 78%, transparent);
+}
+
+/* ==========================================================================
+   ROUND 47 — il tempo di consegna di questo prodotto, sotto le rassicurazioni.
+   Sta qui e non in base.css per la ragione scritta in cima a questo file: le
+   regole nuove vanno dove vincono per ordine, senza riscrivere il foglio
+   grande. Deliberatamente sobrio: e' un'informazione, non una promozione --
+   su collare e guinzaglio dice "20-28 giorni" e gridarlo non aiuterebbe.
+   ========================================================================== */
+.product__consegna {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 0;
+  font-size: 0.92rem;
+  line-height: 1.35;
+  color: var(--color-text);
+}
+.product__consegna svg {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  color: var(--color-gold-deep);
+}

@@ -20,7 +20,7 @@
         "section_number": "",
         "eyebrow": "",
         "heading": "Il collare glielo disegni tu",
-        "text": "Carichi una foto o scegli un motivo, sistemi il nome dove vuoi, e stampiamo quel pezzo lì. Collari, bandane, medagliette, ciotole, cucce, tappetini, guinzagli.",
+        "text": "Carichi una foto o scegli un motivo, sistemi il nome  del tuo cucciolo dove vuoi, e noi lo prepariamo per te.",
         "button_label": "Vedi i prodotti",
         "button_link": "/collections/all",
         "button2_label": "Chi siamo",
@@ -39,7 +39,7 @@
         "m2": {
           "type": "item",
           "settings": {
-            "text": "Italia 4-8 giorni"
+            "text": "Tempi sulla scheda prodotto"
           }
         },
         "m3": {
@@ -88,8 +88,8 @@
           "type": "item",
           "settings": {
             "icon": "sparkle",
-            "title": "Italia in 4-8 giorni",
-            "text": "Europa e Stati Uniti in 5-12"
+            "title": "Ogni prodotto ha il suo tempo",
+            "text": "Scritto sulla scheda, prima di comprare"
           }
         },
         "t3": {
@@ -142,7 +142,7 @@
         "show_seal": true,
         "section_number": "",
         "eyebrow": "",
-        "heading": "Tutto è iniziato con Aron e Mia",
+        "heading": "tutto é iniziato con Aron e Mia",
         "pullquote": "Diciassette anni, due cani, un collare che non esisteva.",
         "text": "<p>Perla nasce da Emanuele e Nicola, diciassette anni, e dai loro due cani. Cercavano un collare che non fosse né di plastica né da novanta euro, e non lo trovavano.</p><p>Così hanno iniziato a disegnarli. Ogni pezzo passa prima da Aron e Mia: se non piace a loro, non arriva a te.</p>",
         "signature": "— Emanuele, Nicola, Aron & Mia",

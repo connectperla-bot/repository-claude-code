@@ -16,13 +16,42 @@
  * caso -- e si lascia intatto tutto il resto. Ogni altra fetch della pagina
  * passa senza essere toccata.
  *
- * LA PARTE CHE VA CONFERMATA
- * Shopify Inbox non e' ancora installato sul negozio, quindi il gancio per
- * aprirlo non ho potuto provarlo dal vivo: si tentano nell'ordine i modi noti
- * e, se nessuno risponde, si finisce sulla pagina contatti invece di lasciare
- * il cliente davanti a un pulsante che non fa niente. Appena Inbox e'
- * installato basta guardare quale dei tentativi va a segno e tenere solo
- * quello.
+ * COM'E' FATTA INBOX, LETTO NEL SUO SORGENTE
+ * Adesso Inbox e' installata, e il gancio non si tira piu' a indovinare.
+ * Arriva da cdn.shopify.com/storefront/web-components/chat.js: e' un web
+ * component con shadow DOM che dichiara due parti, `activator` (la bolla) e
+ * `dialog` (il pannello). La bolla e' un <button part="activator">.
+ *
+ * La versione precedente di questo file tentava per primo
+ * window.ShopifyChat.open(). Cercato nel sorgente del componente: ZERO
+ * occorrenze di ShopifyChat. Era un tentativo a vuoto, ed e' stato tolto.
+ *
+ * PERCHE' SI CERCA PER `part` E NON PER NOME DEL TAG
+ * Oggi l'elemento si chiama <shopify-chat> -- misurato sulla pagina, non
+ * dedotto -- ma il nome puo' cambiare domani senza che nessuno avvisi.
+ * `part="activator"` invece e' un contratto pubblico, esiste proprio per far
+ * stilare la bolla dall'esterno: e' la cosa piu' stabile a cui appendersi.
+ *
+ * MISURATO SULL'ELEMENTO VERO, NON SU UN FINTO
+ * La prima prova diceva "due bolle, non funziona". Il difetto stava nella
+ * prova: fingeva Inbox con un elemento inventato, mentre la pagina aveva gia'
+ * il vero <shopify-chat>, e questo file agganciava giustamente quello. Sulla
+ * cosa vera: una bolla sola, e dopo "Parla con una persona" si riaccende e si
+ * apre senza portare via dalla pagina.
+ *
+ * UNA BOLLA SOLA
+ * Il negozio ha gia' il suo assistente in basso a destra
+ * (.assistant { position:fixed; right:1rem; bottom:1rem; z-index:950 }), e
+ * Inbox si mette nello stesso angolo a z-index 2147483000: la copre. Due chat
+ * sovrapposte sono lo stesso difetto del tasto doppio a schermo intero.
+ * Qui la bolla di Inbox si spegne, e torna visibile solo quando il cliente
+ * chiede una persona: da quel momento e' lei la chat.
+ *
+ * SI SPEGNE, NON SI RIMUOVE
+ * opacity 0 e pointer-events none invece di display none: il componente resta
+ * disegnato e misurabile -- un web component nascosto mentre si inizializza
+ * puo' sbagliare i propri calcoli -- e i clic passano attraverso, quindi la
+ * bolla dell'assistente sotto resta premibile.
  */
 (function () {
   'use strict';
@@ -32,31 +61,61 @@
     return (a && a.getAttribute('href')) || '/pages/contact';
   }
 
-  // I tentativi, dal piu' pulito al piu' grossolano. Ognuno torna true se ha
-  // trovato qualcosa da aprire.
-  var TENTATIVI = [
-    function () {   // l'interfaccia che Inbox espone quando c'e'
-      if (window.ShopifyChat && typeof window.ShopifyChat.open === 'function') {
-        window.ShopifyChat.open();
-        return true;
-      }
-      return false;
-    },
-    function () {   // il pulsante dell'incorporamento, sotto i suoi vari nomi
-      var b = document.querySelector(
-        '#ShopifyChat button, [id^="ShopifyChat"] button, ' +
-        '.shopify-chat-launcher, [data-shopify-chat-launcher], ' +
-        'button[aria-label*="chat" i]'
-      );
-      if (b) { b.click(); return true; }
-      return false;
-    },
-  ];
+  // chat.js e' un modulo asincrono: il componente compare dopo di noi, e non
+  // sempre con una mutazione visibile fuori dal suo shadow root. Si guarda a
+  // intervalli, per mezzo minuto, e poi si smette: se dopo trenta secondi non
+  // c'e', non ci sara'.
+  var ATTESA_MS = 30000;
+  var OGNI_MS = 400;
+  var inbox = null;
+
+  function trovaInbox() {
+    if (inbox && document.contains(inbox.host)) return inbox;
+    inbox = null;
+    var nodi = document.querySelectorAll('*');
+    for (var i = 0; i < nodi.length; i++) {
+      var el = nodi[i];
+      // solo elementi personalizzati: il trattino nel nome e' la regola HTML
+      if (!el.shadowRoot || el.tagName.indexOf('-') === -1) continue;
+      var bolla = el.shadowRoot.querySelector('[part~="activator"]');
+      if (bolla) { inbox = { host: el, bolla: bolla }; return inbox; }
+    }
+    return null;
+  }
+
+  function spegniBolla() {
+    var t = trovaInbox();
+    if (!t) return false;
+    if (t.host.getAttribute('data-perla-inbox') !== 'spenta') {
+      t.host.setAttribute('data-perla-inbox', 'spenta');
+      t.host.style.opacity = '0';
+      t.host.style.pointerEvents = 'none';
+    }
+    return true;
+  }
+
+  function accendiBolla(t) {
+    t.host.setAttribute('data-perla-inbox', 'accesa');
+    t.host.style.opacity = '';
+    t.host.style.pointerEvents = '';
+  }
+
+  function sorvegliaBolla() {
+    if (spegniBolla()) return;
+    var scade = Date.now() + ATTESA_MS;
+    var battito = setInterval(function () {
+      if (spegniBolla() || Date.now() > scade) clearInterval(battito);
+    }, OGNI_MS);
+  }
 
   function apriInbox() {
-    for (var i = 0; i < TENTATIVI.length; i++) {
-      try { if (TENTATIVI[i]()) return true; } catch (e) { /* si prova il prossimo */ }
+    var t = trovaInbox();
+    if (t) {
+      accendiBolla(t);
+      try { t.bolla.click(); return true; } catch (e) { /* si scende ai contatti */ }
     }
+    // Nessuna chat raggiungibile: meglio la pagina contatti che un pulsante
+    // che non fa niente.
     window.location.href = contatti();
     return false;
   }
@@ -119,6 +178,7 @@
     if (!document.querySelector('[data-assistant]')) return;
     aggiungiCollegamento();
     ascolta();
+    sorvegliaBolla();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', avvia);
