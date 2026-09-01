@@ -242,6 +242,67 @@ def test_si_legge_su_qualunque_fondo():
             % (nome, max(scarti), marchio.CONTRASTO_MINIMO))
 
 
+def test_si_legge_anche_sul_tessuto_a_righe():
+    """Il difetto che ROUND 48 chiude, trovato sulla bandana "Marinara".
+
+    Fin qui l'inchiostro si sceglieva da UNA media per tutto il riquadro. Su un
+    tessuto a righe crema e blu quella media sta a meta' strada e non descrive
+    nessuna delle due: misurato sul file vero, la scritta veniva incupita come
+    su un fondo chiaro e dove cadeva sul blu lo stacco scendeva a 42, sotto i
+    60 che marchio.py dichiara come minimo.
+
+    Qui si ricostruisce quel tessuto e si misura lo stacco COLONNA PER COLONNA,
+    non in media: la media era esattamente il modo di non vedere il difetto.
+    """
+    crema, blu = (238, 232, 220), (22, 32, 64)
+    larghezza, altezza = 1400, 1500
+    righe = Image.new('RGB', (larghezza, altezza), crema)
+    for x in range(larghezza):
+        # righe larghe un dito, come sulla Marinara
+        if (x // 90) % 2:
+            for y in range(altezza):
+                righe.putpixel((x, y), blu)
+
+    finito, box = marchio.componi(righe, 'medaglietta')
+    assert box, 'nessun riquadro disegnato'
+    x, y, largo, alto = box[0]
+    largo, alto = round(largo), round(alto)
+    ritaglio = finito.convert('RGB').crop((round(x), round(y),
+                                           round(x) + largo, round(y) + alto))
+    sotto = righe.crop((round(x), round(y), round(x) + largo, round(y) + alto))
+
+    # SI GUARDANO I PIXEL DELL'INCHIOSTRO SCURO, cioe' "Italia": sono quelli
+    # che spariscono su una riga blu se nessuno li schiarisce. Prendere invece
+    # il massimo su una colonna intera risponderebbe a "qualcosa qui stacca?",
+    # e l'oro del medaglione risponderebbe sempre di si' coprendo la scritta:
+    # e' proprio cosi' che il difetto era passato inosservato.
+    logo = marchio._marchio().resize((largo, alto), Image.LANCZOS)
+    grigio = list(logo.convert('L').getdata())
+    alfa = list(logo.getchannel('A').getdata())
+    inchiostro = [i for i in range(len(alfa))
+                  if alfa[i] > 200 and grigio[i] < marchio.SOGLIA_INCHIOSTRO]
+    assert inchiostro, 'nessun pixel di inchiostro scuro nel marchio: prova inutile'
+
+    stampato = list(ritaglio.getdata())
+    tessuto_sotto = list(sotto.getdata())
+
+    # Separati per riga: sulla crema e sulla blu la risposta giusta e' diversa,
+    # e mescolarle rifarebbe l'errore della media unica.
+    per_riga = {'chiara': [], 'scura': []}
+    for i in inchiostro:
+        luce_fondo = marchio._luminosita(tessuto_sotto[i])
+        stacco = abs(marchio._luminosita(stampato[i]) - luce_fondo)
+        per_riga['scura' if luce_fondo < 128 else 'chiara'].append(stacco)
+
+    for nome, stacchi in per_riga.items():
+        assert stacchi, 'il marchio non tocca nessuna riga %s: prova inutile' % nome
+        stacchi.sort()
+        mediano = stacchi[len(stacchi) // 2]
+        assert mediano >= marchio.CONTRASTO_MINIMO, (
+            'sulla riga %s la scritta non si legge: stacco mediano %.0f, ne '
+            'servono %d' % (nome, mediano, marchio.CONTRASTO_MINIMO))
+
+
 def main():
     print('Dove va messo e dove no')
     prova('non si aggiunge ai motivi che lo contengono gia\'', test_non_si_aggiunge_dove_ce_gia)
@@ -261,6 +322,7 @@ def main():
           test_niente_cartella_dietro_al_marchio)
     prova('l\'inchiostro si adatta al fondo', test_l_inchiostro_si_adatta_al_fondo)
     prova('si legge su qualunque fondo', test_si_legge_su_qualunque_fondo)
+    prova('si legge anche sul tessuto a righe', test_si_legge_anche_sul_tessuto_a_righe)
 
     print('\n%d verifiche superate.' % passati +
           (' %d FALLITE.' % falliti if falliti else ''))

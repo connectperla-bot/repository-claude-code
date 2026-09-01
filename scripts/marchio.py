@@ -45,7 +45,7 @@ capo il difetto che questo modulo esiste per togliere.
 """
 import os
 
-from PIL import Image, ImageStat
+from PIL import Image, ImageChops, ImageFilter
 
 QUI = os.path.dirname(os.path.abspath(__file__))
 RADICE = os.path.dirname(QUI)
@@ -327,18 +327,85 @@ SOGLIA_INCHIOSTRO = 100
 # Un pixel del marchio con alfa sotto questa soglia lascia vedere il tessuto:
 # sono quelli che presente() usa per capire su che fondo sta guardando.
 ALFA_TRASPARENTE = 20
+# Lato corto della mappa del fondo, in pixel. Vedi _mappa_fondo().
+MAPPA_FONDO = 48
 
 
 def _luminosita(rgb):
+    """La luminosita' percepita di un colore. La usano i test per misurare lo
+    stacco fra inchiostro e tessuto invece di giudicarlo a occhio."""
     return 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]
 
 
-def _fondo_medio(base, riquadro):
-    """La luminosita' media del tessuto sotto il riquadro del marchio."""
-    s, a, largo, alto = riquadro
-    ritaglio = base.convert("RGB").crop(
-        (round(s), round(a), round(s) + round(largo), round(a) + round(alto)))
-    return _luminosita(ImageStat.Stat(ritaglio).mean)
+def _mappa_fondo(ritaglio, vista=None):
+    """La luminosita' del tessuto sotto il marchio, PUNTO PER PUNTO.
+
+    PERCHE' NON BASTA LA MEDIA
+    Fino a ROUND 48 qui c'era _fondo_medio(): un numero solo per tutto il
+    riquadro. Su un tessuto uniforme e' giusto; su uno a righe e' un numero che
+    non descrive nessuna delle due.
+
+    Misurato sulla bandana "Marinara", che ha righe crema e blu larghe un dito:
+    il marchio ci cade a cavallo, la media finiva a meta' strada, e la scritta
+    "Italia" veniva incupita come su un fondo chiaro. Dove pero' cadeva sul
+    blu, lo stacco scendeva a 42,5 -- sotto i 60 che questo stesso file
+    dichiara come minimo, in tre colonne su tredici. La cartella crema di prima
+    nascondeva il difetto dando al marchio un fondo tutto suo; toltala, e'
+    venuto fuori.
+
+    QUANTO GROSSOLANA
+    Il marchio deve seguire le FASCE del tessuto, non i singoli fili: una mappa
+    a 48 px sul lato corto, sfocata e poi riportata alla misura del marchio, fa
+    esattamente questo. Seguire ogni filo darebbe un inchiostro che cambia
+    dentro la stessa lettera, che si legge peggio di uno sbagliato.
+
+    LA MASCHERA
+    In componi() il tessuto e' tutto in vista e non serve. In presente() no: li
+    il marchio e' gia' posato e copre proprio quello che vorremmo misurare.
+    Allora si guarda solo dove il marchio e' trasparente (`vista`) e si lascia
+    che le zone coperte prendano il colore del tessuto che le circonda -- e'
+    una media pesata locale, la stessa cosa che fa una sfocatura, ma contando
+    solo i pixel che sono davvero tessuto.
+    """
+    w, h = ritaglio.size
+    lato = max(1, min(MAPPA_FONDO, min(w, h)))
+    corto = float(min(w, h))
+    piccolo = (max(1, round(w * lato / corto)), max(1, round(h * lato / corto)))
+    grigio = ritaglio.convert("L")
+
+    if vista is None:
+        mappa = grigio.resize(piccolo, Image.BOX)
+    else:
+        # visto/peso: la somma del tessuto visibile diviso quanto ce n'era.
+        visto = ImageChops.multiply(grigio, vista).resize(piccolo, Image.BOX)
+        peso = vista.resize(piccolo, Image.BOX)
+        v, p = list(visto.getdata()), list(peso.getdata())
+        noti = [255.0 * v[i] / p[i] for i in range(len(p)) if p[i]]
+        # Se una cella non ha nemmeno un pixel di tessuto in vista, prende la
+        # media di quelle che ce l'hanno: meglio del nero, che direbbe "fondo
+        # scurissimo" e schiarirebbe l'inchiostro senza motivo.
+        media = sum(noti) / len(noti) if noti else 128.0
+        mappa = Image.new("L", piccolo)
+        mappa.putdata([min(255, int(255.0 * v[i] / p[i])) if p[i] else int(media)
+                       for i in range(len(p))])
+
+    mappa = mappa.filter(ImageFilter.GaussianBlur(1.2))
+    return mappa.resize(ritaglio.size, Image.BICUBIC)
+
+
+def _rampa(fondo, soglia, morbidezza=30):
+    """Maschera: 255 dove il fondo sta sotto soglia, 0 sopra, sfumata in mezzo.
+
+    Sfumata e non a gradino per la stessa ragione per cui la forza del crema e'
+    sfumata: su una riga di tessuto il passaggio da un inchiostro all'altro
+    deve avvenire lungo qualche pixel, se no si vede la cucitura fra le due
+    versioni del marchio.
+    """
+    mezzo = morbidezza / 2.0
+    return fondo.point(
+        lambda v: 255 if v <= soglia - mezzo
+        else 0 if v >= soglia + mezzo
+        else int(255 * (soglia + mezzo - v) / float(morbidezza)))
 
 
 def _adatta(pezzo, fondo):
@@ -371,25 +438,45 @@ def _adatta(pezzo, fondo):
 
     Non e' una scelta stilistica travestita: le due soglie inseguono le due
     sparizioni documentate sopra, una per ciascuna.
+
+    ROUND 48 -- LA REGOLA VALE PUNTO PER PUNTO
+    `fondo` non e' piu' un numero ma una mappa (vedi _mappa_fondo): su un
+    tessuto a righe le due versioni del marchio si costruiscono tutte e due e
+    si mescolano seguendo il tessuto, invece di sceglierne una sola per tutto
+    il riquadro in base a una media che non descrive nessuna delle due righe.
+    Su un fondo uniforme la mappa e' piatta e il risultato e' identico a prima.
     """
+    # Un fondo uniforme E' una mappa piatta: si accetta anche come numero,
+    # perche' e' cosi' che si ragiona quando si prova una regola sola alla
+    # volta ("il marchio su un antracite a 40") e obbligare a costruire
+    # un'immagine per dirlo renderebbe il codice di prova meno leggibile del
+    # codice provato.
+    if not hasattr(fondo, "point"):
+        fondo = Image.new("L", pezzo.size, int(fondo))
+
     grigio = pezzo.convert("L")
     rgb = pezzo.convert("RGB")
 
-    if fondo < FONDO_SCURO:
-        # Quanto ogni pixel e' "scuro", da 0 a 255: e' la forza con cui viene
-        # tirato verso il crema. Sfumato e non a gradino, se no il bordo
-        # antialiasato delle lettere si stacca come un ritaglio di carta.
-        forza = grigio.point(
-            lambda v: int(255 * (1.0 - v / float(SOGLIA_INCHIOSTRO)))
-            if v < SOGLIA_INCHIOSTRO else 0)
-        rgb = Image.composite(Image.new("RGB", pezzo.size, CREMA), rgb, forza)
-    else:
-        k = CUPEZZA_CHIARO if fondo >= FONDO_CHIARISSIMO else CUPEZZA_MEDIO
-        cupo = rgb.point(lambda v: int(v * k))
-        # solo sull'inchiostro chiaro: il quasi-nero non va incupito ancora
-        chiaro = grigio.point(lambda v: 255 if v >= SOGLIA_INCHIOSTRO else 0)
-        rgb = Image.composite(cupo, rgb, chiaro)
+    # LA VERSIONE PER IL BUIO: l'inchiostro quasi nero tirato verso il crema.
+    # Quanto ogni pixel e' "scuro", da 0 a 255, e' la forza con cui viene
+    # tirato. Sfumata e non a gradino, se no il bordo antialiasato delle
+    # lettere si stacca come un ritaglio di carta.
+    forza = grigio.point(
+        lambda v: int(255 * (1.0 - v / float(SOGLIA_INCHIOSTRO)))
+        if v < SOGLIA_INCHIOSTRO else 0)
+    su_scuro = Image.composite(Image.new("RGB", pezzo.size, CREMA), rgb, forza)
 
+    # LA VERSIONE PER IL CHIARO: l'oro incupito, il quasi-nero lasciato stare.
+    chiaro = grigio.point(lambda v: 255 if v >= SOGLIA_INCHIOSTRO else 0)
+    cupo_medio = Image.composite(
+        rgb.point(lambda v: int(v * CUPEZZA_MEDIO)), rgb, chiaro)
+    cupo_chiaro = Image.composite(
+        rgb.point(lambda v: int(v * CUPEZZA_CHIARO)), rgb, chiaro)
+    # _rampa da' 255 SOTTO la soglia: sotto FONDO_CHIARISSIMO vale il medio.
+    su_chiaro = Image.composite(cupo_medio, cupo_chiaro,
+                                _rampa(fondo, FONDO_CHIARISSIMO))
+
+    rgb = Image.composite(su_scuro, su_chiaro, _rampa(fondo, FONDO_SCURO))
     fuori = rgb.convert("RGBA")
     fuori.putalpha(pezzo.getchannel("A"))
     return fuori
@@ -414,7 +501,9 @@ def componi(immagine, tipo, percorso_marchio=None):
         # proprio dove conta. E si misura riquadro per riquadro, non una volta
         # sola: sul collare il marchio si ripete otto volte lungo la fettuccia
         # e il motivo sotto cambia da un capo all'altro.
-        pezzo = _adatta(pezzo, _fondo_medio(base, (s, a, largo, alto)))
+        sotto = base.convert("RGB").crop(
+            (round(s), round(a), round(s) + largo, round(a) + alto))
+        pezzo = _adatta(pezzo, _mappa_fondo(sotto))
         base.alpha_composite(pezzo, (round(s), round(a)))
 
     return base.convert("RGB"), box
@@ -444,8 +533,7 @@ def presente(immagine, box, percorso_marchio=None, soglia=18.0):
         alfa = pezzo.getchannel("A")
         vista = alfa.point(lambda v: 255 if v < ALFA_TRASPARENTE else 0)
         if vista.getbbox():
-            fondo = _luminosita(ImageStat.Stat(ritaglio, mask=vista).mean)
-            pezzo = _adatta(pezzo, fondo)
+            pezzo = _adatta(pezzo, _mappa_fondo(ritaglio, vista))
         # dove il marchio e' opaco, il file finito deve somigliare al marchio
         maschera = alfa.point(lambda v: 255 if v > 200 else 0)
         if not maschera.getbbox():
