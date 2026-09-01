@@ -139,7 +139,11 @@ app.disable('x-powered-by');
 
 app.use(function (req, res, next) {
   res.header('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
-  res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  // GET c'e' perche' due rotte lo sono: /pattern-source e /health. Finora
+  // funzionavano lo stesso -- una GET semplice non fa il preflight, quindi
+  // nessuno leggeva questa riga -- ma dichiarare meno di quello che si accetta
+  // e' un modo di mentire al browser che prima o poi presenta il conto.
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
   // ROUND 40 -- intestazioni di sicurezza.
   //   nosniff      il browser non prova a indovinare il tipo di un file: senza,
@@ -191,6 +195,30 @@ function limitePerIp(req, res, next) {
   }
   next();
 }
+
+// ROUND 48 -- LA SVEGLIA.
+//
+// Su Render il piano gratuito spegne il servizio dopo ~15 minuti di silenzio,
+// e la prima richiesta che arriva dopo deve aspettare che riparta: misurato,
+// 24,0 secondi a freddo contro 0,52 a caldo. Quei 24 secondi cadevano proprio
+// addosso alla prima composizione del design, ed e' li' che il cliente si
+// vedeva tornare la personalizzazione sbagliata (vedi il commento in testa a
+// assets/perla-editor-sveglia.js per la catena completa).
+//
+// Questa rotta esiste per essere chiamata PRIMA, appena il cliente tocca la
+// pagina di un prodotto personalizzabile: risponde e basta, cosi' quando poi
+// preme "+ Testo" il servizio e' gia' in piedi.
+//
+// FUORI DAL LIMITATORE, DI PROPOSITO
+// limitePerIp protegge le rotte che spendono soldi veri: /upload carica su
+// Cloudinary, /generate-mockup crea un prodotto su Printify. Questa non spende
+// niente -- non tocca la rete, non legge il disco, non alloca. Tenerla dentro
+// il limite avrebbe l'effetto opposto a quello che serve: il cliente che ha
+// gia' fatto venti richieste si vedrebbe negare proprio la sveglia, cioe'
+// quella che gli evita l'attesa.
+app.get('/health', function (req, res) {
+  res.json({ ok: true });
+});
 
 app.post('/upload', limitePerIp, upload.single('photo'), async function (req, res) {
   if (!req.file) {

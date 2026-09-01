@@ -50,3 +50,22 @@
   hook data-* che esistono gia', nessuna riga di global.js toccata.
 {%- endcomment -%}
 <script src="{{ 'perla-guardia-carrello.js' | asset_url }}" defer></script>
+
+{%- comment -%}
+  ROUND 48 — LA SVEGLIA DELL'EDITOR, E LO SCHERMO INTERO SUL TELEFONO.
+
+  Stesso punto e stessa ragione della guardia qui sopra: serve su ogni pagina
+  che possa avere un editor, e questo e' il file piu' piccolo gia' reso
+  ovunque. Si spegne da solo dove [data-photo-customizer] non c'e'.
+
+  Cosa fa: chiama <servizio>/health al primo tocco su una pagina prodotto,
+  cosi' il servizio di composizione — che sul piano gratuito di Render si
+  spegne dopo un quarto d'ora — e' gia' in piedi quando il cliente preme
+  «+ Testo», invece di farsi aspettare ventiquattro secondi e restituire il
+  disegno sbagliato. E a schermo intero tiene ferma la pagina dietro e fa
+  funzionare il pizzico per ingrandire.
+
+  Cosa NON fa, ed e' scritto dentro il file: la guardia `composing` che
+  scrive il primo risultato anche quando e' vecchio sta in global.js.
+{%- endcomment -%}
+<script src="{{ 'perla-editor-sveglia.js' | asset_url }}" defer></script>
