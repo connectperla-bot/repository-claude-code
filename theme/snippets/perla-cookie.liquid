@@ -1,0 +1,269 @@
+{%- comment -%}
+  Perla — il banner dei cookie, nei colori del negozio.
+
+  PERCHE' NON QUELLO DI SHOPIFY
+  Quello nativo si accende in due clic ma resta grigio di sistema, e sarebbe
+  l'unico rettangolo del sito a non parlare la lingua del marchio. Qui i colori
+  sono quelli veri del tema (crema #F3E9DA, filetto #E8DCC9, navy #132A4A,
+  oro #C8862B), presi dalle variabili del tema con un ripiego scritto a mano
+  nel caso il banner venga reso dove quelle variabili non arrivano.
+
+  ACCETTA E RIFIUTA HANNO LO STESSO PESO
+  Non e' un vezzo grafico: un "rifiuta" piu' smorto dell'"accetta" e' proprio
+  cio' che i garanti europei contestano, ed e' il difetto piu' comune dei
+  banner fatti in fretta. Qui uno e' pieno e l'altro e' contornato, stessa
+  dimensione, stessa riga, stesso carattere.
+
+  IL COMPORTAMENTO STA ALTROVE
+  assets/perla-cookie.js: quando mostrarsi, cosa mandare a
+  setTrackingConsent(), e la guardia che fa tacere questa barra se in pagina
+  c'e' anche quella nativa di Shopify. Qui dentro non c'e' logica, solo il
+  documento -- cosi' la barra esiste gia' nell'HTML servito e non c'e' un
+  lampo di pagina senza banner mentre il JavaScript arriva.
+
+  DOVE SI RIAPRE
+  Il collegamento [data-perla-cookie-apri] sta nella pagina Cookie Policy: il
+  consenso si deve poter ritirare con la stessa facilita' con cui e' stato
+  dato. Metterne uno anche nel piede e' un piu', non un obbligo.
+{%- endcomment -%}
+
+<style>
+  .perla-ck,
+  .perla-ck *,
+  .perla-ck *::before,
+  .perla-ck *::after { box-sizing: border-box; }
+  .perla-ck [hidden] { display: none !important; }
+
+  .perla-ck {
+    --ck-crema: #F3E9DA;
+    --ck-avorio: #FCFAF6;
+    --ck-filetto: #E8DCC9;
+    --ck-navy: #132A4A;
+    --ck-testo: #22324A;
+    --ck-oro: #C8862B;
+    --ck-titolo: var(--font-heading, "Marcellus", "Times New Roman", Georgia, serif);
+    --ck-corpo: var(--font-body, "Jost", system-ui, -apple-system, "Segoe UI", sans-serif);
+    /* Sopra la chat e sopra il velo di caricamento: una barra di consenso che
+       finisce dietro a un altro elemento e' una barra che non c'e'. */
+    position: fixed;
+    z-index: 2147483000;
+    inset: auto 0 0 0;
+    font-family: var(--ck-corpo);
+    color: var(--ck-testo);
+  }
+
+  /* ---- la barra ---------------------------------------------------------- */
+
+  .perla-ck__barra {
+    background: var(--ck-crema);
+    border-top: 1px solid var(--ck-filetto);
+    box-shadow: 0 -8px 28px rgba(19, 42, 74, .10);
+    padding: 18px 20px calc(18px + env(safe-area-inset-bottom, 0px));
+  }
+  .perla-ck__dentro {
+    max-width: 1120px;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px 28px;
+  }
+  .perla-ck__parole { flex: 1 1 340px; min-width: 0; }
+  .perla-ck__titolo {
+    font-family: var(--ck-titolo);
+    font-weight: 400;
+    color: var(--ck-navy);
+    font-size: 1.15rem;
+    line-height: 1.25;
+    margin: 0 0 4px;
+  }
+  .perla-ck__testo {
+    margin: 0;
+    font-size: .9rem;
+    line-height: 1.5;
+    max-width: 62ch;
+  }
+  .perla-ck__testo a { color: var(--ck-navy); text-underline-offset: 3px; }
+
+  /* ---- i bottoni --------------------------------------------------------- */
+
+  .perla-ck__scelte {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+  }
+  .perla-ck__btn {
+    font-family: var(--ck-corpo);
+    font-size: .82rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    line-height: 1;
+    padding: 13px 22px;
+    border-radius: 2px;
+    border: 1px solid var(--ck-navy);
+    cursor: pointer;
+    transition: background-color .18s ease, color .18s ease;
+  }
+  .perla-ck__btn--si { background: var(--ck-navy); color: var(--ck-crema); }
+  .perla-ck__btn--si:hover { background: #0F2240; }
+  .perla-ck__btn--no { background: transparent; color: var(--ck-navy); }
+  .perla-ck__btn--no:hover { background: rgba(19, 42, 74, .07); }
+  .perla-ck__btn--terzo {
+    background: none;
+    border: 0;
+    padding: 13px 6px;
+    color: var(--ck-oro);
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: .88rem;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .perla-ck :focus-visible {
+    outline: 2px solid var(--ck-oro);
+    outline-offset: 2px;
+  }
+
+  /* ---- il pannello delle preferenze -------------------------------------- */
+
+  .perla-ck__velo {
+    position: fixed;
+    inset: 0;
+    background: rgba(19, 42, 74, .38);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 16px;
+  }
+  .perla-ck__foglio {
+    background: var(--ck-avorio);
+    border: 1px solid var(--ck-filetto);
+    border-radius: 3px;
+    box-shadow: 0 18px 48px rgba(19, 42, 74, .22);
+    width: min(620px, 100%);
+    max-height: min(80vh, 720px);
+    overflow-y: auto;
+    padding: 26px 26px calc(20px + env(safe-area-inset-bottom, 0px));
+  }
+  .perla-ck__testa {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 14px;
+  }
+  .perla-ck__testa h2 {
+    font-family: var(--ck-titolo);
+    font-weight: 400;
+    color: var(--ck-navy);
+    font-size: 1.4rem;
+    margin: 0;
+  }
+  .perla-ck__x {
+    background: none;
+    border: 0;
+    cursor: pointer;
+    color: var(--ck-testo);
+    font-size: 1.5rem;
+    line-height: 1;
+    padding: 4px 8px;
+  }
+  .perla-ck__riga {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 14px;
+    padding: 16px 0;
+    border-top: 1px solid var(--ck-filetto);
+  }
+  .perla-ck__riga input { margin: 3px 0 0; width: 18px; height: 18px; accent-color: var(--ck-navy); }
+  .perla-ck__riga b { font-weight: 600; color: var(--ck-navy); font-size: .95rem; }
+  .perla-ck__riga span { grid-column: 2; font-size: .86rem; line-height: 1.5; }
+  .perla-ck__riga--fissa input { opacity: .55; }
+  .perla-ck__chiusa {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-top: 18px;
+    border-top: 1px solid var(--ck-filetto);
+  }
+
+  @media (max-width: 749px) {
+    .perla-ck__dentro { flex-direction: column; align-items: stretch; }
+    .perla-ck__scelte { flex-direction: column; align-items: stretch; }
+    .perla-ck__btn { width: 100%; padding: 15px 22px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .perla-ck__btn { transition: none; }
+  }
+</style>
+
+<div class="perla-ck" data-perla-cookie hidden>
+
+  <div class="perla-ck__barra" data-perla-cookie-barra role="region"
+       aria-label="Consenso ai cookie" hidden>
+    <div class="perla-ck__dentro">
+      <div class="perla-ck__parole">
+        <p class="perla-ck__titolo">Due parole sui cookie</p>
+        <p class="perla-ck__testo">
+          Alcuni cookie servono a far funzionare il negozio: il carrello, la
+          lingua, il disegno che stai preparando. Gli altri — quelli che ci
+          dicono come stai usando il sito — li accendiamo solo se ci dici di
+          sì. Puoi cambiare idea quando vuoi.
+          <a href="/pages/cookie-policy">Leggi la Cookie Policy</a>
+        </p>
+      </div>
+      <div class="perla-ck__scelte">
+        <button type="button" class="perla-ck__btn perla-ck__btn--si" data-cookie="accetta">Accetta</button>
+        <button type="button" class="perla-ck__btn perla-ck__btn--no" data-cookie="rifiuta">Rifiuta</button>
+        <button type="button" class="perla-ck__btn perla-ck__btn--terzo" data-cookie="preferenze">Preferenze</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="perla-ck__velo" data-perla-cookie-pannello role="dialog" aria-modal="true"
+       aria-labelledby="perla-ck-titolo" hidden>
+    <div class="perla-ck__foglio">
+      <div class="perla-ck__testa">
+        <h2 id="perla-ck-titolo">Scegli tu</h2>
+        <button type="button" class="perla-ck__x" data-cookie="chiudi" aria-label="Chiudi">&times;</button>
+      </div>
+
+      <div class="perla-ck__riga perla-ck__riga--fissa">
+        <input type="checkbox" checked disabled aria-label="Necessari, sempre attivi">
+        <b>Necessari</b>
+        <span>
+          Carrello, lingua, sicurezza e il disegno che stai preparando nello
+          studio. Senza questi il negozio non funziona, quindi restano sempre
+          accesi.
+        </span>
+      </div>
+
+      <div class="perla-ck__riga">
+        <input type="checkbox" id="perla-ck-analisi" data-cookie-segnale="analytics">
+        <b><label for="perla-ck-analisi">Analisi</label></b>
+        <span>
+          Ci dicono quali pagine funzionano e dove ci si perde. Servono a
+          migliorare il negozio, non a riconoscerti.
+        </span>
+      </div>
+
+      <div class="perla-ck__riga">
+        <input type="checkbox" id="perla-ck-marketing" data-cookie-segnale="marketing">
+        <b><label for="perla-ck-marketing">Marketing</label></b>
+        <span>
+          Permettono di mostrarti i nostri prodotti su Facebook e Instagram, e
+          di capire se un annuncio è servito a qualcosa.
+        </span>
+      </div>
+
+      <div class="perla-ck__chiusa">
+        <button type="button" class="perla-ck__btn perla-ck__btn--si" data-cookie="salva">Salva le mie scelte</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="{{ 'perla-cookie.js' | asset_url }}" defer></script>

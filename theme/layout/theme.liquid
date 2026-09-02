@@ -464,6 +464,18 @@
     <script>document.addEventListener('DOMContentLoaded',function(){window.PerlaMotionInit&&window.PerlaMotionInit();window.PerlaPearlsInit&&window.PerlaPearlsInit();});</script>
 
     {%- comment -%}
+      ROUND 49 -- prima si chiede, poi si misura, e in quest'ordine.
+      Il banner del consenso: fino a ieri non c'era proprio, e siccome
+      perla-analytics tiene tutto dietro analyticsProcessingAllowed(), nessuno
+      poteva dire di si' e la misurazione era zero per costruzione. I due
+      snippet non si parlano direttamente: perla-cookie chiama
+      setTrackingConsent, Shopify emette visitorConsentCollected, e
+      perla-analytics -- che quell'evento lo ascolta gia' -- parte da solo,
+      senza ricaricare la pagina.
+    {%- endcomment -%}
+    {% render 'perla-cookie' %}
+
+    {%- comment -%}
       Clarity, Google Analytics e il pixel di Meta: tutti e tre col consenso,
       tutti e tre spenti finche' il relativo ID non e' compilato in
       Impostazioni tema -> Marketing e Analytics.

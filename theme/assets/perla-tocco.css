@@ -298,3 +298,53 @@ html {
   height: 18px;
   color: var(--color-gold-deep);
 }
+
+/* ==========================================================================
+   ROUND 49 — Judge.me nei colori del negozio.
+
+   Judge.me arriva con un verde-acqua #108474 che nella tavolozza di Perla non
+   esiste: stelle, barre dell'istogramma, nome di chi scrive, bottone "Scrivi
+   una recensione". E' l'unico blocco della scheda prodotto che parla un'altra
+   lingua cromatica, e si vede.
+
+   DOVE STANNO I COLORI VERI, misurato leggendo la vetrina viva. Judge.me
+   dichiara le sue variabili su :root dentro <style class='jdgm-settings-style'>,
+   e tre colori li scrive a mano fuori dalle variabili. Quindi qui servono
+   tutti e due i modi: le variabili ridefinite su :root e le tre regole
+   letterali riscritte. L'!important non e' pigrizia — quel <style> viene
+   iniettato dall'app e non c'e' modo di garantire che arrivi prima di questo
+   foglio; senza, il risultato dipenderebbe dall'ordine di caricamento, cioe'
+   dal caso.
+
+   IL POSTO PULITO E' DENTRO L'APP: Judge.me > Settings > Widget appearance.
+   Cambiarlo li' toglie il bisogno di queste righe, che restano innocue.
+   ========================================================================== */
+:root {
+  --jdgm-primary-color: #C8862B !important;
+  --jdgm-secondary-color: rgba(200, 134, 43, 0.12) !important;
+  --jdgm-star-color: #C8862B !important;
+  --jdgm-write-review-bg-color: #132A4A !important;
+  --jdgm-write-review-text-color: #F3E9DA !important;
+  --jdgm-paginate-color: #132A4A !important;
+  --jdgm-reviewer-name-color: #132A4A !important;
+}
+
+/* Il widget "snippet" tiene le sue variabili su di se', non su :root: una
+   ridefinizione su :root non lo raggiungerebbe mai. */
+.jdgm-review-snippet-widget {
+  --jdgm-snippet-star-color: #C8862B !important;
+}
+
+/* I tre colori scritti a mano da Judge.me, fuori dalle variabili. */
+.jdgm-histogram__bar-content {
+  background-color: #C8862B !important;
+}
+.jdgm-rev[data-verified-buyer='true'] .jdgm-rev__icon.jdgm-rev__icon:after,
+.jdgm-rev__buyer-badge.jdgm-rev__buyer-badge {
+  color: #F3E9DA !important;
+  background-color: #132A4A !important;
+}
+.jdgm-review-snippet-widget .jdgm-rev-snippet-widget__cards-container
+  .jdgm-rev-snippet-card__rev-rating .jdgm-star {
+  color: #C8862B !important;
+}
