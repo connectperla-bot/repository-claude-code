@@ -13,7 +13,11 @@ nei numeri che c'erano prima:
   * la toppa che copre la firma nativa veniva presa a un periodo troppo corto
     e conteneva ancora tre quarti del medaglione;
   * il riquadro da coprire era quello del MODELLO e non quello della firma
-    stampata, e restava fuori una falce d'oro.
+    stampata, e restava fuori una falce d'oro;
+  * la fascia della ciotola veniva tagliata alla larghezza dell'area come se
+    fosse piatta, mentre fa il GIRO del cilindro: l'ultima colonna toccava la
+    prima e il disegno si spezzava li'. Segnalato dalla titolare sulla ciotola
+    "Barocco".
 """
 import os
 import sys
@@ -259,6 +263,165 @@ def gli_otto_nativi_con_la_firma_sono_dichiarati():
         assert marchio.serve(n), "%s ha una firma da rifare, quindi serve()" % n
 
 
+def _giri(im, quante=2):
+    """L'immagine ripetuta di fila: e' come girare la ciotola in mano.
+
+    Serve perche' le giunzioni si guardino nel MEZZO, dove non ci sono bordi
+    che confondono la lettura delle barre.
+    """
+    w, h = im.size
+    fuori = Image.new("RGB", (w * quante, h))
+    for i in range(quante):
+        fuori.paste(im, (i * w, 0))
+    return fuori
+
+
+def _passi(im):
+    """Le distanze fra una barra e la successiva, girando."""
+    c = centri(_giri(im))
+    dentro = [x for x in c if im.width * 0.2 < x < im.width * 1.8]
+    return [b - a for a, b in zip(dentro, dentro[1:])]
+
+
+# La ciotola: 1000 px di larghezza e un motivo che si ripete ogni 137 -- ce ne
+# stanno 7,30, come sulla Barocco vera ce ne stanno 3,73.
+LARGA, PASSO = 1000, 137
+
+
+def il_giro_spezzato_si_vede_nella_misura():
+    """Il difetto segnalato, sul motivo finto: la misura deve coglierlo.
+
+    Vale come prova del contrario: se questo controllo non fallisse sul file
+    rotto non proteggerebbe da niente.
+    """
+    im = a_righe(LARGA, 60, PASSO, 0)
+    salto, adiacenti = motivi.giunzione(im)
+    assert salto > motivi.GIUNZIONE_MASSIMA * adiacenti, (
+        "il taglio non si vede nella misura: %.1f contro %.1f fra colonne "
+        "attaccate" % (salto, adiacenti))
+
+
+def il_passo_sbagliato_si_vede_girando():
+    """L'altro difetto: non un taglio netto, ma due motivi troppo vicini.
+
+    E' quello che la misura del salto NON puo' cogliere da sola, ed e' il
+    motivo per cui avvolgi() garantisce il numero intero di periodi per
+    costruzione invece di misurarlo.
+    """
+    passi = _passi(a_righe(LARGA, 60, PASSO, 0))
+    assert max(passi) - min(passi) > 20, (
+        "il passo dovrebbe essere irregolare sulla chiusura, invece: %r" % passi)
+
+
+def il_giro_si_chiude():
+    im = a_righe(LARGA, 60, PASSO, 0)
+    fuori = motivi.avvolgi(im, [])
+    salto, adiacenti = motivi.giunzione(fuori)
+    assert salto <= motivi.GIUNZIONE_MASSIMA * adiacenti, (
+        "dopo avvolgi() il taglio si vede ancora: %.1f contro %.1f fra colonne "
+        "attaccate" % (salto, adiacenti))
+
+
+def il_passo_resta_regolare_anche_sulla_chiusura():
+    passi = _passi(motivi.avvolgi(a_righe(LARGA, 60, PASSO, 0), []))
+    assert len(passi) >= 6, "troppe poche barre per giudicare: %r" % passi
+    assert max(passi) - min(passi) <= 3, (
+        "girando, il passo cambia dove il giro si chiude: %r" % passi)
+
+
+def avvolgere_non_stravolge_la_scala():
+    """Il motivo si schiaccia, ma di poco e in modo dichiarato.
+
+    Il metro e' il passo VERO con cui il motivo finto e' stato disegnato, non
+    la media delle distanze misurate prima: quella media contiene anche la
+    distanza sbagliata della chiusura, che e' il difetto, e usarla come
+    riferimento faceva risultare uno stravolgimento che non c'e'.
+    """
+    passi = _passi(motivi.avvolgi(a_righe(LARGA, 60, PASSO, 0), []))
+    dopo = sum(passi) / float(len(passi))
+    assert abs(dopo / PASSO - 1.0) <= motivi.SCALA_MASSIMA, (
+        "il motivo e' passato da %d a %.1f px di passo, cioe' del %+.1f%%: "
+        "oltre il %d%% dichiarato"
+        % (PASSO, dopo, 100 * (dopo / PASSO - 1), round(motivi.SCALA_MASSIMA * 100)))
+
+
+def un_giro_gia_chiuso_non_si_tocca():
+    """1000 px e un passo da 100: ci sta dieci volte esatte, non c'e' niente da fare."""
+    im = a_righe(LARGA, 60, 100, 50)
+    note = []
+    fuori = motivi.avvolgi(im, note)
+    assert fuori is im, "un giro gia' chiuso e' stato rifatto lo stesso: %r" % note
+    assert any("gia'" in n for n in note), note
+
+
+def il_passo_fondamentale_si_ritrova():
+    """periodo() puo' tornare un MULTIPLO del passo vero, e li' non si chiude.
+
+    Sulla ciotola "Petrolio" tornava 2732 = 4 x 683: con quello ci stanno 2,38
+    periodi nella larghezza e nessun numero intero entra senza scalare il
+    motivo di un quinto. Col passo vero ce ne stanno 9,51, e dieci costano il
+    5%.
+    """
+    im = a_righe(2000, 60, PASSO, 0)
+    assert abs(motivi._fondamentale(im, PASSO * 4) - PASSO) <= 2, (
+        "da un multiplo x4 e' tornato %d invece di %d"
+        % (motivi._fondamentale(im, PASSO * 4), PASSO))
+
+
+def solo_gli_anelli_si_avvolgono():
+    """Collare, bandana e guinzaglio hanno due capi che non si toccano mai."""
+    assert motivi.AVVOLGONO == ("Ciotola",), motivi.AVVOLGONO
+    for tipo in ("Collare", "Bandana", "Guinzaglio"):
+        assert tipo in motivi.AREE and tipo not in motivi.AVVOLGONO, tipo
+
+
+def su_un_anello_la_fase_non_si_tocca():
+    """Pareggiare i margini rispetto a bordi che non esistono fa danno.
+
+    Misurato: su "Toile Rubino" il ricentraggio orizzontale aveva portato il
+    salto alla chiusura da 2,3 a 11,3 volte lo scarto fra colonne attaccate.
+    """
+    storta = a_righe(LARGA, 60, 200, 8)
+    note = []
+    assert motivi.ricentra(storta, note, avvolge=True) is storta, (
+        "sull'anello l'asse orizzontale e' stato toccato lo stesso: %r" % note)
+    assert motivi.ricentra(storta, []) is not storta, (
+        "senza avvolge=True il ricentraggio deve continuare a funzionare")
+
+
+def il_public_id_non_sovrascrive_mai():
+    """Due difetti visti succedere: le versioni che si accumulano, e quella
+    che si ripete uguale sovrascrivendo il file gia' corretto."""
+    nudo = "https://res.cloudinary.com/x/image/upload/v1/abc.jpg"
+    assert motivi.public_id_di(nudo) == "abc-v%d" % motivi.VERSIONE
+    for gia in ("abc-v2", "abc-v2-v2", "abc-v3"):
+        u = "https://res.cloudinary.com/x/image/upload/v1/%s.jpg" % gia
+        nuovo = motivi.public_id_di(u)
+        assert nuovo == "abc-v%d" % motivi.VERSIONE, nuovo
+        assert motivi.VERSIONE > 2, "la versione va alzata a ogni giro"
+
+
+def i_titoli_con_le_virgolette_curve_non_si_perdono():
+    """Sedici prodotti su 66 sparivano in silenzio dal catalogo.
+
+    Non erano sbagliati: erano stati rinominati dal pannello Shopify, che
+    scrive le virgolette "a sesto" invece di quelle dritte. Il filtro le
+    voleva dritte e li scartava senza dire niente -- fra loro la ciotola
+    "Toile Rubino", una di quelle da chiudere. Un prodotto che il catalogo non
+    legge e' un prodotto che nessuna correzione raggiungera' mai, e non
+    accorgersene e' peggio che sbagliare la correzione.
+    """
+    for titolo, atteso in (
+            (u'Ciotola "Barocco"', ("Ciotola", "Barocco")),
+            (u'Ciotola \u201cToile Rubino\u201d', ("Ciotola", "Toile Rubino")),
+            (u'Bandana \u201cRamo d\u2019Ulivo\u201d', ("Bandana", u"Ramo d\u2019Ulivo")),
+            (u'Guinzaglio \u00abToile Rubino\u00bb', ("Guinzaglio", "Toile Rubino"))):
+        m = motivi.TITOLO.match(titolo)
+        assert m and m.groups() == atteso, (
+            "%r -> %r invece di %r" % (titolo, m.groups() if m else None, atteso))
+    assert motivi.TITOLO.match("Ciotola senza virgolette") is None
+
+
 def le_aree_sono_quelle_di_printful():
     for tipo, misura in motivi.AREE.items():
         assert misura[0] > 0 and misura[1] > 0, tipo
@@ -279,6 +442,21 @@ print("\nLa fascia di stampa")
 prova("la fascia bianca si riempie col fondo", la_fascia_bianca_si_riempie_col_fondo)
 prova("una banda del colore del fondo non e' un difetto",
       una_banda_del_colore_del_fondo_non_e_un_difetto)
+
+print("\nIl giro della ciotola")
+prova("il giro spezzato si vede nella misura", il_giro_spezzato_si_vede_nella_misura)
+prova("il passo sbagliato si vede girando", il_passo_sbagliato_si_vede_girando)
+prova("il giro si chiude", il_giro_si_chiude)
+prova("il passo resta regolare anche sulla chiusura",
+      il_passo_resta_regolare_anche_sulla_chiusura)
+prova("avvolgere non stravolge la scala", avvolgere_non_stravolge_la_scala)
+prova("un giro gia' chiuso non si tocca", un_giro_gia_chiuso_non_si_tocca)
+prova("il passo fondamentale si ritrova", il_passo_fondamentale_si_ritrova)
+prova("solo gli anelli si avvolgono", solo_gli_anelli_si_avvolgono)
+prova("su un anello la fase non si tocca", su_un_anello_la_fase_non_si_tocca)
+prova("il public_id non sovrascrive mai", il_public_id_non_sovrascrive_mai)
+prova("i titoli con le virgolette curve non si perdono",
+      i_titoli_con_le_virgolette_curve_non_si_perdono)
 
 print("\nIl marchio")
 prova("la toppa scavalca il medaglione", la_toppa_scavalca_il_medaglione)

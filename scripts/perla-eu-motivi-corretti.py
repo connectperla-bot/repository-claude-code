@@ -25,7 +25,20 @@ I TRE DIFETTI, GUARDATI E MISURATI
    px di resto -- ma la FASE, cioe' dove cade il primo motivo rispetto al
    bordo. Averle confuse e' l'errore che mi ha fatto scrivere "0 nativi
    asimmetrici" in una misura precedente.
-3. LA FASCIA VUOTA. collare-damasco-verde ha il 34% di bianco piatto sopra e
+3bis. IL GIRO CHE NON SI CHIUDE (ROUND 49). La titolare ha scritto: "le
+   ciotole che hanno un pattern non deve interrompersi ma continuare come
+   fosse infinito, tipo su quella barocco che si interrompe da una parte ed
+   e' brutta". Aveva ragione, e il difetto e' di un tipo diverso dagli altri
+   tre: la ciotola e' un CILINDRO. I 6496 px dell'area fanno il giro
+   completo, quindi la colonna 6495 va a toccare la colonna 0. Se il motivo
+   non ci sta dentro un numero INTERO di volte, li' il disegno salta.
+   Misurato su tutte e dieci le ciotole con un motivo: nessuna ci sta un
+   numero intero di volte (Barocco 3,73 periodi, mancano 468 px su 1741), e
+   il salto alla giunzione vale quanto quello fra due punti PRESI A CASO nel
+   disegno -- 29,7 contro 35,0 sulla Barocco. I due bordi non si conoscono.
+   Lo chiude avvolgi(); il perche' della scala sta nella sua docstring.
+
+4. LA FASCIA VUOTA. collare-damasco-verde ha il 34% di bianco piatto sopra e
    il 34% sotto: nel mockup e' un collare BIANCO con una striscia salvia in
    mezzo. guinzaglio-petrolio ha bande piatte simili, ma sono del colore del
    fondo -- quello va bene, ed e' il motivo per cui il controllo confronta il
@@ -133,9 +146,44 @@ BORDO_TOLLERATO = 2.0
 # gli altri sotto 0,51: in mezzo non c'e' niente.
 SOGLIA_FIRMA = 0.55
 
-# Il suffisso del motivo corretto su Cloudinary. Non si sovrascrive mai
-# l'originale: resta li' come marcia indietro.
-SUFFISSO = "-v2"
+# La versione del motivo corretto su Cloudinary. Non si sovrascrive mai
+# niente: ne' l'originale ne' una correzione precedente, che restano li' come
+# marcia indietro.
+#
+# PERCHE' UN NUMERO E NON UN SUFFISSO FISSO. Prima era la costante "-v2", e lo
+# strip toglieva esattamente quella per poi rimetterla: al secondo giro di
+# correzioni il public_id tornava identico e Cloudinary SOVRASCRIVEVA il file
+# corretto. Peggio: la URL versionata gia' scritta nel manifesto avrebbe
+# continuato a servire l'immagine vecchia, quindi la correzione sembrerebbe
+# non essere arrivata. Con un numero, ogni giro ha il suo public_id.
+VERSIONE = 3
+_VERSIONI = re.compile(r"(?:-v\d+)+$")
+
+# Oltre questo rapporto col salto fra due colonne attaccate, il punto in cui il
+# giro si chiude si distingue dal disegno. Le misure di questo progetto: una
+# giunzione invisibile guardata a 1:1 sta fra 1,0 e 1,3, una visibile fra 2,2 e
+# 30. La soglia sta in cima alla banda invisibile.
+GIUNZIONE_MASSIMA = 1.3
+# Di quanto si cerca intorno al periodo misurato, e quanto si accetta di
+# scalare il motivo per farcelo entrare un numero intero di volte.
+# Di quanto il periodo vero puo' discostarsi dal numero intero che periodo()
+# restituisce, e con che finezza lo si cerca dentro quel raggio.
+INTORNO_PERIODO = 3.0
+PASSO_RICERCA = 0.05
+SCALA_MASSIMA = 0.10
+# Quanto puo' mancare al periodo per entrare un numero intero di volte nella
+# larghezza, in frazione di periodo, prima che il passo sulla chiusura sia
+# visibilmente diverso da quello di tutte le altre. Le dieci ciotole in vendita
+# stanno fra 0,17 e 0,49: nessuna ci sta.
+PERIODI_INTERI = 0.02
+# Quanto puo' somigliarsi peggio, rispetto al passo di partenza, un
+# sottomultiplo perche' conti come periodo vero. Vedi _fondamentale().
+TOLLERANZA_ARMONICA = 1.5
+
+# I tipi la cui area di stampa e' un ANELLO: il bordo destro tocca il sinistro
+# sul prodotto finito. La ciotola gira attorno al cilindro; collare, bandana e
+# guinzaglio hanno due estremi che non si toccano mai.
+AVVOLGONO = ("Ciotola",)
 
 # Quanto vale "banda piatta" e "banda di un altro colore".
 PIATTA = 3.0
@@ -302,6 +350,41 @@ def bordo_disegnato(im, asse, k):
     return max(primo, ultimo), adiacenti
 
 
+def giunzione(im):
+    """Quanto salta il disegno dove il giro si chiude, e quanto salta di suo.
+
+    Torna (salto, adiacenti), tutti e due sulla scala 0-255 dei livelli.
+
+    LA DOMANDA GIUSTA NON E' "C'E' UN SALTO". Un salto c'e' sempre, perche' due
+    colonne diverse sono diverse. La domanda e' se quel salto si distingue
+    dalla normale variazione interna del disegno, ed e' per questo che si torna
+    anche `adiacenti`: lo scarto medio fra due colonne ATTACCATE, preso lontano
+    dai bordi. Il rapporto fra i due e' il numero che conta, ed e' lo stesso
+    metro che bordo_disegnato() usa per l'altra domanda. Le misure di questo
+    progetto: una giunzione invisibile guardata a 1:1 sta fra 1,0 e 1,3, una
+    visibile fra 2,2 e 30.
+
+    Misurato sulle dieci ciotole prima della correzione: il salto alla
+    giunzione vale quanto quello fra due colonne prese A CASO nell'immagine
+    (Barocco 29,7 alla giunzione, 35,0 a caso, 6,4 fra attaccate). Cioe' i due
+    bordi non si conoscono: e' un taglio, non una continuazione.
+
+    QUESTA MISURA DA SOLA NON BASTA, e avvolgi() infatti ne guarda due. Se il
+    taglio capita in mezzo a due motivi, le colonne del bordo sono tutte e due
+    fondo piatto e questo numero dice "a posto" mentre lo SPAZIO fra un motivo
+    e l'altro, li' e solo li', e' sbagliato. Quel secondo difetto non si misura:
+    si esclude per costruzione, mettendo nella larghezza un numero intero di
+    periodi.
+    """
+    rgb = im.convert("RGB")
+    w, h = rgb.size
+    salto = _scarto(_colonna(rgb, w - 1), _colonna(rgb, 0))
+    punti = range(w // 10, 9 * w // 10, max(1, (4 * w // 5) // 12))
+    adiacenti = sum(_scarto(_colonna(rgb, x), _colonna(rgb, x + 1))
+                    for x in punti) / len(punti)
+    return salto, adiacenti
+
+
 def bande_vuote(im):
     """Le bande piatte in alto e in basso che NON sono del colore del fondo.
 
@@ -426,7 +509,7 @@ def _asse(im, asse, note):
     return d, q * k
 
 
-def ricentra(im, note):
+def ricentra(im, note, avvolge=False):
     """Porta la ripetizione a margini uguali, senza lasciare una cucitura.
 
     NON si sposta l'immagine intera in circolo. Farlo porterebbe il bordo
@@ -441,10 +524,18 @@ def ricentra(im, note):
 
     E' lo stesso ragionamento di _fascia_orizzontale() in
     perla-build-eu-print-files.py, portato anche sulla fase.
+
+    SU UN ANELLO NON SI FA (ROUND 49). Con avvolge=True l'asse orizzontale non
+    si tocca: pareggiare i margini rispetto a due bordi che sul prodotto NON
+    ESISTONO -- la ciotola e' un cilindro -- non vuol dire niente, e misurato
+    fa danno. Su "Toile Rubino" questo ricentraggio aveva portato il salto alla
+    giunzione da 2,3 a 11,3 volte lo scarto fra colonne attaccate: era la
+    ciotola messa peggio del catalogo, e ce l'avevo messa io. Al suo posto c'e'
+    avvolgi(), che chiude il giro davvero.
     """
     w, h = im.size
     quadrato = abs(w - h) < 2
-    dx, fx = _asse(im, 0, note)
+    dx, fx = (0, None) if avvolge else _asse(im, 0, note)
     # Su collare, ciotola e guinzaglio il verticale non e' una ripetizione: e'
     # il disegno della fascia, coi suoi bordi. Farlo scorrere spezzerebbe la
     # fascia in due.
@@ -459,6 +550,310 @@ def ricentra(im, note):
     for y in range(0, h, fy):
         for x in range(0, w, fx):
             fuori.paste(finestra, (x, y))
+    return fuori
+
+
+def _somiglianza(im, k, quanti=24):
+    """Quanto l'immagine somiglia a se' stessa spostata di k px.
+
+    Sulle COLONNE VERE, non sulla media per colonna. La media basta a trovare
+    il periodo di un disegno ricco, ma non a dire se un sottomultiplo e' un
+    periodo anche lui: su un motivo quasi piatto come "Petrolio" la media varia
+    di tre decimi di livello in tutto, e a quel punto il rumore vale quanto il
+    disegno. Le colonne intere portano dentro anche il colore e la disposizione
+    verticale, e li' i periodi veri si staccano da soli.
+    """
+    rgb = im.convert("RGB")
+    w = rgb.size[0]
+    if k >= w:
+        return float("inf")
+    tot = n = 0
+    for x in _dove_c_e_disegno(im, w - k, quanti):
+        tot += _scarto(_colonna(rgb, x), _colonna(rgb, x + k))
+        n += 1
+    return tot / max(1, n)
+
+
+def _dove_c_e_disegno(im, fino_a, quanti):
+    """Le colonne su cui vale la pena confrontare: una per fascia, la piu' viva.
+
+    Prendere posizioni a passo fisso sembra equivalente e non lo e'. Su un
+    motivo rado -- barre sottili su un fondo pieno -- quasi tutte cadono sul
+    fondo, il confronto e' fondo contro fondo, e QUALUNQUE spostamento risulta
+    perfetto: _fondamentale() finiva per dichiarare periodo 16 px un disegno
+    che si ripete ogni 100. Visto sul motivo a righe del test. Si divide
+    percio' la larghezza in fasce e da ognuna si prende la colonna che si
+    scosta di piu' dalla media -- dove il disegno c'e' davvero -- restando cosi'
+    sparsi su tutta l'immagine.
+    """
+    p = profilo(im, 0)
+    media = sum(p) / len(p)
+    fascia = max(1, fino_a // max(1, quanti))
+    fuori = []
+    for inizio in range(0, fino_a, fascia):
+        fine = min(inizio + fascia, fino_a)
+        if fine > inizio:
+            fuori.append(max(range(inizio, fine), key=lambda x: abs(p[x] - media)))
+    return fuori
+
+
+def _fondamentale(im, k0):
+    """Il passo piu' CORTO con cui il motivo si ripete davvero.
+
+    periodo() restituisce il minimo assoluto dello scarto, che su questi
+    disegni e' spesso un MULTIPLO del passo vero: sulla ciotola "Petrolio"
+    torna 2732, che e' 4 x 683. Non e' un errore -- a 2732 px il motivo si
+    ripete davvero -- ma per chiudere il giro fa una differenza enorme: con un
+    passo da 2732 nella larghezza ci stanno 2,38 periodi, e i due numeri interi
+    vicini (2 e 3) vorrebbero scalare il motivo del 19% o del 21%. Col passo
+    vero da 683 ce ne stanno 9,51, e dieci costano il 5%.
+
+    Si scende quindi per divisori interi finche' il disegno continua a
+    ripetersi altrettanto bene, e si tiene il piu' corto che regge. Misurato su
+    dieci nativi e sulle loro ricostruzioni: ai periodi veri la somiglianza sta
+    fra 0,9 e 1,2 volte quella al passo di partenza, a un passo sbagliato fra
+    1,9 e 7,2. In mezzo non c'e' niente.
+
+    DUE MISURE PRIMA DI QUESTA NON SEPARAVANO. Il rapporto con lo scarto del
+    passo di partenza, preso sulla media per colonna, sbaglia su un file GIA'
+    rifatto: li' il tassello e' ripetuto e al suo passo lo scarto e' quasi
+    zero, quindi nessun sottomultiplo puo' essere "poco peggio". Il confronto
+    con quanto il profilo varia di suo sbaglia sui motivi quasi piatti, dove
+    quella variazione e' tre decimi di livello e i periodi veri stanno gia' a
+    0,4 di essa. Sulle colonne vere il rapporto col passo di partenza tiene in
+    tutti e due i casi.
+    """
+    riferimento = _somiglianza(im, k0)
+    fuori = k0
+    for j in range(2, 9):
+        k = int(round(k0 / float(j)))
+        if k < 8:
+            break
+        if _somiglianza(im, k) <= riferimento * TOLLERANZA_ARMONICA:
+            fuori = k
+    return fuori
+
+
+def _scarto_al_passo(p, passo):
+    """Quanto il profilo somiglia a se' stesso spostato di `passo`.
+
+    Il passo puo' essere FRAZIONARIO, e serve che lo sia: il periodo vero di
+    un disegno non cade su un pixel tondo, e arrotondarlo e' l'errore che ha
+    fatto sbagliare la prima versione di _giro(). Con q periodi affiancati,
+    mezzo pixel di errore sul passo diventa q mezzi pixel sulla giunzione
+    interna -- misurato: 2,8 px su sette periodi, cioe' una riga che si vede.
+    Fra un pixel e l'altro si interpola.
+    """
+    n = len(p)
+    ultimo = n - int(math.ceil(passo)) - 1
+    if ultimo <= 0:
+        return float("inf")
+    somma = conta = 0
+    for i in range(0, ultimo, 7):
+        x = i + passo
+        b = int(x)
+        f = x - b
+        somma += abs(p[i] - (p[b] * (1 - f) + p[b + 1] * f))
+        conta += 1
+    return somma / max(1, conta)
+
+
+def _passo_fine(p, k0, raggio=INTORNO_PERIODO, passo=PASSO_RICERCA):
+    """Il periodo al centesimo di pixel, cercato attorno a quello intero."""
+    migliore = None
+    quanti = int(round(2 * raggio / passo)) + 1
+    for i in range(quanti):
+        cand = k0 - raggio + i * passo
+        if cand < 4:
+            continue
+        s = _scarto_al_passo(p, cand)
+        if migliore is None or s < migliore[1]:
+            migliore = (cand, s)
+    return migliore[0]
+
+
+def _avvio(im, largo):
+    """Da che punto conviene ritagliare il tassello largo `largo` px.
+
+    Il tassello, affiancato a se' stesso, si richiude sulla propria ultima
+    colonna contro la propria prima: quel confronto si puo' fare PRIMA di
+    costruire qualsiasi cosa, ed e' quasi gratis. Cominciare sempre da zero e'
+    una scelta arbitraria che su un disegno non perfettamente periodico -- e
+    questi sono disegnati a mano, quindi nessuno lo e' -- lascia sul tavolo la
+    differenza fra una giunzione che si vede e una che no. Misurato: sulla
+    ciotola "Damasco" il salto peggiore passa da 2,0 a 1,2 volte lo scarto fra
+    colonne attaccate solo scegliendo da dove partire.
+    """
+    rgb = im.convert("RGB")
+    w = rgb.size[0]
+    massimo = w - largo
+    if massimo <= 0:
+        return 0
+    migliore = None
+    salto = max(1, massimo // 40)
+    for x0 in range(0, massimo + 1, salto):
+        s = _scarto(_colonna(rgb, x0 + largo - 1), _colonna(rgb, x0))
+        if migliore is None or s < migliore[1]:
+            migliore = (x0, s)
+    return migliore[0]
+
+
+def _giro(im, passo, n):
+    """L'immagine rifatta con ESATTAMENTE n periodi nella sua larghezza.
+
+    Torna (immagine, giunzioni), dove `giunzioni` sono le x in cui il disegno
+    e' stato riattaccato -- lo zero, cioe' la chiusura del giro, compreso.
+    Servono per andarle a guardare: una giunzione che nessuno misura e' una
+    giunzione che resta.
+
+    COME. Il tassello e' la finestra piu' lunga della sorgente che contenga un
+    numero intero di periodi -- non un periodo solo: su una ciotola dove ne
+    stanno tre e mezzo, ripetere un periodo solo quattro volte darebbe quattro
+    copie identiche dove prima ce n'erano tre diverse, e la variazione naturale
+    del disegno andrebbe persa. Da DOVE prenderla lo sceglie _avvio(). Il
+    tassello viene poi riscalato in modo che il suo periodo diventi esattamente
+    larghezza/n, e affiancato: cosi' OGNI giunzione, quelle interne e la
+    chiusura, cade su un multiplo esatto del periodo d'uscita.
+
+    LA PRIMA VERSIONE SBAGLIAVA QUI, e non se n'era accorta la misura sulla
+    chiusura -- se n'e' accorto il controllo sul PASSO, che gira l'immagine e
+    guarda le distanze fra i motivi. Affiancava tasselli larghi q volte il
+    periodo INTERO e riscalava alla fine: con un periodo vero di 137,4 px e un
+    intero da 137, il tassello da sette periodi finiva sfasato di 2,8 px, e li'
+    il disegno faceva uno scalino. La chiusura restava a posto, la giunzione
+    interna no.
+    """
+    w, h = im.size
+    q = max(1, int(w // passo))
+    sorgente = int(round(q * passo))
+    x0 = _avvio(im, sorgente)
+    tassello = im.crop((x0, 0, x0 + sorgente, h))
+    fuori = w / float(n)
+    largo = max(1, int(round(q * fuori)))
+    tassello = tassello.resize((largo, h), Image.LANCZOS)
+    tela = Image.new(im.mode, (w + largo, h))
+    giunzioni = [0]
+    for x in range(0, w, largo):
+        tela.paste(tassello, (x, 0))
+        if 0 < x < w:
+            giunzioni.append(x)
+    return tela.crop((0, 0, w, h)), giunzioni
+
+
+def _salto(im, giunzioni):
+    """Il salto peggiore fra quelli lasciati dalle giunzioni, e il metro.
+
+    Il metro e' lo scarto medio fra due colonne ATTACCATE preso lontano dai
+    punti sospetti: dice quanto varia il disegno di suo. Il rapporto fra i due
+    e' il numero che conta.
+    """
+    rgb = im.convert("RGB")
+    w, h = rgb.size
+    peggio = 0.0
+    for x in giunzioni:
+        prima = _colonna(rgb, (x - 1) % w)
+        dopo = _colonna(rgb, x % w)
+        peggio = max(peggio, _scarto(prima, dopo))
+    punti = range(w // 10, 9 * w // 10, max(1, (4 * w // 5) // 12))
+    adiacenti = sum(_scarto(_colonna(rgb, x), _colonna(rgb, x + 1))
+                    for x in punti) / len(punti)
+    return peggio, adiacenti
+
+
+def avvolgi(im, note):
+    """Chiude il giro: l'ultima colonna torna a combaciare con la prima.
+
+    PERCHE' SERVE SOLO QUI. La ciotola e' un cilindro: i 6496 px dell'area di
+    stampa fanno il giro completo e la colonna 6495 tocca la 0. Un collare o un
+    guinzaglio hanno due estremi che non si incontrano mai, e su una bandana
+    stesa i bordi sono orli. Solo qui "il motivo continua all'infinito" e' una
+    cosa che si puo' chiedere -- ed e' quello che e' stato chiesto.
+
+    DUE DIFETTI, NON UNO, e si riconoscono in due modi diversi:
+      * il TAGLIO, cioe' il salto netto dove due pezzi si toccano: lo misurano
+        giunzione() sulla chiusura e _salto() su tutte le giunzioni;
+      * il PASSO SBAGLIATO, cioe' due motivi piu' vicini fra loro proprio li'
+        che altrove: non si misura bene su un'immagine sola, e non serve --
+        basta escluderlo per costruzione. Se nella larghezza c'e' un numero
+        INTERO di periodi, il passo e' regolare anche sulla chiusura.
+    Percio' il controllo d'ingresso guarda tutti e due, e la ricostruzione
+    garantisce il secondo sempre.
+
+    COME. n periodi nella larghezza, con i tasselli riattaccati solo su
+    multipli esatti del periodo d'uscita (vedi _giro()). Il periodo si misura
+    con cura -- prima si scende al passo fondamentale (_fondamentale()), poi lo
+    si affina al centesimo di pixel (_passo_fine()) -- e poi non si tocca: la
+    regolarita' del passo lungo tutto il giro dipende da quello. Restano due
+    scelte, n per difetto o per eccesso, e si tiene quella che lascia il salto
+    piu' basso.
+
+    IL PREZZO, DETTO CHIARO. Il motivo viene schiacciato in orizzontale fra il
+    -7% e il +6% (Barocco: la voluta passa da 1741 a 1621 px di larghezza a
+    parita' di altezza). Non c'e' un termine di paragone accanto al prodotto,
+    quindi non si nota; il salto invece si notava, ed e' stato notato.
+
+    PERCHE' NON DISSOLVERE I DUE BORDI L'UNO NELL'ALTRO. Sarebbe l'altra
+    strada, e terrebbe la scala esatta. E' gia' stata scartata in questo
+    progetto per un motivo che vale anche qui: su questi motivi il monogramma
+    PI e la scritta "PERLA ITALIA" sono dappertutto, e una dissolvenza se li
+    mangia. Vedi _fascia_orizzontale() in perla-build-eu-print-files.py -- "un
+    marchio mangiato e' un reso".
+    """
+    w, h = im.size
+    p = profilo(im, 0)
+    k0, _ = periodo(p)
+    if not k0:
+        note.append("il motivo non e' periodico: non c'e' niente da far "
+                    "combaciare, il giro resta com'e'")
+        return im
+    fondo = _passo_fine(p, _fondamentale(im, k0))
+
+    salto, adiacenti = giunzione(im)
+    resto = w % fondo
+    manca = min(resto, fondo - resto) / fondo
+    if manca <= PERIODI_INTERI and salto <= GIUNZIONE_MASSIMA * adiacenti:
+        note.append("il giro si chiude gia': %.1f periodi da %.1f px nella "
+                    "larghezza, salto %.1f contro %.1f fra colonne attaccate"
+                    % (w / fondo, fondo, salto, adiacenti))
+        return im
+
+    # IL PASSO NON SI CERCA, SI MISURA. In una versione precedente si provava
+    # anche un intorno di +/-10 px tenendo il risultato col salto piu' basso, e
+    # sembrava funzionare sui dieci nativi veri. Non funzionava: il salto si
+    # puo' azzerare anche con un passo SBAGLIATO, se il taglio capita fra due
+    # motivi, e allora il giro si chiude senza scalini ma con una distanza
+    # sbagliata -- di nuovo il difetto di partenza, solo piu' difficile da
+    # vedere. L'ha colto il controllo sul passo, su un motivo a righe dove il
+    # fondo e' piatto: 247 px di distanza dove tutte le altre erano 150. Il
+    # passo giusto e' quello misurato, e la regolarita' viene da li'.
+    migliore = None
+    for n in (int(w // fondo), int(w // fondo) + 1):
+        if n < 1 or abs(w / (n * fondo) - 1.0) > SCALA_MASSIMA:
+            continue
+        prova, giunzioni = _giro(im, fondo, n)
+        peggio, metro = _salto(prova, giunzioni)
+        voto = peggio / max(metro, 0.01)
+        if migliore is None or voto < migliore[0]:
+            migliore = (voto, fondo, n, prova)
+
+    prima = salto / max(adiacenti, 0.01)
+    if migliore is None:
+        note.append("il giro NON si chiude (%.1f volte, e il motivo ci sta "
+                    "%.2f volte invece che un numero intero) ma nessun numero "
+                    "intero di periodi entra restando entro il %d%% di scala: "
+                    "lasciato com'e'"
+                    % (prima, w / fondo, round(SCALA_MASSIMA * 100)))
+        return im
+
+    voto, passo, n, fuori = migliore
+    if voto >= prima and manca <= PERIODI_INTERI:
+        note.append("il giro NON si chiude (%.1f volte) e la ricostruzione non "
+                    "migliora (%.1f): lasciato com'e'" % (prima, voto))
+        return im
+    note.append("giro chiuso: %d periodi da %.1f px in %d px (motivo scalato "
+                "del %+.1f%% in orizzontale), salto peggiore da %.1f a %.1f "
+                "volte lo scarto fra colonne attaccate"
+                % (n, passo, w, 100.0 * (w / (n * passo) - 1.0), prima, voto))
     return fuori
 
 
@@ -586,7 +981,10 @@ def costruisci(percorso, tipo):
             note.append("marchio nativo atteso ma non trovato (correlazione %.2f)"
                         % corr)
 
-    im = ricentra(im, note)
+    avvolge = tipo in AVVOLGONO
+    im = ricentra(im, note, avvolge=avvolge)
+    if avvolge:
+        im = avvolgi(im, note)
 
     if marchio.serve(base) and tipo in GEOMETRIA_EU:
         im, riquadri = marchio.componi(im, GEOMETRIA_EU[tipo])
@@ -605,27 +1003,72 @@ def costruisci(percorso, tipo):
 # CATALOGO E CLOUDINARY
 # ==========================================================================
 
+# Il titolo puo' avere le virgolette dritte o quelle "a sesto": la titolare
+# rinomina i prodotti dal pannello Shopify, che le mette curve da solo.
+TITOLO = re.compile(u'(\\w+)\\s+[\u201c"\u00ab](.+)[\u201d"\u00bb]\\s*$')
+
+
 def catalogo():
-    """(tipo, motivo, voce) per ogni prodotto EU con un motivo vero."""
+    """(tipo, motivo, voce) per ogni prodotto EU con un motivo vero.
+
+    LE VIRGOLETTE CURVE. Qui c'era `"(.+)"` con le sole virgolette dritte, e
+    SEDICI prodotti su 66 -- quattordici bandane, la ciotola e il guinzaglio
+    "Toile Rubino" -- venivano saltati in silenzio, senza una riga di avviso.
+    Non erano sbagliati: erano stati RINOMINATI dal pannello Shopify, che
+    scrive le virgolette curve. Chiunque avesse lanciato una correzione avrebbe
+    letto "50 motivi" e creduto che fossero tutti. E' proprio la ciotola
+    "Toile Rubino" -- una di quelle da chiudere -- ad avere il titolo curvo.
+    """
     with open(PRODOTTI) as fh:
         dati = json.load(fh)
     fuori = []
+    saltati = []
     for voce in dati:
-        m = re.match(r'(\w+)\s+"(.+)"', voce.get("title", ""))
+        m = TITOLO.match(voce.get("title", ""))
         if not m:
+            saltati.append(voce.get("title", ""))
             continue
         tipo, motivo = m.group(1), m.group(2)
         if motivo == "Crea il Tuo Design" or tipo not in AREE:
             # la base neutra dello studio di personalizzazione non e' un motivo
             continue
         fuori.append((tipo, motivo, voce))
+    if saltati:
+        # Mai in silenzio: un prodotto che non si riesce a leggere e' un
+        # prodotto che nessuna correzione raggiungera' mai.
+        print("ATTENZIONE: %d titoli non riconosciuti, quei prodotti restano "
+              "fuori da tutto: %s" % (len(saltati), ", ".join(saltati)))
     return fuori
 
 
-def nativo_di(tipo, motivo):
+def nativo_di(tipo, motivo, handle=None):
+    """Il file originale di questo motivo, gia' in cache o da scaricare.
+
+    IL NOME VIENE DAL TITOLO, E IL TITOLO CAMBIA. "Ciotola Floreale" e'
+    diventata "Ciotola Toile Rubino": il nativo in cache si chiama ancora
+    ciotola-floreale.jpg, e cercando ciotola-toile-rubino.jpg non lo si trova.
+    Non sarebbe un errore fatale -- si riscaricherebbe -- ma quello che si
+    scarica oggi dalla URL del catalogo NON e' l'originale: e' la correzione
+    del giro precedente. Ripartire da li' vuol dire correggere una correzione.
+    Percio', se il nome dal titolo non c'e', si guarda l'indice delle
+    ricostruzioni, che tiene il legame handle -> file e non dipende dal nome
+    commerciale.
+    """
     nome = "%s-%s.jpg" % (tipo.lower(),
                           motivo.lower().replace(" ", "-").replace("'", ""))
-    return os.path.join(NATIVI, nome)
+    percorso = os.path.join(NATIVI, nome)
+    if os.path.exists(percorso) or not handle:
+        return percorso
+    indice = os.path.join(USCITA, "_indice.json")
+    if os.path.exists(indice):
+        with open(indice) as fh:
+            dati = json.load(fh)
+        vecchio = dati.get(handle, {}).get("file")
+        if vecchio:
+            altro = os.path.join(NATIVI, os.path.basename(vecchio))
+            if os.path.exists(altro):
+                return altro
+    return percorso
 
 
 def scarica(voce, percorso):
@@ -643,6 +1086,26 @@ def variabili():
                 c, v = riga.split("=", 1)
                 fuori[c.strip()] = v.strip()
     return fuori
+
+
+def public_id_di(pattern):
+    """Il public_id con cui caricare la correzione di questo motivo.
+
+    DUE DIFETTI CHIUSI QUI, TUTTI E DUE VISTI SUCCEDERE.
+    1. Le versioni si accumulavano: il public_id si ricava dalla URL che sta
+       nel manifesto, e li' dentro dopo il primo caricamento c'e' gia' un
+       suffisso. Attaccarne un altro dava "...-v2-v2.jpg", e al giro dopo
+       "-v2-v2-v2". Visto sulla bandana "Antracite".
+    2. La versione si ripeteva uguale: togliere "-v2" per rimettere "-v2"
+       restituisce lo stesso public_id, e Cloudinary SOVRASCRIVE. La URL
+       versionata gia' nel manifesto avrebbe continuato a servire l'immagine
+       vecchia -- la correzione sembrerebbe non essere mai arrivata, e
+       l'originale sarebbe perso.
+
+    Percio': si tolgono TUTTE le versioni in coda, e si mette quella corrente.
+    """
+    base = pattern.rsplit("/", 1)[-1].rsplit(".", 1)[0]
+    return "%s-v%d" % (_VERSIONI.sub("", base), VERSIONE)
 
 
 def carica_cloudinary(percorso, public_id, env):
@@ -697,7 +1160,7 @@ def misura_tutto(voci):
     righe = {}
     print("%-12s %-24s %-9s %s" % ("tipo", "motivo", "marchio", "cosa c'e' da fare"))
     for tipo, motivo, voce in voci:
-        percorso = nativo_di(tipo, motivo)
+        percorso = nativo_di(tipo, motivo, voce["handle"])
         scarica(voce, percorso)
         im = Image.open(percorso).convert("RGB")
         note = []
@@ -706,7 +1169,22 @@ def misura_tutto(voci):
             note.append("banda vuota %d+%d px" % (alto, basso))
         p = profilo(im, 0)
         k, _ = periodo(p)
-        if k:
+        salto = adiacenti = None
+        if tipo in AVVOLGONO:
+            # Su un anello la fase non vuol dire niente (non ci sono bordi da
+            # pareggiare): quello che conta e' se il giro si chiude.
+            salto, adiacenti = giunzione(im)
+            kf = _passo_fine(p, _fondamentale(im, k)) if k else None
+            resto = (im.width % kf) if kf else 0.0
+            manca = min(resto, kf - resto) / kf if kf else 0.0
+            if salto > GIUNZIONE_MASSIMA * adiacenti:
+                note.append("il giro non si chiude: salto %.1f contro %.1f fra "
+                            "colonne attaccate (%.1f volte)"
+                            % (salto, adiacenti, salto / max(adiacenti, 0.01)))
+            elif manca > PERIODI_INTERI:
+                note.append("il giro non si chiude: il motivo ci sta %.2f volte "
+                            "invece che un numero intero" % (im.width / float(kf)))
+        elif k:
             _, _, sbil = fase(p, k)
             if sbil > SBILANCIO_MASSIMO:
                 note.append("fase orizzontale %.2f" % sbil)
@@ -729,7 +1207,10 @@ def misura_tutto(voci):
         print("%-12s %-24s %-9s %s"
               % (tipo, motivo, stato, "; ".join(note) or "-"))
         righe["%s/%s" % (tipo, motivo)] = {
-            "banda": [alto, basso], "periodo": k, "marchio": stato, "note": note}
+            "banda": [alto, basso], "periodo": k, "marchio": stato,
+            "giunzione": None if salto is None else [round(salto, 2),
+                                                    round(adiacenti, 2)],
+            "note": note}
     os.makedirs(USCITA, exist_ok=True)
     with open(MISURE, "w") as fh:
         json.dump(righe, fh, indent=1)
@@ -747,7 +1228,7 @@ def costruisci_tutto(voci, carica, env, rifai=False):
             indice = json.load(fh)
 
     for tipo, motivo, voce in voci:
-        percorso = nativo_di(tipo, motivo)
+        percorso = nativo_di(tipo, motivo, voce["handle"])
         scarica(voce, percorso)
         uscita = os.path.join(USCITA, os.path.basename(percorso))
         print("\n=== %s \"%s\"" % (tipo, motivo))
@@ -769,17 +1250,10 @@ def costruisci_tutto(voci, carica, env, rifai=False):
         indice[voce["handle"]]["originale"] = voce["pattern"]
 
         if carica:
-            # IL SUFFISSO SI METTE UNA VOLTA SOLA. Il public_id si ricava dal
-            # pattern che sta nel manifesto, e dopo il primo caricamento li'
-            # dentro c'e' gia' un "-v2": rilanciando si otteneva
-            # "...-v2-v2.jpg", e al giro dopo "-v2-v2-v2". Visto succedere
-            # sulla bandana "Antracite", caricata una volta da sola per prova
-            # e poi di nuovo col gruppo.
-            vecchio = voce["pattern"].rsplit("/", 1)[-1].rsplit(".", 1)[0]
-            while vecchio.endswith(SUFFISSO):
-                vecchio = vecchio[:-len(SUFFISSO)]
-            public_id = vecchio + SUFFISSO
-            url = carica_cloudinary(uscita, public_id, env)
+            # Il public_id si ricava dal pattern che sta nel manifesto, dove
+            # dopo il primo caricamento c'e' gia' una versione: vedi
+            # public_id_di().
+            url = carica_cloudinary(uscita, public_id_di(voce["pattern"]), env)
             indice[voce["handle"]]["nuovo"] = url
             voce["pattern"] = url
             print("    caricato: %s" % url)
