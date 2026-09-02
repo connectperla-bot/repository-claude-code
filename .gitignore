@@ -58,6 +58,11 @@ generated-designs/taglie-eu.json
 # script, non i pixel.
 generated-designs/eu-motivi-corretti/
 
+# Cache di scripts/perla-dettaglio-stampa.py: i file di stampa scaricati e le
+# foto del tessuto che ne escono. Le copie che contano stanno su Cloudinary e
+# su Shopify; qui sarebbero 70 immagini rigenerabili in un comando.
+generated-designs/dettagli-stampa/
+
 # Fotografia di Shopify per l'audit --editor (tag, metafield, tabella dei tipi
 # dal tema pubblicato) e l'elenco delle scritture che ne discende. Come
 # taglie-eu.json: si rifanno quando i prodotti cambiano.
