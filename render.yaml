@@ -91,6 +91,28 @@ services:
       - key: GUINZAGLIO_VARIANT_ID
         value: "150707"
 
+  # L'INDIRIZZO, che non era scritto da nessuna parte:
+  #     https://perla-printify-order-sync-yizy.onrender.com
+  # e l'orecchio e' POST /webhooks/orders-create. Va cercato con quel nome
+  # esatto: perla-order-sync-yizy e perla-printify-order-sync-1 non esistono.
+  # Serve quando si guarda Shopify > Impostazioni > Notifiche > Webhook, che e'
+  # l'unico posto da cui si vede se il webhook c'e' e dove punta: l'API Admin
+  # elenca solo i webhook creati da un'app, quelli fatti a mano li' no.
+  #
+  # PROVATO DAVVERO il 02/09/2026, con un ordine vero (draft order completato):
+  # su Printful e' arrivata la bozza 174694356 con external_id uguale all'id
+  # dell'ordine Shopify, variante 19186 e il file di stampa a piena
+  # risoluzione, quotata 24,58 EUR. La catena Shopify -> webhook -> servizio ->
+  # Printful e' integra. Ordine e bozza poi annullati.
+  #
+  # ATTENZIONE ALLO STORE. Quella bozza e' finita sullo store PRINTFUL
+  # 18550340 ("PERLA ITALIA", tipo shopify), non sul 18346388 dichiarato qui
+  # sotto: l'env var su Render e' stata cambiata a mano dopo il primo deploy, e
+  # i valori di questo file valgono solo alla sincronizzazione del blueprint.
+  # Printful accetta e quota gli ordini su tutti e due, quindi non e' rotto --
+  # ma l'unico ordine mai EVASO (169833807) sta sul 18346388, e avere le bozze
+  # divise fra due store vuol dire cercarle in due posti. Da decidere quale
+  # tenere, e allineare Render e questo file a quello.
   - type: web
     name: perla-printify-order-sync
     runtime: node
