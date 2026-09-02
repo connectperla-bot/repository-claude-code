@@ -39,6 +39,7 @@ il giorno che Printful cambia qualcosa.
 USO
     python3 scripts/perla-eu-mockup.py --prova Collare        # un solo tipo
     python3 scripts/perla-eu-mockup.py --prova Collare --riduci 1600
+    python3 scripts/perla-eu-mockup.py --solo ciotola-eu --rifai
     python3 scripts/perla-eu-mockup.py --tutti                # tutti e 66
 
 Printful limita la frequenza: --tutti puo' metterci mezz'ora e si riprende da
@@ -123,9 +124,16 @@ def url_ridotta(url, lato):
     return url.replace("/image/upload/", "/image/upload/w_%d,c_limit/" % lato, 1)
 
 
+# Le virgolette possono essere dritte o "a sesto": la titolare rinomina i
+# prodotti dal pannello Shopify, che le mette curve da solo. Sedici prodotti su
+# 66 ce le hanno, e chiedere solo quelle dritte li faceva fallire uno per uno
+# ("tipo non riconosciuto dal titolo") -- fra loro la ciotola "Toile Rubino".
+TITOLO = re.compile(u'(\\w+)\\s+[“"«]')
+
+
 def tipo_di(titolo):
     """Da 'Collare "Barocco"' al tipo. I titoli EU seguono tutti questa forma."""
-    m = re.match(r'(\w+)\s+"', titolo or "")
+    m = TITOLO.match(titolo or "")
     return m.group(1) if m and m.group(1) in CONFIG else None
 
 
@@ -198,6 +206,14 @@ def main():
     prova = None
     if "--prova" in sys.argv:
         prova = sys.argv[sys.argv.index("--prova") + 1]
+    # --solo restringe agli handle che contengono una di queste sottostringhe.
+    # Serve quando cambia il motivo di un GRUPPO di prodotti e non di tutti:
+    # --prova ne prende uno solo per tipo, --tutti li rifa' tutti e 66 (mezz'ora
+    # di chiamate a Printful, per rigenerare identici quelli che non sono
+    # cambiati). Stessa opzione, stessa forma, di perla-eu-foto-mockup.py.
+    solo = []
+    if "--solo" in sys.argv:
+        solo = [s for s in sys.argv[sys.argv.index("--solo") + 1].split(",") if s]
 
     with open(PRODOTTI) as fh:
         prodotti = json.load(fh)
@@ -211,6 +227,12 @@ def main():
                 visti.add(t)
                 scelti.append(v)
         prodotti = scelti
+    elif solo:
+        prodotti = [v for v in prodotti
+                    if any(s in v["handle"] for s in solo)]
+        if not prodotti:
+            raise SystemExit("--solo non ha selezionato niente: controlla le "
+                             "sottostringhe")
     elif "--tutti" not in sys.argv:
         for v in prodotti:
             print("da fare  %-46s %s" % (v["title"][:46], tipo_di(v["title"])))

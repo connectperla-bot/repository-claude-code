@@ -342,6 +342,15 @@ AREE_EU = {"Collare": (7169, 315), "Bandana": (4125, 4125),
 TIPO_EU = {"Collare": "collare_eu", "Bandana": "bandana_eu",
            "Ciotola": "ciotola_eu", "Guinzaglio": "guinzaglio_eu"}
 
+# I titoli EU hanno la forma 'Collare "Barocco"', con le virgolette dritte
+# oppure "a sesto": la titolare rinomina i prodotti dal pannello Shopify, che
+# le mette curve da solo. Sedici prodotti su 66 ce le hanno, e finche' qui si
+# chiedevano solo quelle dritte l'audit li saltava in silenzio: diceva "66
+# motivi alla misura giusta" dopo averne guardati cinquanta.
+import re as _re  # noqa: E402  (qui, accanto a cio' che serve)
+TITOLO_EU = _re.compile(u'(\\w+)\\s+[\u201c"\u00ab]')
+MOTIVO_EU = _re.compile(u'\\w+\\s+[\u201c"\u00ab](.+)[\u201d"\u00bb]\\s*$')
+
 
 def _misura_remota(url):
     """La misura di un JPEG senza scaricarlo tutto: bastano i primi 64 KB."""
@@ -446,7 +455,7 @@ def verifica_eu(taglie_shopify=None):
 
     fuori = {"motivi": [], "taglie": [], "marchi": []}
     for v in prodotti:
-        m = re.match(r'(\w+)\s+"', v.get("title", ""))
+        m = TITOLO_EU.match(v.get("title", ""))
         tipo = m.group(1) if m else None
         if tipo not in AREE_EU:
             continue
@@ -456,7 +465,7 @@ def verifica_eu(taglie_shopify=None):
             fuori["motivi"].append({
                 "titolo": v["title"], "attesa": list(attesa),
                 "avuta": list(avuta) if avuta else None})
-        motivo = re.match(r'\w+\s+"(.+)"', v["title"])
+        motivo = MOTIVO_EU.match(v["title"])
         guaio = _controlla_marchio(tipo, motivo.group(1), v["pattern"]) if motivo else None
         if guaio:
             fuori["marchi"].append({"titolo": v["title"], "guaio": guaio})
@@ -475,8 +484,8 @@ def verifica_eu(taglie_shopify=None):
                                     "sconosciuti": sconosciuti})
     fuori["esaminati"] = sum(
         1 for v in prodotti
-        if re.match(r'(\w+)\s+"', v.get("title", ""))
-        and re.match(r'(\w+)\s+"', v["title"]).group(1) in AREE_EU)
+        if TITOLO_EU.match(v.get("title", ""))
+        and TITOLO_EU.match(v["title"]).group(1) in AREE_EU)
     fuori["taglie_controllate"] = taglie_shopify is not None
     return fuori
 

@@ -19,6 +19,7 @@ nei numeri che c'erano prima:
     prima e il disegno si spezzava li'. Segnalato dalla titolare sulla ciotola
     "Barocco".
 """
+import io
 import os
 import sys
 
@@ -422,6 +423,35 @@ def i_titoli_con_le_virgolette_curve_non_si_perdono():
     assert motivi.TITOLO.match("Ciotola senza virgolette") is None
 
 
+def nessuno_script_chiede_solo_le_virgolette_dritte():
+    """Lo stesso difetto stava in QUATTRO script, non in uno.
+
+    Trovato correggendo il primo: subito dopo, perla-eu-mockup.py falliva la
+    ciotola "Toile Rubino" con "tipo non riconosciuto dal titolo", e
+    perla-verifica-prodotti.py -- l'AUDIT -- diceva "66 motivi alla misura
+    giusta" dopo averne guardati cinquanta. Un audit che salta i prodotti in
+    silenzio e' peggio di nessun audit, perche' fa credere di aver guardato.
+
+    Qui non si controlla il comportamento ma il TESTO degli script, perche' e'
+    l'unica cosa che li tiene insieme: sono programmi separati, ognuno con la
+    sua copia della regola, e non c'e' un import che li leghi. Se domani ne
+    nasce un quinto con le virgolette dritte, questo lo dice subito.
+    """
+    import glob
+    colpevoli = []
+    for percorso in glob.glob(os.path.join(RADICE, "scripts", "*.py")):
+        testo = io.open(percorso, encoding="utf-8").read()
+        for riga in testo.splitlines():
+            if "re.match" not in riga and "re.compile" not in riga:
+                continue
+            # la forma che cerca un titolo: un tipo, spazi, e le virgolette
+            if "\\s+\"" in riga and u"\u201c" not in riga:
+                colpevoli.append("%s: %s" % (os.path.basename(percorso), riga.strip()))
+    assert not colpevoli, (
+        "questi cercano solo le virgolette dritte e salteranno i prodotti "
+        "rinominati:\n       " + "\n       ".join(colpevoli))
+
+
 def le_aree_sono_quelle_di_printful():
     for tipo, misura in motivi.AREE.items():
         assert misura[0] > 0 and misura[1] > 0, tipo
@@ -457,6 +487,8 @@ prova("su un anello la fase non si tocca", su_un_anello_la_fase_non_si_tocca)
 prova("il public_id non sovrascrive mai", il_public_id_non_sovrascrive_mai)
 prova("i titoli con le virgolette curve non si perdono",
       i_titoli_con_le_virgolette_curve_non_si_perdono)
+prova("nessuno script chiede solo le virgolette dritte",
+      nessuno_script_chiede_solo_le_virgolette_dritte)
 
 print("\nIl marchio")
 prova("la toppa scavalca il medaglione", la_toppa_scavalca_il_medaglione)
