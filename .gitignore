@@ -62,6 +62,7 @@ generated-designs/eu-motivi-corretti/
 # foto del tessuto che ne escono. Le copie che contano stanno su Cloudinary e
 # su Shopify; qui sarebbero 70 immagini rigenerabili in un comando.
 generated-designs/dettagli-stampa/
+generated-designs/dettaglio-da-attaccare.json
 
 # Fotografia di Shopify per l'audit --editor (tag, metafield, tabella dei tipi
 # dal tema pubblicato) e l'elenco delle scritture che ne discende. Come
