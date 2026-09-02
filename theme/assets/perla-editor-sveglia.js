@@ -102,6 +102,15 @@
   // piu' dei 24 misurati: un riavvio lento rientra, e non si insiste oltre.
   var ATTESE = [1500, 3000, 6000, 10000, 15000];
 
+  // I codici con cui la piattaforma dice "il tuo processo NON e' ancora su".
+  // Tutto il resto -- 200, 404, 401, 500 -- vuol dire che un processo c'e' e
+  // risponde, ed e' l'unica cosa che serve sapere. Misurato in produzione il
+  // 01/09/2026: prima chiamata 503 dopo 10,6 s (Render sta avviando), seconda
+  // 404 dopo 12,7 s (il servizio e' su, ma quella build non ha ancora la rotta
+  // /health), terza 404 dopo 0,48 s. Chiedere un 200 faceva dichiarare morto
+  // un servizio perfettamente vivo: vedi sveglia().
+  var AVVIO_IN_CORSO = [502, 503, 504];
+
   var svegliaChiesta = false;
   var servizioPronto = false;
   var rinunciato = false;
@@ -131,7 +140,15 @@
     function tenta() {
       fetch(url, { method: 'GET', cache: 'no-store' })
         .then(function (r) {
-          if (!r.ok) throw new Error('non pronto');
+          // QUALUNQUE risposta che non sia un errore di avvio vuol dire che il
+          // servizio e' sveglio: ha un processo che ascolta. Un 404 lo dice
+          // benissimo -- e succede davvero, perche' finche' il ramo non e'
+          // unito Render serve una build che la rotta /health non ce l'ha.
+          // Nella prima versione qui c'era `if (!r.ok) throw`: quel 404
+          // mandava la sveglia a esaurire tutti i tentativi e poi a mostrare
+          // "il servizio non risponde" a un cliente il cui servizio rispondeva
+          // in mezzo secondo. Il falso allarme e' peggio del silenzio.
+          if (AVVIO_IN_CORSO.indexOf(r.status) !== -1) throw new Error('sta partendo');
           servizioPronto = true;
           togliAttesa();
         })

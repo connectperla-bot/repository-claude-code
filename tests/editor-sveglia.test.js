@@ -181,7 +181,10 @@ function scena(opt) {
         fn({ target: bersaglio });
       });
     },
-    rispondi: function () { risolvi({ ok: true }); return sfoga(); },
+    rispondi: function (stato) {
+      risolvi({ ok: (stato || 200) < 400, status: stato || 200 });
+      return sfoga();
+    },
     fallisci: function () { rifiuta(new Error('giu')); return sfoga(); },
     attesa: function () { return editor ? editor.querySelector('.perla-attesa') : null; },
   };
@@ -273,6 +276,27 @@ function sfoga() {
     const s = scena({});
     for (let i = 0; i < 10; i++) s.tocca(s.editor);
     assert.strictEqual(s.editor.querySelectorAll('.perla-attesa').length, 1);
+  });
+
+  await prova('un 404 conta come sveglio: il servizio ha risposto', async function () {
+    // Difetto vero, misurato in produzione il 01/09/2026: la build in linea su
+    // Render non ha (ancora) la rotta /health e risponde 404 in mezzo secondo.
+    // La prima versione chiedeva un 200, quindi esauriva i cinque tentativi e
+    // diceva al cliente "il servizio non risponde" mentre rispondeva eccome.
+    const a = scena({});
+    a.tocca(a.editor);
+    await a.rispondi(404);
+    assert.strictEqual(a.attesa(), null,
+      'con un 404 l\'avviso d\'attesa dovrebbe sparire: il servizio e\' sveglio');
+  });
+
+  await prova('un 503 no: e\' la piattaforma che dice "sto avviando"', async function () {
+    // Sempre misurato: la PRIMA chiamata dopo il sonno torna 503 dopo 10,6 s,
+    // ed e' Render, non il servizio. Li' aspettare e' giusto.
+    const a = scena({});
+    a.tocca(a.editor);
+    await a.rispondi(503);
+    assert.ok(a.attesa(), 'con un 503 l\'attesa deve restare: il servizio non c\'e\' ancora');
   });
 
   await prova('l\'avviso non e\' [data-photo-status]: non litiga con global.js', async function () {
