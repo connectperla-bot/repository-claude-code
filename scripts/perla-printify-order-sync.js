@@ -34,6 +34,7 @@ const express = require('express');
 const providerRouter = require('./provider-router');
 const variantiFornitore = require('./varianti-fornitore');
 const { segnalaRigheSenzaPersonalizzazione } = require('./righe-senza-personalizzazione');
+const evasione = require('./evasione-shopify');
 
 const {
   SHOPIFY_WEBHOOK_SECRET,
@@ -201,6 +202,10 @@ function verifyShopifyWebhook(req) {
     return false;
   }
 }
+
+// Le rotte che riportano la spedizione a Shopify vivono nel loro modulo,
+// accanto alla logica che servono: vedi evasione-shopify.js.
+evasione.registraRotte(app);
 
 app.post('/webhooks/orders-create', async function (req, res) {
   try {

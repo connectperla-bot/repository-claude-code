@@ -39,3 +39,9 @@ out-foto/
 # per guardare i motivi, si rifa' con `python3 scripts/perla-motivi-nuovi.py`.
 motivi/
 generated-designs/usa-print-files/
+
+# File di stampa rigenerati da perla-rifai-motivi.py: 217 MB, e si
+# ricostruiscono in sei minuti dal codice che li disegna. Nel repository sta
+# la ricetta, non la torta.
+generated-designs/motivi-rifatti/
+scripts/anteprima-motivi-ornati.png
