@@ -493,3 +493,83 @@ html {
 .lang-switch--menu .lang-switch__code {
   margin-left: 0.15rem;
 }
+
+/* ==========================================================================
+   ROUND 52 — L'ORO QUANDO E' TESTO, NON QUANDO E' ORNAMENTO
+   ==========================================================================
+   Misurato col browser vero, sugli stili calcolati della home (1020 elementi
+   guardati, non ipotesi sul CSS). Tre scritte non arrivavano al contrasto
+   minimo che serve per leggerle:
+
+       .eyebrow      oro #B9986A su crema      2,60    ne servono 4,5   (12px)
+       .signature    oro #B9986A su crema      2,25    ne servono 3,0   (30px)
+       .badge--custom  bianco su terracotta    3,19    ne servono 4,5   (10px)
+
+   L'oro del marchio NON si tocca: e' il colore di Perla, sta sui filetti,
+   sulle cornici, sull'icona del mappamondo, e li' non deve leggere niente --
+   deve solo brillare. Quello che cambia e' l'oro USATO COME INCHIOSTRO, che
+   e' un mestiere diverso: #886A40, stessa tinta (35 gradi) e stessa
+   saturazione, sedici punti di luce in meno. Sale a 4,82 sul crema chiaro e
+   4,18 sul crema scuro, e a occhio resta oro -- un oro vecchio, da cornice
+   antica, non un marrone.
+
+   Sul distintivo "Aggiungi il suo nome" la strada piu' corta sarebbe stata
+   incupire la terracotta, ma quella e' un colore scelto e si sarebbe vista
+   cambiare su ogni scheda. Cambia invece l'inchiostro, dal bianco al blu
+   piu' profondo che il tema ha gia' (--color-footer-bg, #0F2240): sulla
+   stessa terracotta fa 4,97. Non e' --color-ink, che pure e' blu, perche'
+   quello fa 4,51 -- passa di un centesimo, e un colore che passa di un
+   centesimo non passa: basta che la proprietaria ritocchi la tinta dal
+   pannello e torna sotto senza che nessuno se ne accorga.
+
+   L'unico oro su fondo chiaro che resta sotto soglia e' "Italia" nella testata
+   (2,60 a 10px), che pero' e' il NOME del negozio dentro al suo marchio: le
+   regole di accessibilita' escludono espressamente i loghi, e cambiarlo
+   vorrebbe dire cambiare il marchio. Sta alla proprietaria, non a chi scrive
+   il CSS. */
+:root {
+  --perla-oro-testo: #886A40;
+}
+
+/* La firma sta in due posti e in tutti e due il colore arriva da un selettore
+   piu' preciso di ".signature": senza i due contenitori questa riga perdeva
+   la gara di specificita' e non succedeva niente. Visto misurando di nuovo. */
+.eyebrow,
+.story__text .signature,
+.founder-note .signature {
+  color: var(--perla-oro-testo);
+}
+
+.badge--custom {
+  color: var(--color-footer-bg, #0F2240);
+}
+
+/* IL TITOLO DELL'EROE, MISURATO SUI PIXEL E NON SUL CSS
+   Il fondo del titolo e' una fotografia con un velo sopra: nessun colore CSS
+   lo descrive, quindi il contrasto si misura fotografando cio' che sta dietro
+   alla scritta (col titolo nascosto) e guardando la luminanza pixel per pixel.
+   Su 140.800 pixel:
+
+       mediano          il bianco sopra fa 5,63
+       95° centile                        3,42
+       99° centile                        2,61      ne servono 3,0
+       il piu' chiaro                     2,02
+
+   Cioe' quasi tutto va bene e un ritaglio chiaro della foto, sotto una
+   lettera, no. Il velo verticale che c'e' e' piu' debole proprio a meta'
+   altezza, che e' dove cade il titolo.
+
+   Si aggiunge un velo che scurisce DA SINISTRA, dove sta la colonna del
+   testo, e si spegne a due terzi: la foto resta leggibile dov'e' foto, e
+   diventa fondo dov'e' fondo. */
+.hero--light .hero__media:after {
+  background:
+    linear-gradient(105deg,
+      rgba(var(--color-ink-rgb), 0.58),
+      rgba(var(--color-ink-rgb), 0.36) 38%,
+      rgba(var(--color-ink-rgb), 0) 66%),
+    linear-gradient(180deg,
+      rgba(var(--color-ink-rgb), 0.30),
+      rgba(var(--color-ink-rgb), 0.18) 45%,
+      rgba(var(--color-ink-rgb), 0.55));
+}
