@@ -626,6 +626,63 @@ def test_il_contorno_regge_sul_tono_di_minoranza():
         'ne servono %d' % (mediano, marchio.CONTRASTO_MINIMO))
 
 
+def test_il_contorno_non_lava_il_tessuto():
+    """Il contorno deve staccare le lettere, non sbiancare la stoffa intorno.
+
+    E' il difetto che la proprietaria ha visto e descritto meglio di quanto lo
+    dicessero i numeri: "il logo con strisce di colore come se il design dove
+    il logo viene applicato incidesse", "il logo che brilla". Con un contorno
+    largo, sulla bandana a righe l'alone copriva un tono e non l'altro: il
+    marchio sembrava a strisce perche' a strisce era diventato il tessuto
+    INTORNO.
+
+    LE PROPORZIONI DELLA PROVA NON SONO ARBITRARIE, e la prima stesura era
+    inutile proprio per questo. Il raggio del contorno e' una frazione
+    dell'ALTEZZA del marchio: su una tela 200x300 vale meno di un pixel per
+    tutti e due i valori, quindi la prova passava anche col contorno largo che
+    stava rovinando il catalogo. Qui la tela e' 360x600 e le righe sono larghe
+    un sesto del marchio -- le stesse proporzioni della bandana marinara vera,
+    dove il marchio e' alto 908 px e le righe 90.
+
+    Misurato fuori dal marchio, scarto mediano per tono:
+
+        raggio 0,0080   un tono 51, l'altro 0   ->  la striscia si vede
+        raggio 0,0015   tutti e due 0           ->  la stoffa passa intera
+    """
+    W, H = 360, 600
+    fondo = Image.new('RGB', (W, H), (238, 232, 220))
+    disegno = ImageDraw.Draw(fondo)
+    for x in range(0, W, 150):
+        disegno.rectangle((x, 0, x + 60, H), fill=(30, 40, 70))
+    logo = marchio._marchio().resize((W, H), Image.LANCZOS)
+    tela = fondo.convert('RGBA')
+    tela.alpha_composite(marchio._adatta(logo, marchio._mappa_fondo(fondo)), (0, 0))
+    finito = tela.convert('RGB')
+
+    alfa = list(logo.getchannel('A').getdata())
+    sotto = list(fondo.getdata())
+    sopra = list(finito.getdata())
+    fuori = [i for i in range(len(alfa)) if alfa[i] < 40]
+
+    def mediano(scelti):
+        v = sorted(abs(marchio._luminosita(sopra[i]) - marchio._luminosita(sotto[i]))
+                   for i in scelti)
+        return v[len(v) // 2] if v else 0
+
+    chiari = [i for i in fuori if marchio._luminosita(sotto[i]) > 170]
+    scuri = [i for i in fuori if marchio._luminosita(sotto[i]) < 110]
+    assert chiari and scuri, 'il tessuto di prova non ha tutti e due i toni'
+
+    su_chiaro, su_scuro = mediano(chiari), mediano(scuri)
+    # 8 e non 0: un contorno esiste, quindi qualcosa tocca. Quello che non deve
+    # succedere e' che tocchi tanto -- e su un tono solo, che e' la striscia.
+    peggio = max(su_chiaro, su_scuro)
+    assert peggio <= 8, (
+        'il contorno lava il tessuto: cambia di %.0f sul chiaro e %.0f sullo '
+        'scuro. E\' cosi\' che il marchio sembra a strisce.'
+        % (su_chiaro, su_scuro))
+
+
 def test_l_inchiostro_segue_il_tono_dominante():
     """Un inchiostro solo va bene, ma dev'essere QUELLO GIUSTO.
 
@@ -697,6 +754,8 @@ def main():
           test_l_alone_non_e_una_cartella)
     prova('il contorno regge anche sul tono di minoranza',
           test_il_contorno_regge_sul_tono_di_minoranza)
+    prova('il contorno non lava il tessuto intorno',
+          test_il_contorno_non_lava_il_tessuto)
     prova('l\'inchiostro segue il tono dominante del tessuto',
           test_l_inchiostro_segue_il_tono_dominante)
 

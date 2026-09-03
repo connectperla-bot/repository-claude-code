@@ -194,7 +194,22 @@ GEOMETRIA = {
     "collare":     {"altezza": 0.72, "ripeti": 8,  "forma": "rettangolo"},
     "guinzaglio":  {"altezza": 0.72, "ripeti": 12, "forma": "rettangolo"},
     "ciotola":     {"altezza": 0.55, "ripeti": 6,  "forma": "rettangolo"},
-    "bandana":     {"altezza": 0.34, "ripeti": 0, "centro": (0.50, 0.42),
+    # ROUND 53 -- 0,22 e non 0,34, e piu' in basso.
+    #
+    # A 0,34 il marchio era alto un terzo della bandana e cadeva in mezzo
+    # esatto: la proprietaria l'ha detto cosi', "e' brutto appiccicato cosi'
+    # grosso al centro, rendilo piu' piccolo e discreto". Guardati affiancati
+    # sullo stesso tessuto pulito, a 0,34 il marchio E' il prodotto, a 0,22 e'
+    # una firma sul prodotto, a 0,15 "Italia" non si legge piu'.
+    #
+    # 0,22 e' anche esattamente la misura della bandana EUROPEA, che nessuno
+    # ha mai segnalato: le due linee vendono lo stesso oggetto e adesso lo
+    # firmano allo stesso modo.
+    #
+    # Il centro scende da 0,42 a 0,48 -- resta dentro la fascia sicura del
+    # triangolo (0,20-0,60 dell'altezza: a 0,48 il marchio va da 604 a 1116 su
+    # un limite di 1395) e smette di essere in mezzo esatto.
+    "bandana":     {"altezza": 0.22, "ripeti": 0, "centro": (0.50, 0.48),
                     "forma": "triangolo"},
     # La bandana EUROPEA non e' un triangolo. Printful stampa un quadrato
     # 44x44 e lo fotografa steso: nel mockup si vede tutto il quadrato, bordo
@@ -357,20 +372,35 @@ FONDO_SCURO = (_luminosita(CREMA) + _luminosita(INCHIOSTRO_SCURO)) / 2.0
 # collare, e un alone di "12 px" sarebbe una nuvola sul secondo e un filo sul
 # primo.
 #
-# IL RAGGIO E' STRETTO, E LA PRIMA VOLTA NON LO ERA. A 0,045 -- 41 px su un
-# marchio alto 908 -- il contorno non e' un contorno: e' una NUVOLA. Guardato
-# affiancato su quattro tessuti veri, sulla bandana marinara (righe crema e
-# blu) la nuvola crema copriva le righe blu sotto il marchio, e sul tartan
-# schiariva il quadrettato. Cioe' tornava esattamente la cosa che la
-# proprietaria aveva chiesto di togliere -- "il logo appiccicato sopra un
-# rettangolo bianco" -- solo con i bordi sfumati invece che dritti.
+# IL RAGGIO E' STRETTO, E C'E' VOLUTO PIU' DI UN GIRO PER STRINGERLO ABBASTANZA.
 #
-# A 0,008 il tessuto si rivede sotto il marchio e le lettere restano staccate,
-# perche' quello che le stacca e' il PROFILO, non l'area. Un contorno stretto
-# e pieno lavora meglio di una nebbia larga e debole: per questo qui l'opacita'
-# e' 1 e non 0,75. Non e' una cartella perche' non ha area propria -- segue le
-# lettere a due pixel di distanza.
-ALONE_RAGGIO = 0.008
+# A 0,045 -- 41 px su un marchio alto 908 -- il contorno non era un contorno:
+# era una NUVOLA, cioe' la cartella crema un'altra volta con i bordi sfumati.
+# A 0,008 sembrava risolto: i numeri dicevano che le lettere staccavano e che
+# il tessuto si rivedeva.
+#
+# I NUMERI DICEVANO GIUSTO E L'OCCHIO NO, e a vederlo la proprietaria e' stata
+# piu' precisa di qualunque misura: "il logo con strisce di colore come se il
+# design dove il logo viene applicato incidesse", "il logo che brilla".
+# Guardato a 1:1 sulla bandana marinara aveva ragione: le righe blu SPARIVANO
+# dietro un alone biancastro largo una lettera, e sul tartan il quadrettato si
+# sbiadiva. Il contorno non lavava il marchio -- lavava il TESSUTO INTORNO, e
+# siccome sul crema non si vedeva e sul blu si', il marchio sembrava a strisce.
+#
+# Misurato sul riquadro del marchio della marinara, pixel di solo tessuto:
+#
+#     raggio      tessuto lavato    scarto mediano       stacco delle lettere
+#                                 sul blu / sul crema    sul tono di minoranza
+#     0,0080         44.421 px         19 / 0                   112
+#     0,0030         20.081 px          0 / 0                   114
+#     0,0015         10.823 px          0 / 0                   113
+#
+# Lo stacco non cambia -- quello lo fa il profilo, non l'area -- mentre il
+# tessuto toccato scende di quattro volte. A 0,0015 le righe passano intere
+# sotto le lettere e il contorno si legge come parte del marchio, come il
+# filetto di un carattere contornato. Il guadagno sale a 7 perche' su un
+# raggio cosi' corto serve piu' spinta per arrivare a bordo pieno.
+ALONE_RAGGIO = 0.0015
 ALONE_OPACITA = 1.00
 # Quanto la sagoma sfocata viene "gonfiata" prima di essere usata come alone.
 #
@@ -385,7 +415,7 @@ ALONE_OPACITA = 1.00
 # pieno subito fuori dalle lettere, sfumato piu' in la'. Cosi' ogni lettera ha
 # un bordo del tono opposto, e la sua FORMA si legge anche dove il suo colore
 # somiglia al tessuto -- che e' come si mette un marchio sopra una fotografia.
-GUADAGNO_ALONE = 4.5
+GUADAGNO_ALONE = 7.0
 
 
 def _cupezza(fondo):
