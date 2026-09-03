@@ -414,8 +414,16 @@
         {%- if localization.available_languages.size > 1 -%}
           <localization-form class="lang-switch lang-switch--menu" data-lang-switch>
             {%- form 'localization', id: 'LangFormMenu', class: 'lang-switch__form' -%}
+              {%- comment -%}
+                La voce porta il nome della lingua ATTUALE nella lingua stessa
+                ("Italiano", "English"), non la parola "Lingua". Due ragioni:
+                si capisce senza sapere l'italiano, ed e' l'unica etichetta che
+                non ha bisogno di una chiave di traduzione nuova -- e i file in
+                locales/ portano in testa l'avviso di Shopify che l'editor
+                delle lingue nell'admin puo' riscriverli quando vuole.
+              {%- endcomment -%}
               <button type="button" class="fullmenu__link lang-switch__current" data-lang-toggle aria-expanded="false">
-                <span>{{ 'general.language.dropdown_label' | t | default: 'Lingua' }}</span>
+                <span>{{ localization.language.endonym_name | capitalize }}</span>
                 <span class="lang-switch__code">{{ localization.language.iso_code | upcase }}</span>
               </button>
               <input type="hidden" name="locale_code" value="{{ localization.language.iso_code }}" data-lang-input>
