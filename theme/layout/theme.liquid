@@ -415,16 +415,28 @@
           <localization-form class="lang-switch lang-switch--menu" data-lang-switch>
             {%- form 'localization', id: 'LangFormMenu', class: 'lang-switch__form' -%}
               {%- comment -%}
-                La voce porta il nome della lingua ATTUALE nella lingua stessa
-                ("Italiano", "English"), non la parola "Lingua". Due ragioni:
-                si capisce senza sapere l'italiano, ed e' l'unica etichetta che
-                non ha bisogno di una chiave di traduzione nuova -- e i file in
+                ROUND 51 -- "il tasto per la lingua non e' facilmente
+                intuibile". Vero, e la prima versione di questa voce lo era
+                ancora meno: diceva soltanto "Italiano", che in un elenco di
+                voci di menu si legge come una destinazione, non come un
+                comando.
+
+                Adesso c'e' un mappamondo e la parola "Lingua", e accanto in
+                piccolo la lingua in cui il sito e' adesso. Il mappamondo si
+                capisce senza leggere, ed e' lo stesso disegno che sta nel
+                selettore in alto: due posti, un solo segno.
+
+                "Lingua" non viene da una chiave di traduzione: i file in
                 locales/ portano in testa l'avviso di Shopify che l'editor
-                delle lingue nell'admin puo' riscriverli quando vuole.
+                delle lingue nell'admin puo' riscriverli quando vuole, e
+                appoggiarci una cosa che serve al funzionamento e' fragile. Il
+                nome della lingua attuale, invece, e' gia' nella lingua giusta
+                per chi guarda: endonym_name da' "Italiano" o "English".
               {%- endcomment -%}
-              <button type="button" class="fullmenu__link lang-switch__current" data-lang-toggle aria-expanded="false">
-                <span>{{ localization.language.endonym_name | capitalize }}</span>
-                <span class="lang-switch__code">{{ localization.language.iso_code | upcase }}</span>
+              <button type="button" class="fullmenu__link lang-switch__current" data-lang-toggle aria-expanded="false" aria-label="Lingua — {{ localization.language.endonym_name | capitalize }}">
+                {%- render 'perla-mappamondo' -%}
+                <span>Lingua</span>
+                <span class="lang-switch__code">{{ localization.language.endonym_name | capitalize }}</span>
               </button>
               <input type="hidden" name="locale_code" value="{{ localization.language.iso_code }}" data-lang-input>
               <ul class="lang-switch__list" data-lang-list hidden>

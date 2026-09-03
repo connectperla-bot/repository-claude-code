@@ -456,3 +456,40 @@ html {
 .lang-switch--menu .lang-switch__opt-code {
   color: inherit;
 }
+
+
+/* ================================================================
+   ROUND 51 — IL MAPPAMONDO DEL SELETTORE DI LINGUA
+   ================================================================
+   Segnalazione: "il tasto per la lingua non e' facilmente intuibile". Nella
+   barra in alto era `IT` con una freccina: si legge come una sigla, non come
+   un comando. Ora c'e' un mappamondo accanto, e nel menu del telefono c'e'
+   anche la parola "Lingua".
+
+   Lo snippet disegna il segno a 1em, cioe' alla dimensione del testo che ha
+   accanto. Va bene nella pillola in alto, dove il testo e' piccolo; non nel
+   menu, dove le voci sono alte fino a 3,6rem e un mappamondo grande uguale
+   sarebbe un pianeta. Qui si rimpicciolisce dove serve. */
+.lang-switch__globo {
+  flex: 0 0 auto;
+  opacity: 0.85;
+}
+.lang-switch__current:hover .lang-switch__globo {
+  opacity: 1;
+}
+
+/* Nel menu: il segno sta accanto alla parola, ma piu' piccolo di lei, e
+   allineato al centro della riga invece che alla base — su un carattere alto
+   la base cadrebbe sotto il mappamondo. */
+.lang-switch--menu .lang-switch__current {
+  align-items: center;
+  gap: 0.45rem;
+}
+.lang-switch--menu .lang-switch__globo {
+  width: 0.62em;
+  height: 0.62em;
+  color: var(--color-gold, #C8862B);
+}
+.lang-switch--menu .lang-switch__code {
+  margin-left: 0.15rem;
+}

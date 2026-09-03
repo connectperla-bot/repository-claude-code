@@ -1,0 +1,38 @@
+{%- comment -%}
+  Selettore lingua IT/EN — usa il sistema nativo Shopify (localization).
+  Compatto, elegante. Funziona solo se nel pannello Shopify sono attive più lingue
+  (Impostazioni → Lingue). Se c'è una sola lingua, non mostra nulla.
+
+  ROUND 51 — IL MAPPAMONDO.
+  Segnalazione: "il tasto per la lingua non e' facilmente intuibile". Qui
+  c'erano solo la sigla «IT» e una freccina: si legge come un'etichetta di
+  stato, non come un comando su cui si preme. Il mappamondo lo dice senza
+  parole, e in una barra dove tutto il resto sono icone e' il segno che ci si
+  aspetta.
+
+  Lo stesso disegno sta nella voce del menu a schermo intero (vedi
+  layout/theme.liquid): due posti, un solo segno, uno snippet solo. Copiarlo
+  sarebbe stato piu' corto oggi e divergente fra un mese.
+{%- endcomment -%}
+{%- if localization.available_languages.size > 1 -%}
+  <localization-form class="lang-switch" data-lang-switch>
+    {%- form 'localization', id: 'LangForm', class: 'lang-switch__form' -%}
+      <button type="button" class="lang-switch__current" data-lang-toggle aria-expanded="false" aria-label="{{ 'sections.header.language' | t | default: 'Lingua' }}">
+        {%- render 'perla-mappamondo' -%}
+        <span class="lang-switch__code">{{ localization.language.iso_code | slice: 0, 2 | upcase }}</span>
+        <svg class="lang-switch__caret" width="9" height="6" viewBox="0 0 9 6" fill="none" aria-hidden="true"><path d="M1 1l3.5 3.5L8 1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <input type="hidden" name="locale_code" value="{{ localization.language.iso_code }}" data-lang-input>
+      <ul class="lang-switch__list" data-lang-list hidden>
+        {%- for language in localization.available_languages -%}
+          <li>
+            <button type="button" class="lang-switch__opt{% if language.iso_code == localization.language.iso_code %} is-active{% endif %}" data-lang-value="{{ language.iso_code }}" lang="{{ language.iso_code }}">
+              {{ language.endonym_name | capitalize }}
+              <span class="lang-switch__opt-code">{{ language.iso_code | slice: 0, 2 | upcase }}</span>
+            </button>
+          </li>
+        {%- endfor -%}
+      </ul>
+    {%- endform -%}
+  </localization-form>
+{%- endif -%}
