@@ -156,7 +156,12 @@ SOGLIA_FIRMA = 0.55
 # corretto. Peggio: la URL versionata gia' scritta nel manifesto avrebbe
 # continuato a servire l'immagine vecchia, quindi la correzione sembrerebbe
 # non essere arrivata. Con un numero, ogni giro ha il suo public_id.
-VERSIONE = 3
+# ROUND 52 -- quarta versione dei motivi europei. La terza era quella senza
+# cartella crema; questa porta il marchio nuovo (un inchiostro solo e un
+# contorno stretto invece del mosaico crema/nero). Il numero SALE sempre e non
+# si riusa mai: la URL versionata della v3 e' gia' nei metafield e nelle foto
+# dei prodotti, e riscriverci sopra farebbe servire ancora la vecchia immagine.
+VERSIONE = 4
 _VERSIONI = re.compile(r"(?:-v\d+)+$")
 
 # Oltre questo rapporto col salto fra due colonne attaccate, il punto in cui il

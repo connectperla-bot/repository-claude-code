@@ -383,6 +383,30 @@ PER_SORGENTE = {
     # marchio: quindi glielo compone marchio.py.
     "PINATA DOLIVO.jpg":                           "bandana-ulivo-nuovo.jpg",
 
+    # ROUND 52 -- TRE BANDANE, UN DISEGNO SOLO
+    # La proprietaria ha visto tre bandane diverse con la stessa foto. Non era
+    # un errore delle foto: erano davvero lo stesso file. "Ramo" e "Nobile"
+    # stampavano tutte e due PINATA DOLIVO.jpg, e "Fiorellino"
+    # bandana-damask-burgundy-perla.jpg -- che pero' rimanda anch'esso a
+    # bandana-ulivo-nuovo. Tre sorgenti diverse, un nativo solo: Printify le
+    # ha caricate una volta e ha dato lo stesso id a tutte e tre
+    # (6a99339258c0241eaf18c240), perche' i byte erano identici.
+    #
+    # Il guaio e' che questa tabella e' indicizzata per ARTWORK ORIGINALE, e
+    # "Ramo" e "Nobile" ne hanno uno solo in due: qui non c'e' modo di
+    # separarli. Servono due identita' NUOVE, che non appartengono a nessun
+    # artwork esistente, e chi carica dice quale prodotto prende quale --
+    # per id, che e' l'unica cosa che li distingue davvero
+    # (PER_PRODOTTO in perla-usa-carica-stampe.py).
+    #
+    # Quale disegno l'ha scelto la proprietaria: "Ramo" tiene le foglie
+    # d'ulivo (e' l'"Olive Branch Pet Bandana", il nome dice gia' cosa deve
+    # esserci), "Nobile" prende il damasco bordeaux e oro -- si chiama
+    # "Vintage Damask Burgundy & Gold" e finalmente stampera' quello -- e
+    # "Fiorellino" il lino, crema con rametti sparsi.
+    "bandana-nobile-damasco.jpg":                  "bandana-damasco-diamante.jpg",
+    "bandana-fiorellino-lino.jpg":                 "bandana-lino.jpg",
+
     # --- medagliette: area 810x900, il nativo si riduce e si ritaglia ------
     "tag-paisley-burgundy-perla.jpg":              "bandana-paisley-cammeo.jpg",
     "tag-geometric-silver-perla.jpg":              "bandana-diamanti.jpg",

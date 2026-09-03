@@ -74,6 +74,28 @@ LOGHI = marchio.LIVELLI_OBSOLETI
 TIPO_DI_BLUEPRINT = {419: "cuccia", 562: "bandana", 566: "medaglietta",
                      784: "collare", 570: "ciotola", 855: "tappetino"}
 
+# ROUND 52 -- I DUE PRODOTTI CHE NON SI POSSONO RICONOSCERE DAL FILE
+#
+# identifica() capisce cosa stampa un prodotto GUARDANDO IL FILE CHE STAMPA,
+# e per settanta prodotti su settantadue e' la regola giusta: i titoli
+# mentono ("Maroon Damask Dog Collar" stampa un ulivo), il file no.
+#
+# Ma tre bandane -- "Ramo", "Nobile" e "Fiorellino" -- stampavano lo STESSO
+# file, con lo stesso id Printify perche' i byte erano identici. Dal file non
+# si distinguono: e' l'informazione stessa che manca, non la regola che
+# sbaglia. L'unica cosa che le separa e' l'id del prodotto, quindi e' da li'
+# che si prendono le due identita' nuove.
+#
+# Sono DUE e non tre perche' "Ramo" e' l'"Olive Branch Pet Bandana": il suo
+# ulivo lo tiene, ed e' l'unica delle tre a cui il file attuale corrispondeva
+# davvero.
+PER_PRODOTTO = {
+    # "Nobile" -- Vintage Damask Pet Bandana, Burgundy & Gold
+    "6a50d3988ee599f2ab095207": "bandana-nobile-damasco.jpg",
+    # "Fiorellino" -- Floral Pet Bandana
+    "6a50ceb48ee599f2ab094d38": "bandana-fiorellino-lino.jpg",
+}
+
 
 def chiavi():
     valori = {}
@@ -229,12 +251,20 @@ def file_costruito(tipo, identita, misura, da_catalogo):
 def identifica(prodotto, tipo):
     """Cosa stampa questo prodotto: (identita', da_catalogo) oppure (None, motivo).
 
-    Sulle CUCCE si va per titolo, perche' quattro di loro stampano motivi
+    Prima di tutto PER_PRODOTTO, che vale per due bandane e per nessun altro:
+    stampavano un file che stampava anche un terzo prodotto, quindi dal file
+    non erano distinguibili. Vedi il commento sopra la tabella.
+
+    Poi le CUCCE, per titolo, perche' quattro di loro stampano motivi
     geometrici disegnati che non hanno una sorgente. Su tutto il resto si va
     per FILE STAMPATO, perche' i titoli mentono: "Maroon Damask Dog Collar"
     stampa collar-olive-perla-only.jpg. E' la stessa regola gia' scritta in
     perla-usa-file-stampa.py.
     """
+    scelto = PER_PRODOTTO.get(str(prodotto.get("id")))
+    if scelto:
+        return scelto, False
+
     if tipo == "cuccia":
         chiave = chiave_catalogo(prodotto["title"])
         return (chiave, True) if chiave else (None, "titolo non nel CATALOGO")
