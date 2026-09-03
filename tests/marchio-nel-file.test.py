@@ -439,6 +439,50 @@ def test_la_cartella_chiara_su_fondo_chiaro_si_riconosce_dal_bordo():
         'bordo %.2f, ne serve %.2f' % (e['bordo'], marchio.TOPPA_BORDO))
 
 
+
+def _tessuto_a_righe(misura, chiara, scura, larghezza=40):
+    """Righe VERTICALI, come il collare "marinara"."""
+    im = Image.new('RGB', misura, chiara)
+    d = ImageDraw.Draw(im)
+    for x in range(0, misura[0], larghezza * 2):
+        d.rectangle((x, 0, x + larghezza, misura[1]), fill=scura)
+    return im
+
+
+def test_un_tessuto_a_righe_non_e_una_toppa():
+    """Il falso allarme che ROUND 50 ha davvero preso, e come si toglie.
+
+    Il collare "marinara" -- righe verticali navy e crema, nessuna cartella --
+    veniva segnalato. Due volte, per due ragioni diverse, ed e' istruttivo:
+
+      1. una riga crema dentro il riquadro e' CHIARA E PIATTA come una
+         cartella, e il suo bordo e' alto quanto tutto il riquadro;
+      2. su un collare il marchio si ripete otto volte, e basta che UNO degli
+         otto riquadri cada su una riga larga.
+
+    Quello che una riga non ha e' un bordo CHIUSO: ha il lato verticale, non
+    quello orizzontale. Misurando il piu' debole dei due, la riga scende a zero
+    e la cartella resta a 0,46 -- che e' il suo bordo, e non dipende dal
+    tessuto sotto.
+    """
+    misura = (600, 400)
+    riquadro = (220, 90, 160, 220)
+    righe = _tessuto_a_righe(misura, (238, 232, 220), (26, 42, 78))
+    e = marchio.toppa(righe, [riquadro])[0]
+    assert e['bordo'] < marchio.TOPPA_BORDO, (
+        'una riga non ha un bordo chiuso: dovrebbe misurare quasi zero, invece '
+        '%.2f' % e['bordo'])
+    assert not e['toppa'], (
+        'un tessuto a righe non e\' una cartella: dentro %.2f, intorno %.2f, '
+        'bordo %.2f' % (e['dentro'], e['intorno'], e['bordo']))
+
+    # e la cartella VERA, sullo stesso tessuto a righe, si vede lo stesso
+    sporco = marchio.toppa(_con_cartella(righe, riquadro), [riquadro])[0]
+    assert sporco['toppa'], (
+        'la cartella su tessuto a righe va vista comunque: dentro %.2f, '
+        'bordo %.2f' % (sporco['dentro'], sporco['bordo']))
+
+
 def main():
     print('Dove va messo e dove no')
     prova('non si aggiunge ai motivi che lo contengono gia\'', test_non_si_aggiunge_dove_ce_gia)
@@ -469,6 +513,8 @@ def main():
           test_un_motivo_chiaro_non_e_una_toppa)
     prova('una cartella chiara su fondo chiaro si riconosce dal bordo',
           test_la_cartella_chiara_su_fondo_chiaro_si_riconosce_dal_bordo)
+    prova('un tessuto a righe NON e\' una cartella',
+          test_un_tessuto_a_righe_non_e_una_toppa)
 
     print('\n%d verifiche superate.' % passati +
           (' %d FALLITE.' % falliti if falliti else ''))

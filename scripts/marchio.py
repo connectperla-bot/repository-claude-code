@@ -626,25 +626,46 @@ def _chiaro_e_piatto(ritaglio):
     return maschera.histogram()[255], grigio.width * grigio.height
 
 
+def _linea_piu_lunga(salti, larghezza, altezza, per_colonne):
+    """La frazione piu' alta di una colonna (o riga) che fa un salto netto."""
+    dati = list(salti.getdata())
+    meglio = 0.0
+    if per_colonne:
+        for x in range(larghezza):
+            forti = sum(1 for y in range(altezza) if dati[y * larghezza + x] > TOPPA_SALTO)
+            meglio = max(meglio, forti / float(altezza))
+    else:
+        for y in range(altezza):
+            riga = dati[y * larghezza:(y + 1) * larghezza]
+            forti = sum(1 for v in riga if v > TOPPA_SALTO)
+            meglio = max(meglio, forti / float(larghezza))
+    return meglio
+
+
 def _bordo_dritto(ritaglio):
-    """Il bordo verticale piu' lungo dentro il riquadro, come frazione d'altezza.
+    """Quanto e' CHIUSO il bordo piu' netto dentro il riquadro, da 0 a 1.
 
     Si guarda in una miniatura a misura fissa: cosi' la soglia vale uguale su
     una bandana da 4275 px e su una medaglietta da 810, e la sfocatura del
     ridimensionamento spegne il rumore del tessuto senza spegnere un bordo
     vero, che e' lungo.
+
+    PERCHE' SERVONO TUTTE E DUE LE DIREZIONI
+    Con le sole colonne, il collare "marinara" -- righe verticali navy e crema,
+    nessuna cartella -- misurava 1,00: una riga crema dentro il riquadro e'
+    chiara e piatta come una cartella, e il suo bordo e' alto quanto tutto il
+    riquadro. Era l'unico falso allarme su 62 motivi europei, e non e' un caso
+    isolato: qualunque tessuto rigato lo darebbe.
+    Una cartella pero' e' CHIUSA: ha un bordo verticale E uno orizzontale. Una
+    riga ha solo il verticale. Prendendo il piu' DEBOLE dei due, la riga scende
+    a quasi zero e la cartella resta alta.
     """
     grigio = ritaglio.convert("L").resize((120, 200), Image.BILINEAR)
-    destra = grigio.crop((1, 0, grigio.width, grigio.height))
-    sinistra = grigio.crop((0, 0, grigio.width - 1, grigio.height))
-    salti = ImageChops.difference(destra, sinistra)
-    dati = list(salti.getdata())
-    larghezza, altezza = salti.size
-    meglio = 0.0
-    for x in range(larghezza):
-        forti = sum(1 for y in range(altezza) if dati[y * larghezza + x] > TOPPA_SALTO)
-        meglio = max(meglio, forti / float(altezza))
-    return meglio
+    w, h = grigio.size
+    vert = ImageChops.difference(grigio.crop((1, 0, w, h)), grigio.crop((0, 0, w - 1, h)))
+    oriz = ImageChops.difference(grigio.crop((0, 1, w, h)), grigio.crop((0, 0, w, h - 1)))
+    return min(_linea_piu_lunga(vert, w - 1, h, True),
+               _linea_piu_lunga(oriz, w, h - 1, False))
 
 
 def toppa(immagine, box, allarga=0.6):
@@ -678,13 +699,21 @@ def toppa(immagine, box, allarga=0.6):
             "dentro": round(dentro, 3),
             "intorno": round(intorno, 3),
             "bordo": round(bordo, 3),
-            # Chiara e piatta e' la condizione necessaria; poi basta UNO dei due
-            # indizi: che stacchi dal tessuto intorno, oppure che abbia un bordo
-            # dritto. Sono i due modi in cui una cartella si tradisce, e nessuno
-            # dei due li copre tutti e due i casi.
-            "toppa": bool(dentro >= TOPPA_DENTRO
-                          and (dentro - intorno >= TOPPA_STACCO
-                               or bordo >= TOPPA_BORDO)),
+            # SERVONO TUTTE E DUE, non una qualunque. Prima bastava una delle
+            # due e il collare "marinara" passava per cartella: uno degli otto
+            # riquadri ripetuti lungo la fettuccia cadeva su una riga crema
+            # larga, quindi "chiaro e piatto dentro, mosso intorno" -- ma di
+            # cartella non c'era l'ombra, e il suo bordo infatti misura 0,00.
+            #
+            # Il bordo chiuso invece non manca MAI a una cartella vera: su
+            # tutte quelle trovate -- 11 file Printify e 7 motivi europei --
+            # misura 0,455-0,46, sempre, perche' e' il bordo della cartella e
+            # non dipende dal tessuto che ha sotto. Farne una condizione
+            # necessaria toglie il falso allarme senza perdere niente.
+            #
+            # `intorno` resta misurato e riportato: serve a capire un caso
+            # guardando i numeri, anche se non entra piu' nel verdetto.
+            "toppa": bool(dentro >= TOPPA_DENTRO and bordo >= TOPPA_BORDO),
         })
     return esiti
 
