@@ -171,7 +171,20 @@ def main():
     for i, p in enumerate(coda, 1):
         tipo = tipo_di(p["handle"])
         d = None
-        for _ in range(4):
+        # I QUATTRO TENTATIVI VALGONO ANCHE PER GLI ALTRI ERRORI, NON SOLO PER
+        # IL 429. Fino a qui un errore diverso dal 429 usciva SUBITO, senza
+        # riprovare: il ciclo da quattro serviva alla sola coda di Printful.
+        # Misurato sulla tornata del marchio nuovo: nei primi nove prodotti
+        # TRE hanno risposto "Impossibile generare l'anteprima da Printful" al
+        # primo colpo -- un terzo -- e sono rimasti con la foto vecchia. E'
+        # esattamente lo stesso genere di intoppo del 429 (il generatore di
+        # anteprime di Printful che non ce la fa in quel momento), quindi
+        # merita lo stesso rimedio: si aspetta e si richiede.
+        #
+        # La pausa e' piu' corta di quella del 429 perche' qui non c'e' nessuno
+        # che ci dica di aspettare un minuto: e' un intoppo, non un limite.
+        ATTESA_INTOPPO = 12
+        for tentativo in range(4):
             d = posta(MOCKUP, {"product_type": tipo, "composite_image_id": ID_FINTO,
                                "composite_image_url": url_nitida(p["pattern"])})
             if d.get("images"):
@@ -181,7 +194,13 @@ def main():
                 print("   429, aspetto %ds" % att)
                 time.sleep(att)
                 continue
-            print("%2d/%d  %-32s MOCKUP FALLITO: %s" % (i, len(coda), p["title"][:32], str(d)[:150]))
+            if tentativo < 3:
+                print("   intoppo su %s, riprovo fra %ds (%d di 4)"
+                      % (p["title"][:28], ATTESA_INTOPPO, tentativo + 1))
+                time.sleep(ATTESA_INTOPPO)
+                continue
+            print("%2d/%d  %-32s MOCKUP FALLITO dopo 4 tentativi: %s"
+                  % (i, len(coda), p["title"][:32], str(d)[:120]))
             d = None
             break
         if not d or not d.get("images"):
