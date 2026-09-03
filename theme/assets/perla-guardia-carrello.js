@@ -78,6 +78,52 @@
   // fermarlo a torto costa un messaggio da leggere, lasciarlo passare costa un
   // ordine pagato e sbagliato.
 
+  // ROUND 50 -- IL BUCO CHE LA GUARDIA NON POTEVA VEDERE, E IL BOTTONE CHE CRESCE.
+  //
+  // Segnalazione: "l'aggiunta al carrello non funziona alcune volte, tipo su
+  // quello personalizzato a cui aggiungi il nome; se clicco aggiungi il
+  // bottone diventa enorme per poco ma non ha effetto".
+  //
+  // Sono due guasti, e nascono tutti e due dallo stesso punto: e' il clic su
+  // "Aggiungi al carrello" a far partire la composizione del disegno.
+  //
+  //   IL BUCO. I controlli qui sopra guardano il campo del design PRIMA che il
+  //   gestore del tema parta. Ma se il disegno non era ancora stato composto,
+  //   a comporlo e' quel clic: global.js chiama __perlaEnsureComposed() e
+  //   aspetta. Se il caricamento fallisce li' dentro, composeAndUpload() se lo
+  //   mangia --
+  //       .catch(function(){ bakedImageId=""; writePropData();
+  //                          setPhotoStatus(status, composeError, true) })
+  //   -- la promessa RISOLVE lo stesso, e il tema prosegue: FormData(form),
+  //   POST a /cart/add, "Aggiunto!". La guardia era gia' passata. E' lo stesso
+  //   danno di ROUND 45 (il cliente paga e non si stampa niente) da un ingresso
+  //   che ROUND 45 non copriva.
+  //
+  //   L'ATTESA SENZA FONDO. `ensure.then(...)` non ha alcun limite. Il servizio
+  //   che compone sta su un piano gratuito e si addormenta: misurato il 3
+  //   settembre 2026, la prima chiamata ha impiegato 12,6 secondi, le
+  //   successive 0,5. Dodici secondi con un bottone che gira sono, per chi
+  //   guarda, "non ha effetto".
+  //
+  //   IL BOTTONE ENORME. Non e' un difetto di stile: il tema scrive nel
+  //   bottone P.strings.composing al posto di "Aggiungi al carrello", e il
+  //   bottone si allarga per contenerlo.
+  //
+  // COME SI CHIUDONO SENZA RISCRIVERE IL CARRELLO
+  // Questo ascoltatore sta in fase di CATTURA, quindi parte prima del gestore
+  // del tema; e il tema legge `pr.__perlaEnsureComposed` solo dopo, quando
+  // parte lui. In quella finestra si puo' sostituire quella funzione con una
+  // che fa le stesse cose piu' due: si arrende dopo LIMITE_COMPOSIZIONE, e
+  // ricontrolla il campo del design DOPO che la composizione e' finita.
+  //
+  // Quando si arrende, RIFIUTA con un oggetto che porta `.description`, perche'
+  // il ramo d'errore del tema e' gia' scritto cosi':
+  //     .catch(function(err){ txt.textContent = err && err.description
+  //                             ? err.description : P.strings.cartError; ... })
+  // quindi il messaggio compare da solo, is-loading viene tolto dal codice del
+  // tema, e -- la cosa che conta -- il fetch a /cart/add NON parte mai. Nessuna
+  // logica del carrello duplicata qui dentro.
+
   var CLASSE_ERRORE = 'product-personalize__status--error';
   var SEGNAPOSTO = 'Testo';
   var COMPONENDO_DI_SCORTA = 'Preparazione dell\'immagine...';
@@ -91,6 +137,16 @@
   var MESSAGGIO_SEGNAPOSTO = 'C’è un riquadro di testo con scritto ancora ' +
     '«Testo»: tocca la scritta e cambiala, oppure cancella il riquadro. ' +
     'Altrimenti «Testo» verrebbe stampato davvero.';
+
+  // ROUND 50 -- quanto si aspetta, e cosa si dice.
+  var LIMITE_COMPOSIZIONE = 20000;   // 12,6 s misurati a freddo: 20 lascia margine
+
+  // Due lunghezze per lo stesso guasto, perche' finiscono in due posti diversi:
+  // sul BOTTONE ci sta una riga corta, nel paragrafo di stato sotto l'editor
+  // c'e' spazio per dire cosa fare.
+  var BOTTONE_NON_PRONTO = 'Disegno non pronto';
+  var MESSAGGIO_LENTO = 'Il disegno non è ancora pronto: il servizio che ' +
+    'lo prepara ci sta mettendo troppo. Aspetta qualche secondo e riprova.';
 
   function eUnFormCarrello(form) {
     if (!form || form.nodeName !== 'FORM') return false;
@@ -173,13 +229,123 @@
     }
   }
 
+
+  // --- ROUND 50: il limite di attesa e la misura del bottone ---------------
+
+  // Vero solo dentro l'invio del form. L'anteprima "mockup reale" chiama la
+  // stessa __perlaEnsureComposed, ma li' un rifiuto non c'entra niente: quel
+  // pulsante ha un suo ramo d'errore e un suo messaggio.
+  var dentroAlCarrello = false;
+
+  function conLimite(promessa, ms) {
+    return new Promise(function (risolvi, rifiuta) {
+      var scattato = false;
+      var timer = setTimeout(function () {
+        scattato = true;
+        rifiuta({ description: BOTTONE_NON_PRONTO, perlaDettaglio: MESSAGGIO_LENTO });
+      }, ms);
+      Promise.resolve(promessa).then(function (valore) {
+        if (scattato) return;
+        clearTimeout(timer);
+        risolvi(valore);
+      }, function (errore) {
+        if (scattato) return;
+        clearTimeout(timer);
+        rifiuta(errore);
+      });
+    });
+  }
+
+  function fermata(form, dettaglio) {
+    avvisa(form, dettaglio);
+    return { description: BOTTONE_NON_PRONTO, perlaDettaglio: dettaglio };
+  }
+
+  // Si sostituisce una volta sola per radice: `originale` resta nella chiusura,
+  // e la sostituta la richiama sempre, quindi il percorso del tema non cambia.
+  function avvolgiComposizione(form, radice) {
+    if (radice.__perlaLimiteMesso) return;
+    var originale = radice.__perlaEnsureComposed;
+    // L'editor si accende dopo Fabric.js: se non e' ancora pronto non c'e'
+    // niente da avvolgere, e nemmeno niente da aspettare.
+    if (typeof originale !== 'function') return;
+    radice.__perlaLimiteMesso = true;
+    radice.__perlaEnsureComposed = function () {
+      var promessa = originale.apply(radice, arguments);
+      if (!dentroAlCarrello) return promessa;
+      return conLimite(promessa, LIMITE_COMPOSIZIONE).then(function (valore) {
+        // IL RICONTROLLO. Qui la composizione e' finita: se ha fallito, il
+        // campo e' vuoto e lo stato porta la classe d'errore -- esattamente
+        // cio' che designMancante() sa riconoscere. Prima di adesso questo
+        // controllo non poteva esistere, perche' la composizione non era
+        // ancora partita.
+        var motivo = motivoPerFermare(form);
+        if (motivo) throw fermata(form, motivo);
+        return valore;
+      });
+    };
+  }
+
+  function proteggiComposizione(form) {
+    var radici = form.querySelectorAll('[data-photo-customizer]');
+    if (!radici.length) return;
+    for (var i = 0; i < radici.length; i++) avvolgiComposizione(form, radici[i]);
+    dentroAlCarrello = true;
+    // Il gestore del tema parte in questo stesso invio ed e' sincrono fino alla
+    // chiamata: basta il primo turno successivo per richiudere la finestra.
+    setTimeout(function () { dentroAlCarrello = false; }, 0);
+  }
+
+  // La misura si prende PRIMA che il tema cambi la scritta, e si rimette a
+  // posto appena il bottone torna a riposo. Non si lascia incollata: una
+  // larghezza in pixel sopravvissuta a una rotazione dello schermo farebbe
+  // sbordare il bottone.
+  function fissaLarghezza(form) {
+    var bottone = form.querySelector('[data-add-btn]');
+    if (!bottone || bottone.__perlaLarghezzaFissa) return;
+    if (typeof bottone.getBoundingClientRect !== 'function') return;
+    var largo = Math.ceil(bottone.getBoundingClientRect().width);
+    if (!largo) return;
+    var prima = bottone.style.width;
+    bottone.__perlaLarghezzaFissa = true;
+    bottone.style.width = largo + 'px';
+
+    var timer = null;
+    var osservatore = null;
+    function libera() {
+      if (timer) { clearTimeout(timer); timer = null; }
+      if (osservatore) { osservatore.disconnect(); osservatore = null; }
+      bottone.style.width = prima;
+      bottone.__perlaLarghezzaFissa = false;
+    }
+    // Rete di sicurezza: comunque vada -- errore, pagina lasciata a meta',
+    // osservatore mai chiamato -- la misura non resta appesa e l'osservatore
+    // non resta acceso. E' il difetto che ROUND 50 va a cercare altrove, e
+    // sarebbe brutto introdurlo proprio qui.
+    timer = setTimeout(libera, LIMITE_COMPOSIZIONE + 5000);
+    if (typeof MutationObserver !== 'function') return;
+    osservatore = new MutationObserver(function () {
+      if (bottone.classList.contains('is-loading')) return;
+      if (bottone.classList.contains('is-added')) return;
+      libera();
+    });
+    osservatore.observe(bottone, { attributes: true, attributeFilter: ['class'] });
+  }
+
   document.addEventListener('submit', function (e) {
     var form = e.target;
     if (!eUnFormCarrello(form)) return;
     var motivo = motivoPerFermare(form);
-    if (!motivo) return;
-    e.preventDefault();
-    e.stopImmediatePropagation();
-    avvisa(form, motivo);
+    if (motivo) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      avvisa(form, motivo);
+      return;
+    }
+    // Si passa. Da qui comanda il gestore del tema: ROUND 50 gli mette accanto
+    // il limite di attesa, il ricontrollo dopo la composizione e la misura del
+    // bottone -- presa prima che sia lui a cambiare la scritta.
+    proteggiComposizione(form);
+    fissaLarghezza(form);
   }, true);
 })();

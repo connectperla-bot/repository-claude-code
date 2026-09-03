@@ -348,3 +348,34 @@ html {
   .jdgm-rev-snippet-card__rev-rating .jdgm-star {
   color: #C8862B !important;
 }
+
+
+/* ================================================================
+   ROUND 50 — IL PULSANTE "AGGIUNGI AL CARRELLO" NON CAMBIA MISURA
+   ================================================================
+   Segnalazione: "se clicco aggiungi il bottone diventa enorme per poco".
+   Il tema, mentre prepara il disegno, sostituisce la scritta del pulsante
+   con sections.product.photo_composing. Le due correzioni si tengono per
+   mano:
+
+     - le traduzioni sono state accorciate perche' la scritta d'attesa
+       stia dentro quella normale ("Preparo il disegno..." e' piu' corta di
+       "Aggiungi al carrello");
+     - assets/perla-guardia-carrello.js fissa comunque la larghezza misurata
+       prima del cambio, perche' una traduzione futura potrebbe non starci.
+
+   Qui si chiude il cerchio: con la larghezza bloccata una scritta troppo
+   lunga andrebbe a capo e il pulsante crescerebbe in ALTEZZA invece che in
+   larghezza. Su una riga sola, e troncata con i puntini, non cresce in
+   nessuna direzione. */
+[data-add-btn] {
+  overflow: hidden;
+}
+[data-add-btn] [data-btn-text] {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}

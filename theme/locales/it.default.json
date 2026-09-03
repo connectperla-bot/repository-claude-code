@@ -142,7 +142,7 @@
       "name_color_label": "Colore del nome",
       "name_position_label": "Posizione del nome",
       "name_live_preview_label": "Anteprima stampa:",
-      "photo_composing": "Preparazione dell'immagine…",
+      "photo_composing": "Preparo il disegno…",
       "photo_compose_error": "Non siamo riusciti a preparare il tuo design. Riprova fra qualche secondo: senza il file non possiamo stamparlo.",
       "pay_note": "Paga in un tocco con Apple Pay, Google Pay o Shop Pay",
       "delivery_estimate": "Consegna stimata: {{ min }}-{{ max }} giorni",
