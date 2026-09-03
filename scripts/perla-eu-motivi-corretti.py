@@ -161,7 +161,9 @@ SOGLIA_FIRMA = 0.55
 # contorno stretto invece del mosaico crema/nero). Il numero SALE sempre e non
 # si riusa mai: la URL versionata della v3 e' gia' nei metafield e nelle foto
 # dei prodotti, e riscriverci sopra farebbe servire ancora la vecchia immagine.
-VERSIONE = 4
+# ROUND 53 -- quinta versione: il contorno del marchio non lava piu' il
+# tessuto, e sulla bandana il marchio e' sceso da 0,34 a 0,22.
+VERSIONE = 5
 _VERSIONI = re.compile(r"(?:-v\d+)+$")
 
 # Oltre questo rapporto col salto fra due colonne attaccate, il punto in cui il
