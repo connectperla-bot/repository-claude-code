@@ -77,7 +77,23 @@ CACHE = os.path.join(RADICE, "generated-designs", "dettagli-stampa")
 USCITA = os.path.join(RADICE, "generated-designs", "dettaglio-da-attaccare.json")
 UPLOAD = "https://perla-upload-endpoint-yizy.onrender.com/upload"
 
-LATO = 1000
+# ROUND 53 -- 2048 e non 1000, perche' la proprietaria vede ancora sgranato.
+#
+# La prima stesura faceva questa foto a 1000 px perche' 1000 e' la misura dei
+# mockup Printful, e sembrava giusto che stessero insieme nella galleria. Ma
+# questa foto NON e' un mockup: e' un ritaglio a risoluzione nativa dal file
+# di stampa, quindi la misura della tela non e' un limite tecnico, e' una
+# scelta -- e a 1000 buttavamo via meta' di quello che avevamo.
+#
+# Misurato: il file del collare e' largo 7169 px. Una tela da 1000 ne mostra
+# 1000 alla volta, una da 2048 ne mostra 2048. Nessun pixel viene inventato in
+# nessuno dei due casi (l'ingrandimento resta 1,0 per costruzione, e
+# dettaglio() si ferma se non lo e'); semplicemente la seconda ne mostra il
+# doppio, e le foto americane sul negozio sono gia' a 2048.
+#
+# Le strisce si riadattano da sole: sul collare da tre passano a cinque, sul
+# guinzaglio da quattro a sette.
+LATO = 2048
 # I tipi che soffrono lo schiacciamento: nastri lunghissimi e bassi. La bandana
 # e' quadrata e la ciotola e' 8:1, e a 1000 px si vedono benissimo tutte e due.
 TIPI = ("collare-eu", "guinzaglio-eu")
