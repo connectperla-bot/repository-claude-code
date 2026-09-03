@@ -303,6 +303,52 @@ def test_si_legge_anche_sul_tessuto_a_righe():
             'servono %d' % (nome, mediano, marchio.CONTRASTO_MINIMO))
 
 
+def test_la_scritta_non_sparisce_a_nessuna_luminosita():
+    """Il difetto che ROUND 50 chiude: la scritta invisibile sui grigi medi.
+
+    IL GUASTO
+    I due inchiostri del marchio -- il crema e il quasi-nero -- stanno da PARTI
+    OPPOSTE del fondo. Il passaggio fra l'uno e l'altro era sfumato su trenta
+    livelli di luminosita', e mescolare a meta' due colori che stanno uno sopra
+    e uno sotto il fondo non da' una via di mezzo: da' esattamente il fondo.
+
+    Misurato sul nucleo pieno della scritta (i pixel che nel logo sono sotto 40,
+    quindi non i bordi antialiasati), lo stacco del pixel che stacca DI PIU':
+
+        fondo    prima   dopo
+          110       90    131
+          120       20    121      <- venti. La scritta non c'era.
+          130       90    111
+
+    Venti su un minimo di sessanta vuol dire che a quella luminosita' non
+    esisteva un solo punto della scritta che si vedesse. Guardato a schermo su
+    un grigio 120: "Perla Italia" spariva del tutto.
+
+    PERCHE' IL TEST GUARDA IL PIXEL PIU' FORTE E NON LA MEDIA
+    Perche' la domanda e' "si legge o no". Una media bassa puo' ancora essere
+    una scritta leggibile con i bordi morbidi; ma se nemmeno il punto piu'
+    contrastato arriva alla soglia, non c'e' niente da leggere. E' la misura
+    che distingue i due casi -- ed e' quella che il test precedente non fa,
+    perche' guarda TUTTO il marchio e li' basta una luce della perla a passare.
+    """
+    logo = marchio._marchio().resize((120, 200), Image.LANCZOS)
+    grigio = list(logo.convert('L').getdata())
+    alfa = list(logo.getchannel('A').getdata())
+    nucleo = [i for i in range(len(alfa)) if alfa[i] > 200 and grigio[i] < 40]
+    assert nucleo, 'nessun pixel di scritta piena: la prova non misurerebbe niente'
+
+    peggiore = (999, None)
+    for luce in range(0, 256, 5):
+        colori = list(marchio._adatta(logo, float(luce)).convert('RGB').getdata())
+        forte = max(abs(marchio._luminosita(colori[i]) - luce) for i in nucleo)
+        if forte < peggiore[0]:
+            peggiore = (forte, luce)
+    assert peggiore[0] >= marchio.CONTRASTO_MINIMO, (
+        'su fondo di luminosita\' %d la scritta non stacca da nessuna parte: '
+        'il punto piu\' contrastato sta a %.0f, ne servono %d'
+        % (peggiore[1], peggiore[0], marchio.CONTRASTO_MINIMO))
+
+
 def main():
     print('Dove va messo e dove no')
     prova('non si aggiunge ai motivi che lo contengono gia\'', test_non_si_aggiunge_dove_ce_gia)
@@ -323,6 +369,8 @@ def main():
     prova('l\'inchiostro si adatta al fondo', test_l_inchiostro_si_adatta_al_fondo)
     prova('si legge su qualunque fondo', test_si_legge_su_qualunque_fondo)
     prova('si legge anche sul tessuto a righe', test_si_legge_anche_sul_tessuto_a_righe)
+    prova('la scritta non sparisce a nessuna luminosita\' del fondo',
+          test_la_scritta_non_sparisce_a_nessuna_luminosita)
 
     print('\n%d verifiche superate.' % passati +
           (' %d FALLITE.' % falliti if falliti else ''))

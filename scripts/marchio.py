@@ -314,12 +314,17 @@ INCHIOSTRO_SCURO = (28, 26, 24)
 CREMA = (246, 240, 230)
 # Scarto di luminosita' sotto il quale un inchiostro sparisce nel fondo.
 CONTRASTO_MINIMO = 60
-# Sotto questa luminosita' il fondo e' "scuro": l'inchiostro nero non si legge
-# piu' e va schiarito. Sopra, il nero si legge e semmai e' l'oro a soffrire.
-FONDO_SCURO = 120
 # Sopra questa, il fondo e' cosi' chiaro che all'oro basta pochissimo aiuto.
 FONDO_CHIARISSIMO = 205
 # Di quanto si incupisce l'oro sui fondi medi e su quelli chiarissimi.
+#
+# PERCHE' DUE VALORI FISSI E NON UNA FORMULA. Provato: far inseguire all'oro
+# la soglia di contrasto, incupendolo punto per punto in base al fondo, migliora
+# ogni numero -- sulla salvia i pixel sotto soglia scendono dal 51% al 2% -- e
+# rovina il marchio. La ragione e' che "l'oro" non e' un colore solo: dentro ci
+# sono anche le luci della PERLA, e moltiplicarle per 0,3 le spegne. Guardato a
+# schermo, il medaglione diventa una macchia grigia. Il numero diceva meglio,
+# l'occhio diceva peggio, e su un logo decide l'occhio.
 CUPEZZA_MEDIO = 0.62
 CUPEZZA_CHIARO = 0.80
 # Sotto questa luminosita' un pixel del logo e' "inchiostro scuro".
@@ -335,6 +340,65 @@ def _luminosita(rgb):
     """La luminosita' percepita di un colore. La usano i test per misurare lo
     stacco fra inchiostro e tessuto invece di giudicarlo a occhio."""
     return 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]
+
+
+# Dove passare dall'inchiostro scuro al crema: nel punto in cui i due staccano
+# UGUALE dal fondo, cioe' a meta' strada fra le loro luminosita'. E' l'unica
+# scelta che tiene, e la ragione e' aritmetica: per ogni fondo, il piu'
+# contrastato dei due inchiostri stacca almeno di (crema - scuro)/2 -- qui 109,
+# quasi il doppio del minimo richiesto. Qualunque altro punto lascerebbe una
+# fascia di fondi in cui NESSUNO dei due basta.
+FONDO_SCURO = (_luminosita(CREMA) + _luminosita(INCHIOSTRO_SCURO)) / 2.0
+# Quanto e' stretto il passaggio fra i due inchiostri, in livelli di
+# luminosita' del fondo.
+#
+# PERCHE' STRETTO, quando ROUND 47 lo voleva sfumato. Perche' i due inchiostri
+# stanno DA PARTI OPPOSTE del fondo, e mescolarli a meta' non da' una via di
+# mezzo: da' esattamente il colore del fondo. Misurato sui grigi uniformi con
+# il passaggio largo 30 che c'era prima: a 120 il 94% del marchio restava sotto
+# la soglia, a 128 il 97%. Il marchio spariva -- non per il colore scelto, ma
+# per la mescolanza. Sfumare va bene fra due colori dalla stessa parte; qui no.
+PASSAGGIO_INCHIOSTRO = 6
+
+
+def _cupezza(fondo):
+    """Di quanto incupire l'oro perche' stacchi da un fondo di quella luminosita'.
+
+    IL DIFETTO CHE CHIUDE, MISURATO
+    Fino a qui l'oro si incupiva di un fattore FISSO: 0,62 sotto FONDO_CHIARISSIMO
+    e 0,80 sopra. Su un avorio funziona. Su un fondo di mezzo no, e non e'
+    un'opinione -- contando i pixel opachi del marchio che restano sotto i
+    CONTRASTO_MINIMO=60 che questo file stesso dichiara:
+
+        fondo             luce   sotto i 60
+        antracite          38        0%
+        navy               33        0%
+        senape            179       19%
+        bordeaux           64       24%
+        oro (laurel)      163       37%
+        salvia            156       50%
+
+    Su meta' del marchio, sulla salvia, l'inchiostro non staccava. La ragione
+    e' aritmetica: l'oro nativo sta a 179, incupito di 0,62 arriva a 111, e su
+    un fondo a 156 sono 45 di scarto -- sotto la soglia. Con la cartella crema
+    non si vedeva, perche' il marchio aveva un fondo tutto suo; e' lo stesso
+    difetto che ROUND 48 ha trovato sul tessuto a righe, un passo piu' in la'.
+
+    LA REGOLA
+    Invece di due fattori scelti a mano, uno solo che insegue la soglia: l'oro
+    va portato a CONTRASTO_MINIMO SOTTO il fondo. Verso il basso, perche' da
+    179 in su c'e' poco spazio prima del bianco, mentre verso il nero ce n'e'
+    sempre.
+
+        fondo 120  ->  0,34    fondo 179  ->  0,66
+        fondo 156  ->  0,54    fondo 205  ->  0,81 (tagliato a 0,80)
+
+    I due vecchi valori non spariscono: 0,80 resta il tetto, ed e' esattamente
+    quello che la regola calcola sul chiarissimo. Il fisso 0,62 corrispondeva
+    a un fondo di 171: giusto per quello, sbagliato per tutti gli altri.
+    """
+    voluta = (fondo - CONTRASTO_MINIMO - MARGINE_CONTRASTO) / float(LUMINOSITA_ORO)
+    return max(CUPEZZA_MINIMA, min(CUPEZZA_MASSIMA, voluta))
 
 
 def _mappa_fondo(ritaglio, vista=None):
@@ -476,7 +540,8 @@ def _adatta(pezzo, fondo):
     su_chiaro = Image.composite(cupo_medio, cupo_chiaro,
                                 _rampa(fondo, FONDO_CHIARISSIMO))
 
-    rgb = Image.composite(su_scuro, su_chiaro, _rampa(fondo, FONDO_SCURO))
+    rgb = Image.composite(su_scuro, su_chiaro,
+                          _rampa(fondo, FONDO_SCURO, PASSAGGIO_INCHIOSTRO))
     fuori = rgb.convert("RGBA")
     fuori.putalpha(pezzo.getchannel("A"))
     return fuori
