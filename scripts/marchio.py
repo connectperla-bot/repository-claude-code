@@ -357,11 +357,21 @@ FONDO_SCURO = (_luminosita(CREMA) + _luminosita(INCHIOSTRO_SCURO)) / 2.0
 # collare, e un alone di "12 px" sarebbe una nuvola sul secondo e un filo sul
 # primo.
 #
-# L'opacita' e' bassa di proposito. Deve bastare a staccare il marchio dal
-# tessuto, non a coprirlo: sopra il 60% smette di sembrare un alone e comincia
-# a sembrare la cartella che abbiamo appena tolto.
-ALONE_RAGGIO = 0.045
-ALONE_OPACITA = 0.75
+# IL RAGGIO E' STRETTO, E LA PRIMA VOLTA NON LO ERA. A 0,045 -- 41 px su un
+# marchio alto 908 -- il contorno non e' un contorno: e' una NUVOLA. Guardato
+# affiancato su quattro tessuti veri, sulla bandana marinara (righe crema e
+# blu) la nuvola crema copriva le righe blu sotto il marchio, e sul tartan
+# schiariva il quadrettato. Cioe' tornava esattamente la cosa che la
+# proprietaria aveva chiesto di togliere -- "il logo appiccicato sopra un
+# rettangolo bianco" -- solo con i bordi sfumati invece che dritti.
+#
+# A 0,008 il tessuto si rivede sotto il marchio e le lettere restano staccate,
+# perche' quello che le stacca e' il PROFILO, non l'area. Un contorno stretto
+# e pieno lavora meglio di una nebbia larga e debole: per questo qui l'opacita'
+# e' 1 e non 0,75. Non e' una cartella perche' non ha area propria -- segue le
+# lettere a due pixel di distanza.
+ALONE_RAGGIO = 0.008
+ALONE_OPACITA = 1.00
 # Quanto la sagoma sfocata viene "gonfiata" prima di essere usata come alone.
 #
 # PERCHE' SERVE, e l'ho scoperto misurando invece che immaginando. Un alone
@@ -375,7 +385,7 @@ ALONE_OPACITA = 0.75
 # pieno subito fuori dalle lettere, sfumato piu' in la'. Cosi' ogni lettera ha
 # un bordo del tono opposto, e la sua FORMA si legge anche dove il suo colore
 # somiglia al tessuto -- che e' come si mette un marchio sopra una fotografia.
-GUADAGNO_ALONE = 3.2
+GUADAGNO_ALONE = 4.5
 
 
 def _cupezza(fondo):
@@ -534,8 +544,15 @@ def _adatta(pezzo, fondo):
        chiare, guardando i pixel di scritta caduti sulle strisce, lo stacco
        era 8 con e 8 senza. Gonfiando la sfocatura (GUADAGNO_ALONE) il
        contorno esce invece DA SOTTO le lettere e le circonda: sulla fascia di
-       bordo lo stacco passa da 40 a 94, contro i 60 richiesti. Una forma si
-       legge dal suo profilo, non dal suo riempimento.
+       bordo lo stacco passa da 40 a 142, contro i 60 richiesti. Una forma
+       si legge dal suo profilo, non dal suo riempimento.
+
+       E il contorno va STRETTO, non largo. A raggio 0,045 era una nuvola
+       che copriva il tessuto -- la cartella un'altra volta, solo coi
+       bordi sfumati -- e staccava 94. A 0,008, pieno invece che velato,
+       il tessuto si rivede sotto il marchio e lo stacco sale a 142.
+       Guardati affiancati sulla bandana marinara, i due non si
+       somigliano nemmeno.
 
     L'ORO NON SI TOCCA, e vale la pena scriverlo perche' l'ho provato: far
     inseguire all'oro la soglia di contrasto, incupendolo in proporzione al

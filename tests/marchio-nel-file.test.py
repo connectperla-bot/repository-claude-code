@@ -598,8 +598,9 @@ def test_il_contorno_regge_sul_tono_di_minoranza():
     le circonda -- allora la FORMA si legge anche dove il colore no.
 
         stacco mediano sulla fascia di bordo, sulle strisce chiare
-            senza contorno    40
-            con il contorno   94        (minimo richiesto 60)
+            senza contorno              40
+            contorno largo e velato     94
+            contorno stretto e pieno   142        (minimo richiesto 60)
 
     Si misura sulla fascia di bordo (alfa fra 10 e 250) e non sul pieno,
     perche' e' li' che un contorno lavora.
