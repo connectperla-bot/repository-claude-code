@@ -356,7 +356,7 @@
       </div>
       <div class="search-overlay__body">
         <form class="search-overlay__field" action="{{ routes.search_url }}" method="get" role="search">
-          <input type="search" name="q" class="search-overlay__input" data-search-input placeholder="{{ 'general.search.placeholder' | t | default: 'Cerca…' }}" autocomplete="off">
+          <input type="search" name="q" class="search-overlay__input" data-search-input aria-label="{{ 'general.search.search' | t | default: 'Cerca' }}" placeholder="{{ 'general.search.placeholder' | t | default: 'Cerca…' }}" autocomplete="off">
         </form>
         <p class="search-overlay__hint" data-search-hint></p>
         <div class="search-overlay__results" data-search-results></div>

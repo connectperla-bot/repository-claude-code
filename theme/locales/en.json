@@ -47,6 +47,7 @@
   },
   "popup": { "eyebrow": "Welcome to Perla", "offer": "-10%", "title": "10% off your first order", "text": "Subscribe and we'll email you the code.", "placeholder": "Your email", "button": "Get the code", "success": "Done! Check your inbox.", "decline": "My dog? No discount. Basta." },
   "sections": {
+    "instagram": { "post_label": "See post {{ numero }} on Instagram" },
     "announcement": { "label": "Announcements" },
     "apps": { "empty": "Add an app block here from the theme editor (reviews, upsell, banner…)." },
     "faq": { "empty": "Add your questions from the Shopify admin." },

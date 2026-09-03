@@ -75,6 +75,7 @@
     "eyebrow": "Benvenuto in Perla", "offer": "-10%", "title": "Il 10% sul primo ordine", "text": "Iscriviti e ricevi il codice via email.", "placeholder": "La tua email", "button": "Ottieni il codice", "success": "Fatto! Controlla la tua email.", "decline": "Il mio cane non merita sconti"
   },
   "sections": {
+    "instagram": { "post_label": "Guarda il post {{ numero }} su Instagram" },
     "announcement": { "label": "Annunci" },
     "apps": { "empty": "Aggiungi qui un blocco app dal tema editor (recensioni, upsell, banner…)." },
     "faq": { "empty": "Aggiungi le tue domande dal pannello Shopify." },
