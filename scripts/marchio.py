@@ -608,7 +608,11 @@ TOPPA_STACCO = 0.20    # e tanta di piu' che nell'anello intorno
 # a 0,770. Da solo nemmeno questo basterebbe (il motivo a cerchi "Vortice" fa
 # 0,770), ma i due insieme si coprono a vicenda: il bordo dritto conta solo
 # dentro una regione gia' chiara e piatta. Cosi' fanno 19 su 19.
-TOPPA_BORDO = 0.40     # quanta altezza deve avere un bordo per essere "dritto"
+# 0,42 e non 0,40: la cartella misura sempre 0,455-0,46 -- e' il suo bordo, e
+# non dipende dal motivo -- mentre una cuccia damascata pallida ricostruita
+# SENZA cartella arrivava a 0,400 esatti per via del suo stesso disegno. La
+# soglia sta in mezzo, larga da tutte e due le parti.
+TOPPA_BORDO = 0.42     # quanta altezza deve avere un bordo per essere "dritto"
 TOPPA_SALTO = 18       # di quanto deve saltare la luminosita' per essere bordo
 
 
