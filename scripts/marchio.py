@@ -349,16 +349,33 @@ def _luminosita(rgb):
 # quasi il doppio del minimo richiesto. Qualunque altro punto lascerebbe una
 # fascia di fondi in cui NESSUNO dei due basta.
 FONDO_SCURO = (_luminosita(CREMA) + _luminosita(INCHIOSTRO_SCURO)) / 2.0
-# Quanto e' stretto il passaggio fra i due inchiostri, in livelli di
-# luminosita' del fondo.
+
+# L'ALONE: quanto largo e quanto denso.
 #
-# PERCHE' STRETTO, quando ROUND 47 lo voleva sfumato. Perche' i due inchiostri
-# stanno DA PARTI OPPOSTE del fondo, e mescolarli a meta' non da' una via di
-# mezzo: da' esattamente il colore del fondo. Misurato sui grigi uniformi con
-# il passaggio largo 30 che c'era prima: a 120 il 94% del marchio restava sotto
-# la soglia, a 128 il 97%. Il marchio spariva -- non per il colore scelto, ma
-# per la mescolanza. Sfumare va bene fra due colori dalla stessa parte; qui no.
-PASSAGGIO_INCHIOSTRO = 6
+# Il raggio e' una frazione dell'ALTEZZA del marchio, non un numero di pixel:
+# lo stesso marchio si compone alto 908 px su una bandana e 227 px su un
+# collare, e un alone di "12 px" sarebbe una nuvola sul secondo e un filo sul
+# primo.
+#
+# L'opacita' e' bassa di proposito. Deve bastare a staccare il marchio dal
+# tessuto, non a coprirlo: sopra il 60% smette di sembrare un alone e comincia
+# a sembrare la cartella che abbiamo appena tolto.
+ALONE_RAGGIO = 0.045
+ALONE_OPACITA = 0.75
+# Quanto la sagoma sfocata viene "gonfiata" prima di essere usata come alone.
+#
+# PERCHE' SERVE, e l'ho scoperto misurando invece che immaginando. Un alone
+# fatto solo sfocando la sagoma sta SOTTO il marchio: dove il marchio e' opaco
+# non si vede affatto. Misurato su un tessuto in maggioranza scuro con strisce
+# chiare, guardando i pixel di scritta che cadono sulle strisce: lo stacco
+# restava 8 con l'alone e 8 senza. Serviva a niente proprio nel caso per cui
+# l'avevo aggiunto.
+#
+# Moltiplicando la sfocatura e tagliandola a 255 si ottiene invece un CONTORNO:
+# pieno subito fuori dalle lettere, sfumato piu' in la'. Cosi' ogni lettera ha
+# un bordo del tono opposto, e la sua FORMA si legge anche dove il suo colore
+# somiglia al tessuto -- che e' come si mette un marchio sopra una fotografia.
+GUADAGNO_ALONE = 3.2
 
 
 def _cupezza(fondo):
@@ -457,95 +474,120 @@ def _mappa_fondo(ritaglio, vista=None):
     return mappa.resize(ritaglio.size, Image.BICUBIC)
 
 
-def _rampa(fondo, soglia, morbidezza=30):
-    """Maschera: 255 dove il fondo sta sotto soglia, 0 sopra, sfumata in mezzo.
+def _mediana(mappa):
+    """La luminosita' MEDIANA di una mappa del fondo.
 
-    Sfumata e non a gradino per la stessa ragione per cui la forza del crema e'
-    sfumata: su una riga di tessuto il passaggio da un inchiostro all'altro
-    deve avvenire lungo qualche pixel, se no si vede la cucitura fra le due
-    versioni del marchio.
+    Mediana e non media: su un tessuto a due toni la media cade in mezzo e non
+    descrive nessuno dei due, mentre la mediana cade su quello che occupa piu'
+    superficie -- che e' il fondo su cui il marchio sta davvero.
     """
-    mezzo = morbidezza / 2.0
-    return fondo.point(
-        lambda v: 255 if v <= soglia - mezzo
-        else 0 if v >= soglia + mezzo
-        else int(255 * (soglia + mezzo - v) / float(morbidezza)))
+    istogramma = mappa.histogram()
+    quanti = sum(istogramma)
+    if not quanti:
+        return 128.0
+    meta = quanti / 2.0
+    corsa = 0
+    for valore, n in enumerate(istogramma):
+        corsa += n
+        if corsa >= meta:
+            return float(valore)
+    return 128.0
 
 
 def _adatta(pezzo, fondo):
-    """Il marchio con l'inchiostro giusto per il fondo su cui cade. Niente altro.
+    """Il marchio con l'inchiostro giusto per il fondo, e un alone che lo stacca.
 
-    PERCHE' NON C'E' PIU' LA CARTELLA
-    Fino a ROUND 47 dietro al marchio si disegnava sempre una cartella crema
-    con doppio bordo. La ragione era buona: il logo ha DUE inchiostri, l'oro e
-    il quasi-nero, e non esiste un fondo del catalogo su cui si leggano tutti e
-    due -- sulla bandana senape spariva l'oro, sulla medaglietta antracite
-    spariva "Italia". La cartella li staccava tutti e due in un colpo solo.
+    PERCHE' NON C'E' LA CARTELLA
+    Fino a ROUND 47 dietro al marchio si disegnava una cartella crema con
+    doppio bordo. Il logo ha DUE inchiostri, l'oro e il quasi-nero, e non
+    esiste un fondo del catalogo su cui si leggano tutti e due: la cartella li
+    staccava in un colpo solo. Ma su un collare copriva quasi tutto il nastro,
+    e la proprietaria l'ha detta cosi': "il logo e' stato appiccicato con uno
+    sfondo bianco gigantesco e non mi piace, vorrei solo il logo con la
+    scritta".
 
-    La soluzione pero' costava piu' del problema. Sul collare la cartella e'
-    alta il 72% di una fettuccia di 315 px e si ripete otto volte: misurata,
-    copriva quasi tutto il nastro, e il motivo per cui il cliente compra quel
-    collare spariva sotto otto etichette color panna. La proprietaria l'ha
-    detta cosi': "il logo e' stato appiccicato con uno sfondo bianco gigantesco
-    e non mi piace, vorrei solo il logo con la scritta".
+    PERCHE' NON C'E' PIU' NEMMENO IL MOSAICO
+    ROUND 48 aveva sostituito la cartella con una scelta PUNTO PER PUNTO: dove
+    il tessuto e' scuro l'inchiostro diventa crema, dove e' chiaro resta nero.
+    Su un fondo uniforme e' perfetto. Su un motivo no, e i motivi sono la
+    regola: misurato sul riquadro del marchio dei 19 motivi bandana europei,
+    in DODICI il tessuto sta da tutte e due le parti della soglia. Li' il
+    marchio diventava un mosaico crema/nero -- la proprietaria l'ha visto e
+    l'ha descritto cosi': "il logo e' scansionato di luminosita' in base a
+    quale parte del design copre".
 
-    Quindi il contrasto se lo porta addosso il marchio, invece di appoggiarsi a
-    una toppa. Due regole, misurate guardando il marchio su navy, antracite,
-    bordeaux, senape, salvia e avorio:
+    COSA FA ADESSO, IN DUE MOSSE
+    1. UN INCHIOSTRO SOLO per tutto il marchio, scelto dalla luminosita'
+       mediana del tessuto sotto. Il marchio torna a essere un oggetto solo,
+       come un marchio deve essere.
+    2. UN CONTORNO morbido nel tono opposto, ricavato dalla sagoma del
+       marchio stesso. Non e' la cartella: non ha lati, non e' un rettangolo,
+       non ha una forma sua -- e' il profilo delle lettere e del medaglione
+       che sfuma nel tessuto. E' cio' che regge dove un inchiostro solo non
+       basterebbe: sui motivi a due toni, dove il marchio cade anche sul tono
+       che gli somiglia.
 
-      fondo scuro (< 120)   l'inchiostro quasi nero diventa crema, in
-                            proporzione a quanto e' scuro. "Italia" si legge
-                            senza toccare l'oro, che sul buio gia' brilla.
-      fondo chiaro (>= 120) l'oro si incupisce: sul senape (luminosita' 168)
-                            l'oro nativo sta a 178 e sparisce, portato a 0,62
-                            si stacca. Il quasi-nero li' si legge gia' da solo.
+       LA PRIMA VERSIONE DI QUESTO CONTORNO NON SERVIVA A NIENTE, e vale la
+       pena dirlo perche' sembrava ovvio che servisse. Era la sagoma solo
+       sfocata, disegnata SOTTO il marchio: dove il marchio e' opaco non si
+       vede affatto. Misurato su un tessuto in maggioranza scuro con strisce
+       chiare, guardando i pixel di scritta caduti sulle strisce, lo stacco
+       era 8 con e 8 senza. Gonfiando la sfocatura (GUADAGNO_ALONE) il
+       contorno esce invece DA SOTTO le lettere e le circonda: sulla fascia di
+       bordo lo stacco passa da 40 a 94, contro i 60 richiesti. Una forma si
+       legge dal suo profilo, non dal suo riempimento.
 
-    Non e' una scelta stilistica travestita: le due soglie inseguono le due
-    sparizioni documentate sopra, una per ciascuna.
-
-    ROUND 48 -- LA REGOLA VALE PUNTO PER PUNTO
-    `fondo` non e' piu' un numero ma una mappa (vedi _mappa_fondo): su un
-    tessuto a righe le due versioni del marchio si costruiscono tutte e due e
-    si mescolano seguendo il tessuto, invece di sceglierne una sola per tutto
-    il riquadro in base a una media che non descrive nessuna delle due righe.
-    Su un fondo uniforme la mappa e' piatta e il risultato e' identico a prima.
+    L'ORO NON SI TOCCA, e vale la pena scriverlo perche' l'ho provato: far
+    inseguire all'oro la soglia di contrasto, incupendolo in proporzione al
+    fondo, migliora ogni numero -- sulla salvia i pixel sotto soglia scendono
+    dal 51% al 2% -- e rovina il marchio. Dentro "l'oro" ci sono anche le luci
+    della PERLA, e moltiplicarle per 0,3 le spegne: il medaglione diventa una
+    macchia grigia. Il numero diceva meglio, l'occhio diceva peggio.
     """
-    # Un fondo uniforme E' una mappa piatta: si accetta anche come numero,
-    # perche' e' cosi' che si ragiona quando si prova una regola sola alla
-    # volta ("il marchio su un antracite a 40") e obbligare a costruire
-    # un'immagine per dirlo renderebbe il codice di prova meno leggibile del
-    # codice provato.
-    if not hasattr(fondo, "point"):
-        fondo = Image.new("L", pezzo.size, int(fondo))
+    # Un fondo uniforme si accetta anche come numero: e' cosi' che si ragiona
+    # quando si prova una regola sola alla volta ("il marchio su un antracite a
+    # 40"), e obbligare a costruire un'immagine per dirlo renderebbe il codice
+    # di prova meno leggibile del codice provato.
+    luce = float(fondo) if not hasattr(fondo, "point") else _mediana(fondo)
 
     grigio = pezzo.convert("L")
     rgb = pezzo.convert("RGB")
+    alfa = pezzo.getchannel("A")
+    scuro = luce < FONDO_SCURO
 
-    # LA VERSIONE PER IL BUIO: l'inchiostro quasi nero tirato verso il crema.
-    # Quanto ogni pixel e' "scuro", da 0 a 255, e' la forza con cui viene
-    # tirato. Sfumata e non a gradino, se no il bordo antialiasato delle
-    # lettere si stacca come un ritaglio di carta.
-    forza = grigio.point(
-        lambda v: int(255 * (1.0 - v / float(SOGLIA_INCHIOSTRO)))
-        if v < SOGLIA_INCHIOSTRO else 0)
-    su_scuro = Image.composite(Image.new("RGB", pezzo.size, CREMA), rgb, forza)
+    if scuro:
+        # L'inchiostro quasi nero tirato verso il crema. Quanto ogni pixel e'
+        # scuro, da 0 a 255, e' la forza con cui viene tirato: sfumata e non a
+        # gradino, se no il bordo antialiasato delle lettere si stacca come un
+        # ritaglio di carta.
+        forza = grigio.point(
+            lambda v: int(255 * (1.0 - v / float(SOGLIA_INCHIOSTRO)))
+            if v < SOGLIA_INCHIOSTRO else 0)
+        rgb = Image.composite(Image.new("RGB", pezzo.size, CREMA), rgb, forza)
+        tono_alone = INCHIOSTRO_SCURO
+    else:
+        # L'oro incupito, il quasi-nero lasciato stare: sul chiaro si legge da
+        # solo. Quanto incupire dipende da quanto e' chiaro il fondo.
+        chiaro = grigio.point(lambda v: 255 if v >= SOGLIA_INCHIOSTRO else 0)
+        cupezza = CUPEZZA_CHIARO if luce >= FONDO_CHIARISSIMO else CUPEZZA_MEDIO
+        rgb = Image.composite(rgb.point(lambda v: int(v * cupezza)), rgb, chiaro)
+        tono_alone = CREMA
 
-    # LA VERSIONE PER IL CHIARO: l'oro incupito, il quasi-nero lasciato stare.
-    chiaro = grigio.point(lambda v: 255 if v >= SOGLIA_INCHIOSTRO else 0)
-    cupo_medio = Image.composite(
-        rgb.point(lambda v: int(v * CUPEZZA_MEDIO)), rgb, chiaro)
-    cupo_chiaro = Image.composite(
-        rgb.point(lambda v: int(v * CUPEZZA_CHIARO)), rgb, chiaro)
-    # _rampa da' 255 SOTTO la soglia: sotto FONDO_CHIARISSIMO vale il medio.
-    su_chiaro = Image.composite(cupo_medio, cupo_chiaro,
-                                _rampa(fondo, FONDO_CHIARISSIMO))
+    marchio_inchiostrato = rgb.convert("RGBA")
+    marchio_inchiostrato.putalpha(alfa)
 
-    rgb = Image.composite(su_scuro, su_chiaro,
-                          _rampa(fondo, FONDO_SCURO, PASSAGGIO_INCHIOSTRO))
-    fuori = rgb.convert("RGBA")
-    fuori.putalpha(pezzo.getchannel("A"))
+    # L'ALONE. La sagoma del marchio, sfocata e attenuata, nel tono opposto a
+    # quello dell'inchiostro. Si disegna SOTTO, quindi dove il marchio e' opaco
+    # non si vede affatto: esce solo intorno alle lettere e al medaglione, che
+    # e' esattamente dove serve.
+    raggio = max(1.0, ALONE_RAGGIO * pezzo.size[1])
+    sagoma = alfa.filter(ImageFilter.GaussianBlur(raggio))
+    sagoma = sagoma.point(
+        lambda v: int(min(255, v * GUADAGNO_ALONE) * ALONE_OPACITA))
+    fuori = Image.new("RGBA", pezzo.size, tono_alone + (0,))
+    fuori.putalpha(sagoma)
+    fuori.alpha_composite(marchio_inchiostrato)
     return fuori
-
 
 def componi(immagine, tipo, percorso_marchio=None):
     """Disegna il marchio sul file di stampa gia' costruito.

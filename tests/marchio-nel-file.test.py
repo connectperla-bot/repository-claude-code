@@ -199,15 +199,21 @@ def test_l_inchiostro_si_adatta_al_fondo():
     """
     logo = marchio._marchio().resize((120, 200), Image.LANCZOS)
 
+    # ROUND 51 -- si guarda dove il MARCHIO e' pieno, non dove l'immagine
+    # tornata e' opaca. Da quando c'e' il contorno le due cose non coincidono
+    # piu': il contorno e' opaco anche lui, e sul fondo scuro e' scuro per
+    # definizione, quindi il minimo lo dava lui e la prova falliva parlando di
+    # un inchiostro che invece era stato schiarito benissimo. Il metro va preso
+    # sul logo di partenza.
+    pieno = [i for i, a in enumerate(logo.getchannel('A').getdata()) if a > 200]
+
     def piu_scuro(im):
-        rgb = im.convert('RGB')
-        alfa = im.getchannel('A')
-        return min(marchio._luminosita(p) for p, a in zip(rgb.getdata(), alfa.getdata()) if a > 200)
+        d = list(im.convert('RGB').getdata())
+        return min(marchio._luminosita(d[i]) for i in pieno)
 
     def piu_chiaro(im):
-        rgb = im.convert('RGB')
-        alfa = im.getchannel('A')
-        return max(marchio._luminosita(p) for p, a in zip(rgb.getdata(), alfa.getdata()) if a > 200)
+        d = list(im.convert('RGB').getdata())
+        return max(marchio._luminosita(d[i]) for i in pieno)
 
     su_scuro = marchio._adatta(logo, 40)
     assert piu_scuro(su_scuro) > piu_scuro(logo) + 60, (
@@ -483,6 +489,173 @@ def test_un_tessuto_a_righe_non_e_una_toppa():
         'bordo %.2f' % (sporco['dentro'], sporco['bordo']))
 
 
+
+def test_l_inchiostro_non_va_a_chiazze():
+    """Il difetto che ROUND 51 chiude, segnalato guardando i prodotti.
+
+    "Su alcune il logo o e' troppo scuro o e' scansionato di luminosita' in
+    base a quale parte del design copre". E' esatto: da ROUND 48 l'inchiostro
+    si sceglieva PUNTO PER PUNTO seguendo il tessuto sotto, e su un motivo il
+    marchio diventava un mosaico crema/nero.
+
+    Non era un caso limite. Misurato sul riquadro del marchio dei 19 motivi
+    bandana europei, contando quanta parte del fondo sta sopra la soglia:
+    in DODICI il tessuto sta da tutte e due le parti, cioe' su dodici il
+    marchio era a chiazze.
+
+    QUI SI MISURA LA CHIAZZATURA
+    Si compone il marchio su un tessuto a righe larghe -- il caso peggiore, due
+    toni netti -- e si guarda quanto e' sparpagliato l'inchiostro del NUCLEO
+    della scritta (i pixel che nel logo sono sotto 40, quindi non i bordi
+    sfumati). Se l'inchiostro e' uno solo, quei pixel si somigliano; se e' un
+    mosaico, stanno ai due estremi della scala.
+
+        scarto fra il primo e il terzo quarto     prima   dopo
+                                                  212     42
+
+    Duecentododici su una scala di 255 vuol dire che meta' della scritta stava
+    da una parte e meta' dall'altra: e' la definizione di "a chiazze".
+    """
+    logo = marchio._marchio().resize((160, 260), Image.LANCZOS)
+    grigio = list(logo.convert('L').getdata())
+    alfa = list(logo.getchannel('A').getdata())
+    nucleo = [i for i in range(len(alfa)) if alfa[i] > 200 and grigio[i] < 40]
+    assert nucleo, 'nessun pixel di scritta piena: la prova non misurerebbe niente'
+
+    righe = _tessuto_a_righe((160, 260), (238, 232, 220), (26, 42, 78))
+    pezzo = marchio._adatta(logo, marchio._mappa_fondo(righe))
+    colori = list(pezzo.convert('RGB').getdata())
+    luci = sorted(marchio._luminosita(colori[i]) for i in nucleo)
+    sparpaglio = luci[3 * len(luci) // 4] - luci[len(luci) // 4]
+    assert sparpaglio < 80, (
+        'l\'inchiostro della scritta va a chiazze sul tessuto a due toni: '
+        'fra il primo e il terzo quarto ci sono %.0f livelli, ne servono meno '
+        'di 80' % sparpaglio)
+
+
+def test_l_alone_non_e_una_cartella():
+    """L'alone stacca il marchio, ma non deve diventare la toppa di prima.
+
+    LA DISTINZIONE NON E' QUELLA CHE PENSAVO
+    Scrivendo questa prova avevo dato per scontato che l'alone si riconoscesse
+    perche' NON ha un bordo chiuso. La misura dice di no: il riquadro col
+    marchio misura un bordo di 0,43, sopra la soglia. Ma quel bordo non e'
+    dell'alone -- e' del MEDAGLIONE, che e' un cerchio con un contorno netto,
+    e ce l'ha per disegno.
+
+    Quello che davvero separa i due casi e' l'altra condizione, `dentro`:
+    quanta parte del riquadro e' chiara E piatta.
+
+        solo tessuto            dentro 0,00
+        marchio con l'alone     dentro 0,06
+        con la cartella         dentro 0,88
+
+    Una cartella e' un campo pieno e uniforme; un marchio con un alone e' una
+    sagoma sfumata su un tessuto che si vede ancora. Quindici volte di
+    differenza, ed e' quella che il controllo guarda.
+    """
+    misura = (600, 400)
+    riquadro = (220, 90, 160, 220)
+    tessuto = _tessuto(misura, (70, 90, 130), (40, 55, 90))
+    logo = marchio._marchio().resize((160, 220), Image.LANCZOS)
+
+    con_alone = tessuto.convert('RGBA')
+    s, a, largo, alto = riquadro
+    sotto = tessuto.crop((s, a, s + largo, a + alto))
+    con_alone.alpha_composite(marchio._adatta(logo, marchio._mappa_fondo(sotto)), (s, a))
+
+    e = marchio.toppa(con_alone.convert('RGB'), [riquadro])[0]
+    assert not e['toppa'], (
+        'l\'alone e\' stato scambiato per una cartella: dentro %.2f, '
+        'intorno %.2f, bordo %.2f' % (e['dentro'], e['intorno'], e['bordo']))
+    assert e['dentro'] < marchio.TOPPA_DENTRO / 2.0, (
+        'il riquadro col marchio non deve somigliare a un campo pieno e '
+        'uniforme: dentro %.2f, la soglia della cartella e\' %.2f'
+        % (e['dentro'], marchio.TOPPA_DENTRO))
+
+
+
+def _fondo_a_maggioranza(misura, dominante, minoranza, larghezza=22, passo=70):
+    """Un tessuto quasi tutto di un tono, con strisce dell'altro."""
+    im = Image.new('RGB', misura, dominante)
+    d = ImageDraw.Draw(im)
+    for x in range(0, misura[0], passo):
+        d.rectangle((x, 0, x + larghezza, misura[1]), fill=minoranza)
+    return im
+
+
+def test_il_contorno_regge_sul_tono_di_minoranza():
+    """Il caso per cui il contorno esiste, e che senza non e' coperto.
+
+    Con UN inchiostro solo per tutto il marchio, sul tono di maggioranza il
+    marchio stacca per costruzione. Il problema e' l'altro tono: su un fondo
+    quasi tutto scuro con qualche striscia chiara, l'inchiostro sara' crema, e
+    dove una striscia chiara passa sotto una lettera quella lettera e' crema
+    su crema.
+
+    Non lo risolve un'ombra dietro: dove il marchio e' opaco, quello che c'e'
+    sotto non si vede. Lo risolve un contorno, che esce da sotto le lettere e
+    le circonda -- allora la FORMA si legge anche dove il colore no.
+
+        stacco mediano sulla fascia di bordo, sulle strisce chiare
+            senza contorno    40
+            con il contorno   94        (minimo richiesto 60)
+
+    Si misura sulla fascia di bordo (alfa fra 10 e 250) e non sul pieno,
+    perche' e' li' che un contorno lavora.
+    """
+    W, H = 200, 300
+    fondo = _fondo_a_maggioranza((W, H), (30, 40, 70), (238, 232, 220))
+    logo = marchio._marchio().resize((W, H), Image.LANCZOS)
+    tela = fondo.convert('RGBA')
+    tela.alpha_composite(marchio._adatta(logo, marchio._mappa_fondo(fondo)), (0, 0))
+    finito = tela.convert('RGB')
+
+    alfa = list(logo.getchannel('A').getdata())
+    sotto = list(fondo.getdata())
+    sopra = list(finito.getdata())
+    bordo = [i for i in range(len(alfa))
+             if 10 < alfa[i] < 250 and marchio._luminosita(sotto[i]) > 180]
+    assert bordo, 'nessun pixel di bordo sulle strisce chiare: prova inutile'
+    stacchi = sorted(abs(marchio._luminosita(sopra[i]) - marchio._luminosita(sotto[i]))
+                     for i in bordo)
+    mediano = stacchi[len(stacchi) // 2]
+    assert mediano >= marchio.CONTRASTO_MINIMO, (
+        'sul tono di minoranza il marchio non si stacca: il bordo fa %.0f, '
+        'ne servono %d' % (mediano, marchio.CONTRASTO_MINIMO))
+
+
+def test_l_inchiostro_segue_il_tono_dominante():
+    """Un inchiostro solo va bene, ma dev'essere QUELLO GIUSTO.
+
+    La mediana serve proprio a questo: su un tessuto per tre quarti scuro
+    l'inchiostro dev'essere il crema, e su uno per tre quarti chiaro il
+    quasi-nero. Con la media, su un due-toni netto, si finirebbe a meta' e si
+    sceglierebbe male quasi sempre.
+    """
+    W, H = 200, 300
+    logo = marchio._marchio().resize((W, H), Image.LANCZOS)
+    grigio = list(logo.convert('L').getdata())
+    alfa = list(logo.getchannel('A').getdata())
+    nucleo = [i for i in range(len(alfa)) if alfa[i] > 200 and grigio[i] < 40]
+
+    def luce_della_scritta(fondo):
+        pezzo = marchio._adatta(logo, marchio._mappa_fondo(fondo))
+        colori = list(pezzo.convert('RGB').getdata())
+        luci = sorted(marchio._luminosita(colori[i]) for i in nucleo)
+        return luci[len(luci) // 2]
+
+    scuro = _fondo_a_maggioranza((W, H), (30, 40, 70), (238, 232, 220))
+    chiaro = _fondo_a_maggioranza((W, H), (238, 232, 220), (30, 40, 70))
+    su_scuro, su_chiaro = luce_della_scritta(scuro), luce_della_scritta(chiaro)
+    assert su_scuro > 150, (
+        'su un tessuto in maggioranza SCURO la scritta deve essere chiara: '
+        'misura %.0f' % su_scuro)
+    assert su_chiaro < 110, (
+        'su un tessuto in maggioranza CHIARO la scritta deve essere scura: '
+        'misura %.0f' % su_chiaro)
+
+
 def main():
     print('Dove va messo e dove no')
     prova('non si aggiunge ai motivi che lo contengono gia\'', test_non_si_aggiunge_dove_ce_gia)
@@ -515,6 +688,16 @@ def main():
           test_la_cartella_chiara_su_fondo_chiaro_si_riconosce_dal_bordo)
     prova('un tessuto a righe NON e\' una cartella',
           test_un_tessuto_a_righe_non_e_una_toppa)
+
+    print('\nUn inchiostro solo, e un alone')
+    prova('l\'inchiostro non va a chiazze sul tessuto a due toni',
+          test_l_inchiostro_non_va_a_chiazze)
+    prova('l\'alone stacca il marchio ma non e\' una cartella',
+          test_l_alone_non_e_una_cartella)
+    prova('il contorno regge anche sul tono di minoranza',
+          test_il_contorno_regge_sul_tono_di_minoranza)
+    prova('l\'inchiostro segue il tono dominante del tessuto',
+          test_l_inchiostro_segue_il_tono_dominante)
 
     print('\n%d verifiche superate.' % passati +
           (' %d FALLITE.' % falliti if falliti else ''))
