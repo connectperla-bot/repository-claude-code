@@ -253,6 +253,22 @@ def esamina(p, token, cache, manifesto=None):
                     difetti.append("riferimento morto (livello senza nome, id %s)"
                                    % im.get("id"))
                     continue
+                # SPECCHIATO O RUOTATO. Chiesto esplicitamente ("il fatto di
+                # aver tagli, cose specchiate o incongruenze") e costa niente:
+                # Printify lo dice nel placeholder, non serve scaricare il
+                # file. Oggi sono zero su 89 immagini, ed e' proprio per questo
+                # che il controllo va messo adesso: un giorno che qualcuno
+                # trascina un livello nell'editor di Printify, un motivo
+                # specchiato non si distingue a occhio dall'originale -- ma la
+                # scritta del marchio dentro il motivo si', e si stampa al
+                # contrario.
+                if im.get("flipX"):
+                    difetti.append("%s e' specchiata in orizzontale" % nome)
+                if im.get("flipY"):
+                    difetti.append("%s e' specchiata in verticale" % nome)
+                giro = im.get("angle") or 0
+                if giro % 360:
+                    difetti.append("%s e' ruotata di %s gradi" % (nome, giro))
                 e_marchio = nome in marchio.LIVELLI_OBSOLETI
                 if e_marchio:
                     marchi_totali += 1
@@ -542,6 +558,54 @@ def verifica_printful(env):
 
 # ==========================================================================
 
+def verifica_toppe(prodotti, cartella):
+    """La cartella crema c'e' ancora, dentro i pixel dei file di stampa?
+
+    PERCHE' E' A RICHIESTA E NON SEMPRE
+    Va scaricato il file di stampa vero: sono 317 MB per i 48 prodotti attivi.
+    Farlo a ogni giro trasformerebbe un controllo di trenta secondi in uno di
+    dieci minuti, e un controllo che nessuno lancia non controlla niente. Qui
+    si scarica una volta e si tiene in cache.
+
+    Uso:  python3 scripts/perla-verifica-prodotti.py --toppe
+    """
+    from PIL import Image
+    Image.MAX_IMAGE_PIXELS = None
+    os.makedirs(cartella, exist_ok=True)
+    logo = marchio._marchio()
+    tipi = {419: "cuccia", 562: "bandana", 566: "medaglietta", 570: "ciotola"}
+    sporchi = []
+    guardati = 0
+    for p in sorted(prodotti, key=lambda x: x["title"]):
+        tipo = tipi.get(p["blueprint_id"])
+        if tipo is None:
+            continue
+        immagine = next((im for pa in p.get("print_areas", [])
+                         for ph in pa.get("placeholders", [])
+                         for im in ph.get("images", [])), None)
+        if not immagine:
+            continue
+        dove = os.path.join(cartella, "%s-%s.img" % (tipo, p["id"]))
+        if not (os.path.exists(dove) and os.path.getsize(dove)):
+            subprocess.run(["curl", "-sL", "--max-time", "180",
+                            immagine["src"], "-o", dove], check=False)
+        try:
+            im = Image.open(dove)
+            esiti = marchio.toppa(im, marchio.riquadri(tipo, im.size, logo.size))
+        except Exception as err:
+            print("   %-52s non misurabile: %s" % (p["title"][:52], err))
+            continue
+        guardati += 1
+        peggio = max(esiti, key=lambda e: e["dentro"] - e["intorno"]) if esiti else None
+        if peggio and peggio["toppa"]:
+            sporchi.append((p["title"], peggio))
+            print("   CARTELLA  %-44s dentro %.2f intorno %.2f bordo %.2f"
+                  % (p["title"][:44], peggio["dentro"], peggio["intorno"], peggio["bordo"]))
+    print("\n%d file di stampa guardati, %d con la cartella incollata dietro al marchio"
+          % (guardati, len(sporchi)))
+    return sporchi
+
+
 def main():
     env = chiavi()
     solo = None
@@ -553,6 +617,11 @@ def main():
     if solo:
         prodotti = [p for p in prodotti if solo in p["title"].lower()]
     print("%d prodotti su Printify\n" % len(prodotti))
+
+    if "--toppe" in sys.argv:
+        print("Cerco la cartella crema dentro i file di stampa veri...\n")
+        verifica_toppe(prodotti, os.path.join(USCITA, "stampe-scaricate"))
+        return 0
 
     manifesto = marchio_nei_file()
     if manifesto:

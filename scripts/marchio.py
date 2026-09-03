@@ -574,6 +574,117 @@ def componi(immagine, tipo, percorso_marchio=None):
     return base.convert("RGB"), box
 
 
+# ==========================================================================
+# LA TOPPA: RICONOSCERE UN MARCHIO APPOGGIATO SU UNA CARTELLA
+# ==========================================================================
+# Fino a ROUND 47 dietro al marchio si disegnava una cartella crema. Il codice
+# non lo fa piu', ma i file gia' in catalogo sono piu' vecchi del codice: il 3
+# settembre 2026, sui 48 prodotti Printify attivi, 11 bandane su 20, 7 cucce su
+# 12 e 2 medagliette ce l'avevano ancora. Nessun controllo se n'era accorto,
+# perche' tutti guardavano i DATI del prodotto (misure, copertura, livelli) e
+# la cartella sta dentro i PIXEL.
+#
+# COME SI RICONOSCE, SENZA SAPERE CHE FORMA HA
+# Una cartella incollata e' una regione grande, CHIARA e PIATTA -- piatta vuol
+# dire che ogni punto somiglia ai suoi vicini -- dentro un motivo che intorno
+# piatto non e'. Le due condizioni servono tutte e due: da sola, "chiara e
+# piatta" segnalerebbe ogni disegno su fondo avorio. E' il CONFRONTO col
+# tessuto intorno che distingue una cartella incollata da un tessuto chiaro.
+TOPPA_CHIARA = 170     # sopra questa luminosita' un pixel e' "chiaro"
+TOPPA_PIATTA = 6       # scarto dal proprio sfocato sotto il quale e' "piatto"
+TOPPA_DENTRO = 0.30    # tanta di quella superficie dentro il riquadro
+TOPPA_STACCO = 0.20    # e tanta di piu' che nell'anello intorno
+#
+# IL SECONDO SEGNALE, E PERCHE' SERVE
+# Il confronto con l'anello non basta quando il tessuto intorno e' gia' chiaro
+# e piatto: su "Ramo", "Nobile" e "Fiorellino" -- motivi pallidi su crema -- la
+# cartella misura 0,494 dentro e 0,498 intorno, cioe' non stacca affatto.
+# Misurato: da sola, la regola dell'anello prendeva 16 bandane su 19.
+#
+# Ma una cartella ha una cosa che un tessuto non ha: un BORDO DRITTO, lungo
+# quanto lei. Contando per ogni colonna quanta parte dell'altezza fa un salto
+# netto di luminosita', le undici bandane con la cartella danno tutte
+# esattamente 0,455 -- e' il suo bordo -- mentre i motivi puliti vanno da 0,040
+# a 0,770. Da solo nemmeno questo basterebbe (il motivo a cerchi "Vortice" fa
+# 0,770), ma i due insieme si coprono a vicenda: il bordo dritto conta solo
+# dentro una regione gia' chiara e piatta. Cosi' fanno 19 su 19.
+TOPPA_BORDO = 0.40     # quanta altezza deve avere un bordo per essere "dritto"
+TOPPA_SALTO = 18       # di quanto deve saltare la luminosita' per essere bordo
+
+
+def _chiaro_e_piatto(ritaglio):
+    """Quanti pixel sono chiari E piatti, e su quanti in tutto."""
+    grigio = ritaglio.convert("L")
+    scarto = ImageChops.difference(grigio, grigio.filter(ImageFilter.GaussianBlur(2)))
+    maschera = ImageChops.multiply(
+        grigio.point(lambda v: 255 if v >= TOPPA_CHIARA else 0),
+        scarto.point(lambda v: 255 if v <= TOPPA_PIATTA else 0))
+    return maschera.histogram()[255], grigio.width * grigio.height
+
+
+def _bordo_dritto(ritaglio):
+    """Il bordo verticale piu' lungo dentro il riquadro, come frazione d'altezza.
+
+    Si guarda in una miniatura a misura fissa: cosi' la soglia vale uguale su
+    una bandana da 4275 px e su una medaglietta da 810, e la sfocatura del
+    ridimensionamento spegne il rumore del tessuto senza spegnere un bordo
+    vero, che e' lungo.
+    """
+    grigio = ritaglio.convert("L").resize((120, 200), Image.BILINEAR)
+    destra = grigio.crop((1, 0, grigio.width, grigio.height))
+    sinistra = grigio.crop((0, 0, grigio.width - 1, grigio.height))
+    salti = ImageChops.difference(destra, sinistra)
+    dati = list(salti.getdata())
+    larghezza, altezza = salti.size
+    meglio = 0.0
+    for x in range(larghezza):
+        forti = sum(1 for y in range(altezza) if dati[y * larghezza + x] > TOPPA_SALTO)
+        meglio = max(meglio, forti / float(altezza))
+    return meglio
+
+
+def toppa(immagine, box, allarga=0.6):
+    """C'e' una cartella incollata dietro al marchio? Torna la misura.
+
+    Per ogni riquadro del marchio da' {"dentro", "intorno", "bordo", "toppa"}:
+    quanto del riquadro e' chiaro-e-piatto, quanto lo e' l'anello di tessuto
+    attorno, quanto e' lungo il bordo dritto piu' lungo, e il verdetto. L'anello si prende allargando il riquadro del 60% e
+    togliendo il riquadro stesso -- ritagliato ai bordi dell'immagine, perche'
+    PIL riempie di nero quello che sborda e il nero direbbe "tessuto scurissimo
+    e mosso" proprio dove non c'e' tessuto affatto.
+
+    Sola misura: non tocca l'immagine.
+    """
+    rgb = immagine.convert("RGB")
+    W, H = rgb.size
+    esiti = []
+    for s, a, largo, alto in box:
+        s, a = int(round(s)), int(round(a))
+        largo, alto = max(1, int(round(largo))), max(1, int(round(alto)))
+        dentro_n, dentro_tot = _chiaro_e_piatto(rgb.crop((s, a, s + largo, a + alto)))
+        ms, ma = int(largo * allarga / 2), int(alto * allarga / 2)
+        largo_box = (max(0, s - ms), max(0, a - ma),
+                     min(W, s + largo + ms), min(H, a + alto + ma))
+        fuori_n, fuori_tot = _chiaro_e_piatto(rgb.crop(largo_box))
+        anello_tot = fuori_tot - dentro_tot
+        dentro = dentro_n / float(max(1, dentro_tot))
+        intorno = (fuori_n - dentro_n) / float(anello_tot) if anello_tot > 0 else dentro
+        bordo = _bordo_dritto(rgb.crop((s, a, s + largo, a + alto)))
+        esiti.append({
+            "dentro": round(dentro, 3),
+            "intorno": round(intorno, 3),
+            "bordo": round(bordo, 3),
+            # Chiara e piatta e' la condizione necessaria; poi basta UNO dei due
+            # indizi: che stacchi dal tessuto intorno, oppure che abbia un bordo
+            # dritto. Sono i due modi in cui una cartella si tradisce, e nessuno
+            # dei due li copre tutti e due i casi.
+            "toppa": bool(dentro >= TOPPA_DENTRO
+                          and (dentro - intorno >= TOPPA_STACCO
+                               or bordo >= TOPPA_BORDO)),
+        })
+    return esiti
+
+
 def presente(immagine, box, percorso_marchio=None, soglia=18.0):
     """Vero se nei riquadri indicati c'e' davvero il marchio.
 

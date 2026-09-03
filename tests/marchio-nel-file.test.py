@@ -30,7 +30,7 @@ import json
 import os
 import sys
 
-from PIL import Image
+from PIL import Image, ImageDraw
 
 QUI = os.path.dirname(os.path.abspath(__file__))
 SCRIPTS = os.path.join(QUI, '..', 'scripts')
@@ -349,6 +349,96 @@ def test_la_scritta_non_sparisce_a_nessuna_luminosita():
         % (peggiore[1], peggiore[0], marchio.CONTRASTO_MINIMO))
 
 
+
+def _tessuto(misura, fondo, macchia, passo=17):
+    """Un tessuto finto ma MOSSO: puntini regolari su un fondo."""
+    im = Image.new('RGB', misura, fondo)
+    d = ImageDraw.Draw(im)
+    for y in range(0, misura[1], passo):
+        for x in range(0, misura[0], passo):
+            d.ellipse((x, y, x + 6, y + 6), fill=macchia)
+    return im
+
+
+def _con_cartella(tessuto, riquadro, colore=(246, 240, 230)):
+    """Incolla una cartella chiara nel riquadro, come faceva ROUND 46."""
+    im = tessuto.copy()
+    s, a, largo, alto = riquadro
+    d = ImageDraw.Draw(im)
+    d.rounded_rectangle((int(s), int(a), int(s + largo), int(a + alto)),
+                        radius=12, fill=colore, outline=(180, 165, 140), width=3)
+    return im
+
+
+def test_la_cartella_incollata_si_riconosce():
+    """La toppa: una regione chiara e piatta dentro un motivo che non lo e'.
+
+    E' il controllo che non esisteva, ed e' per questo che la cartella crema e'
+    rimasta in catalogo quattro giorni dopo che il codice aveva smesso di
+    disegnarla: tutti i controlli guardavano i DATI del prodotto -- misure,
+    copertura, livelli -- e la cartella sta dentro i PIXEL.
+
+    Provato anche sui file veri scaricati da Printify il 3 settembre 2026:
+    undici bandane con la cartella riconosciute su undici, otto pulite
+    riconosciute su otto, e zero su ventisei bandane ricostruite.
+    """
+    misura = (600, 400)
+    riquadro = (220, 90, 160, 220)
+    tessuto = _tessuto(misura, (70, 90, 130), (40, 55, 90))
+
+    pulito = marchio.toppa(tessuto, [riquadro])[0]
+    assert not pulito['toppa'], (
+        'un tessuto senza niente sopra non e\' una toppa: dentro %.2f, '
+        'intorno %.2f' % (pulito['dentro'], pulito['intorno']))
+
+    sporco = marchio.toppa(_con_cartella(tessuto, riquadro), [riquadro])[0]
+    assert sporco['toppa'], (
+        'la cartella incollata non e\' stata vista: dentro %.2f, intorno %.2f, '
+        'bordo %.2f' % (sporco['dentro'], sporco['intorno'], sporco['bordo']))
+
+
+def test_un_motivo_chiaro_non_e_una_toppa():
+    """Il falso allarme da evitare: un disegno chiaro e piatto DAPPERTUTTO.
+
+    E' il caso della bandana "Cachemire", crema su crema: dentro il riquadro
+    e' chiara e piatta (0,54) esattamente come intorno (0,53). Se bastasse
+    "chiara e piatta" senza il confronto, ogni motivo pallido del catalogo
+    verrebbe segnalato -- e un controllo che grida sempre non lo guarda piu'
+    nessuno.
+    """
+    misura = (600, 400)
+    riquadro = (220, 90, 160, 220)
+    pallido = _tessuto(misura, (243, 238, 228), (238, 233, 223), passo=23)
+    e = marchio.toppa(pallido, [riquadro])[0]
+    assert not e['toppa'], (
+        'un motivo pallido su tutta la superficie non e\' una cartella: '
+        'dentro %.2f, intorno %.2f, bordo %.2f' % (e['dentro'], e['intorno'], e['bordo']))
+
+
+def test_la_cartella_chiara_su_fondo_chiaro_si_riconosce_dal_bordo():
+    """Il caso che il confronto con l'anello NON puo' prendere.
+
+    Su "Ramo", "Nobile" e "Fiorellino" -- motivi pallidi su crema -- la
+    cartella misura 0,494 dentro e 0,498 intorno: non stacca di niente, perche'
+    il tessuto e' chiaro e piatto quanto lei. Con la sola regola dell'anello
+    erano tre bandane sbagliate su diciannove.
+
+    Quello che una cartella ha e un tessuto no e' un BORDO DRITTO lungo quanto
+    lei. Ed e' l'unico indizio che resta, qui.
+    """
+    misura = (600, 400)
+    riquadro = (220, 90, 160, 220)
+    pallido = _tessuto(misura, (240, 236, 226), (232, 228, 218), passo=23)
+    e = marchio.toppa(_con_cartella(pallido, riquadro), [riquadro])[0]
+    assert e['dentro'] - e['intorno'] < marchio.TOPPA_STACCO, (
+        'prova mal costruita: qui la cartella deve NON staccare dall\'anello, '
+        'se no non sta provando il bordo (dentro %.2f, intorno %.2f)'
+        % (e['dentro'], e['intorno']))
+    assert e['toppa'], (
+        'la cartella su fondo chiaro va riconosciuta dal bordo dritto: '
+        'bordo %.2f, ne serve %.2f' % (e['bordo'], marchio.TOPPA_BORDO))
+
+
 def main():
     print('Dove va messo e dove no')
     prova('non si aggiunge ai motivi che lo contengono gia\'', test_non_si_aggiunge_dove_ce_gia)
@@ -371,6 +461,14 @@ def main():
     prova('si legge anche sul tessuto a righe', test_si_legge_anche_sul_tessuto_a_righe)
     prova('la scritta non sparisce a nessuna luminosita\' del fondo',
           test_la_scritta_non_sparisce_a_nessuna_luminosita)
+
+    print('\nLa cartella incollata')
+    prova('una cartella dentro un motivo mosso si riconosce',
+          test_la_cartella_incollata_si_riconosce)
+    prova('un motivo chiaro dappertutto NON e\' una cartella',
+          test_un_motivo_chiaro_non_e_una_toppa)
+    prova('una cartella chiara su fondo chiaro si riconosce dal bordo',
+          test_la_cartella_chiara_su_fondo_chiaro_si_riconosce_dal_bordo)
 
     print('\n%d verifiche superate.' % passati +
           (' %d FALLITE.' % falliti if falliti else ''))
