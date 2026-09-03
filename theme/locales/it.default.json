@@ -25,6 +25,7 @@
   },
   "general": {
     "breadcrumb": { "home": "Home" },
+    "language": { "dropdown_label": "Lingua" },
     "meta": { "page": "Pagina {{ page }}", "tags": "Tag: {{ tags }}" },
     "newsletter": { "placeholder": "La tua email", "button": "Iscriviti", "success": "Grazie! Controlla la tua email per lo sconto di benvenuto." },
     "pagination": { "label": "Paginazione", "previous": "Precedente", "next": "Successivo" },

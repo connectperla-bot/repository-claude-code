@@ -12,6 +12,7 @@
   "assistant": { "open": "Open assistant", "title": "Perla Assistant", "ask_placeholder": "Type your question...", "ask_send": "Send question", "ask_thinking": "Thinking...", "ask_error": "I can't answer right now. Please email us.", "page_cta_text": "Questions about this page? Our assistant answers right away.", "page_cta_label": "Ask the assistant" },
   "general": {
     "breadcrumb": { "home": "Home" },
+    "language": { "dropdown_label": "Language" },
     "meta": { "page": "Page {{ page }}", "tags": "Tagged: {{ tags }}" },
     "newsletter": { "placeholder": "Your email", "button": "Subscribe", "success": "Thank you! Check your inbox for your welcome discount." },
     "pagination": { "label": "Pagination", "previous": "Previous", "next": "Next" },

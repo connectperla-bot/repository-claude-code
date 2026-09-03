@@ -386,6 +386,52 @@
           <a class="fullmenu__link" href="{{ pages.salvati.url | default: '/pages/salvati' }}"><span>{{ 'customer.saved.title' | t | default: 'Salvati' }}</span></a>
         {%- endif -%}
         <a class="fullmenu__link" href="{{ routes.account_url | default: routes.account_login_url }}"><span>{{ 'customer.account.title' | t | default: 'Account' }}</span></a>
+        {%- comment -%}
+          ROUND 50 — DA TELEFONO NON SI POTEVA SCEGLIERE LA LINGUA.
+
+          Segnalazione: "poi da telefono non si puo scegliere la lingua".
+          Il selettore esiste da sempre, ma sta dentro .header__nav--right, e
+          base.css a <=749px fa `.header__nav { display:none }`: sul telefono
+          sparisce insieme a tutta la barra dei link. Nessun CSS puo'
+          rimediarci, perche' un figlio di un elemento display:none non si
+          puo' riaccendere.
+
+          Quindi va messo dove chi ha un telefono lo cerca: nel menu. E' la
+          stessa scelta gia' fatta per "Salvati" qui sopra, per la stessa
+          ragione.
+
+          Il tema lo accende da solo: initAll() passa per initLang(), che
+          prende TUTTI i [data-lang-switch] e ne segna uno per uno con
+          __langInit. Due selettori nella pagina restano indipendenti e non
+          si disturbano; l'unica cosa che non si puo' ripetere e' l'id del
+          form, che qui infatti e' LangFormMenu.
+
+          Solo la lingua, come nella barra in alto: il negozio ha un mercato
+          solo (browsing_context_suggestions.json risponde con suggestions
+          vuoto, Shopify.country = "IT"), quindi non c'e' nessun paese fra
+          cui scegliere.
+        {%- endcomment -%}
+        {%- if localization.available_languages.size > 1 -%}
+          <localization-form class="lang-switch lang-switch--menu" data-lang-switch>
+            {%- form 'localization', id: 'LangFormMenu', class: 'lang-switch__form' -%}
+              <button type="button" class="fullmenu__link lang-switch__current" data-lang-toggle aria-expanded="false">
+                <span>{{ 'general.language.dropdown_label' | t | default: 'Lingua' }}</span>
+                <span class="lang-switch__code">{{ localization.language.iso_code | upcase }}</span>
+              </button>
+              <input type="hidden" name="locale_code" value="{{ localization.language.iso_code }}" data-lang-input>
+              <ul class="lang-switch__list" data-lang-list hidden>
+                {%- for lingua in localization.available_languages -%}
+                  <li>
+                    <button type="button" class="lang-switch__opt{% if lingua.iso_code == localization.language.iso_code %} is-active{% endif %}" data-lang-value="{{ lingua.iso_code }}" lang="{{ lingua.iso_code }}">
+                      {{ lingua.endonym_name | capitalize }}
+                      <span class="lang-switch__opt-code">{{ lingua.iso_code | upcase }}</span>
+                    </button>
+                  </li>
+                {%- endfor -%}
+              </ul>
+            {%- endform -%}
+          </localization-form>
+        {%- endif -%}
       </nav>
       <div class="fullmenu__foot">{{ shop.name }} · Italia</div>
     </div>

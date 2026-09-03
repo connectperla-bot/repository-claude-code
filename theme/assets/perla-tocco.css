@@ -379,3 +379,80 @@ html {
   text-overflow: ellipsis;
   vertical-align: middle;
 }
+
+
+/* ================================================================
+   ROUND 50 — LA LINGUA NEL MENU DEL TELEFONO
+   ================================================================
+   Il selettore in alto sta dentro .header__nav--right, che base.css a
+   <=749px spegne con `display:none`: sul telefono spariva. La copia nel
+   menu (layout/theme.liquid) usa lo stesso markup e gli stessi agganci
+   data-*, quindi il tema la accende da sola; qui le si toglie l'aspetto da
+   pillola della barra in alto e le si da' quello di una voce di menu.
+
+   L'elenco delle lingue, nella barra in alto, e' una tendina bianca
+   sospesa. Dentro un menu blu a schermo intero non ha senso: qui e' un
+   elenco sotto la voce, con i bersagli da 44 px che servono al dito. */
+.lang-switch--menu {
+  display: block;
+  width: 100%;
+  position: relative;
+}
+.lang-switch--menu .lang-switch__form {
+  margin: 0;
+}
+
+.lang-switch--menu .lang-switch__current {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  border: 0;
+  border-radius: 0;
+  padding: 0.18em 0;
+  background: none;
+  font-family: var(--font-heading, "Playfair Display", serif);
+  font-size: clamp(2rem, 10vw, 3.6rem);
+  font-weight: inherit;
+  letter-spacing: normal;
+  line-height: 1.05;
+  color: var(--color-cream, #F6EFE5);
+  text-align: left;
+}
+.lang-switch--menu .lang-switch__current:hover {
+  border-color: transparent;
+}
+.lang-switch--menu .lang-switch__code {
+  font-family: var(--font-body, "Jost", sans-serif);
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  color: var(--color-gold, #C8862B);
+}
+
+.lang-switch--menu .lang-switch__list {
+  position: static;
+  min-width: 0;
+  margin: 0.2rem 0 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  box-shadow: none;
+  transform: none;
+}
+.lang-switch--menu[data-open] .lang-switch__list {
+  transform: none;
+}
+.lang-switch--menu .lang-switch__opt {
+  min-height: 44px;
+  padding: 0.7rem 0;
+  font-size: 1.05rem;
+  color: var(--color-cream, #F6EFE5);
+}
+.lang-switch--menu .lang-switch__opt:hover {
+  background: none;
+}
+.lang-switch--menu .lang-switch__opt.is-active {
+  color: var(--color-gold, #C8862B);
+}
+.lang-switch--menu .lang-switch__opt-code {
+  color: inherit;
+}
