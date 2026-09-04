@@ -70,3 +70,7 @@ generated-designs/dettaglio-da-attaccare.json
 generated-designs/editor-shopify.json
 generated-designs/editor-da-scrivere.json
 generated-designs/foto-eu-da-attaccare.json
+# Stessa natura: l'elenco dei prezzi da scrivere che esce da
+# perla-prezzi-margine.py --scrivi. Si rifa' in un comando, e i prezzi
+# che contano stanno su Shopify.
+generated-designs/prezzi-da-scrivere.json
