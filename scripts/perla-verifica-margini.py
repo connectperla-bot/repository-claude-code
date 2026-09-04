@@ -96,15 +96,31 @@ DEROGHE = {("ciotola-eu", "530 ml"): "decisa dalla proprietaria il 4 settembre"}
 # Per due tornate questo script ha percio' mostrato DUE colonne, con e senza,
 # dicendo che la seconda era un'ipotesi.
 #
-# Il 4 settembre la proprietaria l'ha chiusa lei: "considera che io pago l'IVA
-# sia su printful che printify". Non e' piu' un'ipotesi, e' un dato di chi
-# riceve le fatture. Quindi il costo Printify e' prodotto + spedizione + IVA,
-# una colonna sola, e i prezzi si fanno su quello.
+# IL 22% SU PRINTIFY ERA UN MIO ERRORE, E VA DETTO PER INTERO
 #
-# iva_da_un_ordine_printify() resta e ha la precedenza: il giorno del primo
-# ordine vero il numero si legge invece di darlo per buono, e se fosse diverso
-# dal 22% lo si scopre da solo.
-IVA_PRINTIFY = 0.22
+# Il 4 settembre la proprietaria aveva chiuso la questione cosi': "considera
+# che io pago l'IVA sia su printful che printify", e io ho messo il 22% su
+# tutte e due le linee. Su Printful e' giusto -- merce stampata in Europa e
+# consegnata in Italia, IVA italiana, e l'ordine 169833807 la mostra.
+#
+# Su Printify no, e a vederlo e' stata lei: "siccome siamo in America non penso
+# si paghi l'IVA, o se si paga non al 22". Ha ragione, e la ragione e'
+# geografica prima che fiscale: quella merce viene stampata negli Stati Uniti e
+# consegnata a un indirizzo americano. In Europa non entra mai, quindi non c'e'
+# nessuna importazione e nessuna IVA italiana da pagare. Quello che Printify
+# puo' addebitare e' la SALES TAX americana, che dipende dallo stato di
+# consegna e va da zero a circa il dieci per cento.
+#
+# QUINDI NON E' PIU' UN'IVA, E' UNA RISERVA. Il numero qui sotto non pretende
+# di essere l'imposta vera: e' l'accantonamento che la proprietaria ha scelto
+# -- "considera un 5% per pararci un po' il sedere sul primo ordine" -- per non
+# trovarsi scoperta se al primo ordine la sales tax arriva davvero.
+#
+# iva_da_un_ordine_printify() resta e MANTIENE LA PRECEDENZA: il giorno del
+# primo ordine vero l'imposta si legge dalla fattura invece di stimarla, e se
+# fosse diversa dal 5% lo si scopre da solo, senza che nessuno debba
+# ricordarsene.
+RISERVA_IMPOSTA_USA = 0.05
 
 INDIRIZZO = {"address1": "Via della Beata Colomba 1", "city": "Perugia",
              "country_code": "IT", "zip": "06132"}
@@ -300,7 +316,7 @@ def main():
     tasso, quando = cambio_usd_eur()
     print("cambio 1 USD = %.4f EUR (%s)\n" % (tasso, quando))
     iva_vera = iva_da_un_ordine_printify()
-    iva_pf = iva_vera if iva_vera is not None else IVA_PRINTIFY
+    iva_pf = iva_vera if iva_vera is not None else RISERVA_IMPOSTA_USA
 
     print("Chiedo i costi ai fornitori...", file=sys.stderr)
     costo = {}
@@ -365,9 +381,10 @@ def main():
     if iva_vera is not None:
         print("IVA Printify LETTA da un ordine vero: %.1f%%." % (100 * iva_vera))
     else:
-        print("IVA Printify al %.0f%%, come dichiarato dalla proprietaria: nessun"
-              % (100 * iva_pf))
-        print("ordine vero da cui leggerla, ma le fatture le riceve lei.")
+        print("Sulla linea Printify: riserva del %.0f%% per la sales tax\n"
+              "americana. Non e' IVA italiana -- quella merce non entra mai in\n"
+              "Europa -- ed e' una stima, non un numero letto: la chiude la\n"
+              "prima fattura Printify vera." % (100 * iva_pf))
     if senza:
         print("Senza costo noto (%d): %s" % (len(senza), ", ".join(
             "%s %s" % s for s in senza[:5])))

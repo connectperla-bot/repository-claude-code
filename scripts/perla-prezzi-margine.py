@@ -74,7 +74,33 @@ MARGINE = 0.20
 # negozio pensando di correggere un errore. La deroga corrispondente sta in
 # DEROGHE dentro perla-verifica-margini.py, cosi' il controllo la riconosce
 # invece di bocciarla.
-PREZZO_DECISO = {("ciotola-eu", "530 ml"): 49.90}
+#
+# E I QUATTRO PRINTIFY CHE RESTANO DOVE SONO, DECISO IL 4 SETTEMBRE
+#
+# Fino a oggi il costo Printify veniva calcolato con l'IVA italiana al 22%,
+# che su merce stampata e consegnata negli Stati Uniti non c'entra niente --
+# l'errore e' raccontato per intero in perla-verifica-margini.py, sopra a
+# RISERVA_IMPOSTA_USA. Con la riserva al 5% il costo di questi quattro scende,
+# e la regola del 20% proporrebbe di abbassarli: bandana 26,90 -> 22,90 e
+# 29,90 -> 25,90, ciotola 52,90 -> 45,90, medaglietta 22,90 -> 19,90.
+#
+# La proprietaria ha detto "tieni i prezzi come prima tranne la cuccia": solo
+# le tre cucce si sono mosse (75,90 / 107,90 / 175,90 -> 64,90 / 92,90 /
+# 150,90), perche' 175 EUR per una cuccia le sembravano troppi. Gli altri
+# quattro restano, e col costo piu' basso il loro margine adesso e' sopra il
+# 20% -- il controllo li lascia passare senza bisogno di una deroga.
+#
+# Sono scritti qui e non lasciati a mente perche' altrimenti questo listino
+# riproporrebbe di abbassarli a ogni giro, e prima o poi qualcuno lo farebbe
+# credendo di correggere un errore. Quattro righe coprono 54 varianti: il
+# listino ragiona per (tipo, taglia), non per singolo prodotto.
+PREZZO_DECISO = {
+    ("ciotola-eu", "530 ml"): 49.90,
+    ("bandana", '20" × 10"'): 26.90,
+    ("bandana", '27" × 13"'): 29.90,
+    ("ciotola", "16oz"): 52.90,
+    ("medaglietta", '1"'): 22.90,
+}
 
 
 def _modulo(nome, percorso):
@@ -98,7 +124,7 @@ def listino(margine):
     margini.ambiente()
     tasso, quando = margini.cambio_usd_eur()
     iva_vera = margini.iva_da_un_ordine_printify()
-    iva_pf = iva_vera if iva_vera is not None else margini.IVA_PRINTIFY
+    iva_pf = iva_vera if iva_vera is not None else margini.RISERVA_IMPOSTA_USA
 
     costo = dict(margini.costi_printful())
     costo.update(margini.costi_printify(tasso))
