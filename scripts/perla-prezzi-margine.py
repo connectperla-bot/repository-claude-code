@@ -58,6 +58,19 @@ USCITA = os.path.join(RADICE, "generated-designs", "prezzi-da-scrivere.json")
 
 MARGINE = 0.20
 
+# L'UNICA ECCEZIONE ALLA REGOLA, DECISA DALLA PROPRIETARIA IL 4 SETTEMBRE
+#
+# La ciotola europea costa 41,24 (prodotto + spedizione + IVA): col 20% il
+# prezzo verrebbe 51,90, e le sembrava alto. Ha scelto di togliere la 950 ml e
+# di tenere la 530 a 50,90, cioe' un margine del 19,0%.
+#
+# Il prezzo scritto qui VINCE sul calcolo. Senza questa riga il listino
+# riproporrebbe 51,90 a ogni giro, e qualcuno prima o poi lo riscriverebbe sul
+# negozio pensando di correggere un errore. La deroga corrispondente sta in
+# DEROGHE dentro perla-verifica-margini.py, cosi' il controllo la riconosce
+# invece di bocciarla.
+PREZZO_DECISO = {("ciotola-eu", "530 ml"): 50.90}
+
 
 def _modulo(nome, percorso):
     spec = importlib.util.spec_from_file_location(nome, percorso)
@@ -100,7 +113,12 @@ def listino(margine):
             printify = t in margini.PRINTIFY.values()
             c_iva = c * (1 + iva_pf) if printify else c
             prezzo = float(v["price"])
-            nuovo = al_90(c_iva / (1 - margine))
+            # Il prezzo deciso a mano vince sulla regola: e' l'unico modo per
+            # non riproporre 51,90 sulla ciotola a ogni listino. Vedi DEROGHE e
+            # PREZZO_DECISO -- le due tabelle raccontano la stessa decisione,
+            # una per il controllo e una per il calcolo.
+            deciso = PREZZO_DECISO.get((t, v["title"]))
+            nuovo = deciso if deciso is not None else al_90(c_iva / (1 - margine))
             righe.append({
                 "prodotto": p["title"], "taglia": v["title"],
                 "fornitore": "Printify" if printify else "Printful",

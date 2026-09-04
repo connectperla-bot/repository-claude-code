@@ -59,10 +59,30 @@ PRINTFUL = {
     "bandana-eu":    [("S", 16031, {"stitch_color": "white"}),
                       ("M", 16032, {"stitch_color": "white"}),
                       ("L", 16033, {"stitch_color": "white"})],
-    "ciotola-eu":    [("530 ml", 16785, {}), ("950 ml", 16786, {})],
+    # La 950 ml non si vende piu' dal 4 settembre -- vedi PREZZO_DECISO qui
+    # sotto. L'id 16786 resta in varianti-fornitore.js, che e' la mappa degli
+    # ORDINI: toglierlo di li' renderebbe irrisolvibile un ordine storico.
+    # Qui invece si chiede un preventivo, e chiedere il prezzo di una misura
+    # che non e' in vendita e' una chiamata sprecata.
+    "ciotola-eu":    [("530 ml", 16785, {})],
 }
 # I blueprint Printify in vendita, con il tipo che compare nel titolo Shopify.
 PRINTIFY = {419: "cuccia", 562: "bandana", 566: "medaglietta", 570: "ciotola"}
+
+# L'UNICA DEROGA AL 20%, DECISA DALLA PROPRIETARIA IL 4 SETTEMBRE
+#
+# La ciotola europea costa 41,24 (prodotto + spedizione + IVA): con la regola
+# del 20% il prezzo minimo sarebbe 51,90, e le sembrava alto. Fra le tre strade
+# proposte ha scelto di togliere la 950 ml e di tenere la 530 a 50,90, cioe' un
+# margine del 19,0%.
+#
+# Sta scritta qui e non lasciata a mente per due motivi. Il primo: senza, il
+# controllo tornerebbe rosso ogni volta su una riga che e' una decisione e non
+# un errore, e un controllo che si sa gia' che fallisce smette di essere
+# guardato. Il secondo: la soglia resta 20 per tutto il resto del catalogo --
+# la regola non cambia, cambia il fatto che una deroga e' dichiarata, con la
+# data e il motivo.
+DEROGHE = {("ciotola-eu", "530 ml"): "decisa dalla proprietaria il 4 settembre"}
 
 # L'IVA CHE NON SI SA, E PERCHE' VA DETTO INVECE DI TACERLO
 #
@@ -310,6 +330,8 @@ def main():
             c_iva = c * (1 + iva_pf) if printify else c
             righe.append({"prodotto": p["title"], "taglia": v["title"], "prezzo": prezzo,
                           "fornitore": "Printify" if printify else "Printful",
+                          "tipo": t,
+                          "deroga": DEROGHE.get((t, v["title"])),
                           "costo_senza_iva": round(c, 2),
                           "costo": round(c_iva, 2),
                           "margine": round(100 * (prezzo - c_iva) / prezzo, 1)})
@@ -325,8 +347,19 @@ def main():
     if len(righe) > 25:
         print("  … e altre %d varianti, tutte con margine piu' alto" % (len(righe) - 25))
 
-    sotto = [r for r in righe if r["margine"] < opz.soglia]
+    # Una riga sotto soglia CON una deroga dichiarata non e' un guasto: e' una
+    # scelta di listino, e va detta invece di sparire dal conto.
+    sotto = [r for r in righe if r["margine"] < opz.soglia and not r["deroga"]]
+    derogate = [r for r in righe if r["margine"] < opz.soglia and r["deroga"]]
     print("\n%d varianti misurate. Sotto il %.0f%%: %d" % (len(righe), opz.soglia, len(sotto)))
+    # Raggruppate: la deroga e' UNA decisione, non undici. Undici righe uguali
+    # si smettono di leggere alla terza.
+    gruppi = {}
+    for r in derogate:
+        gruppi.setdefault((r["taglia"], r["deroga"]), []).append(r["margine"])
+    for (taglia, perche), margini_g in sorted(gruppi.items()):
+        print("  %d varianti «%s» stanno al %.1f%%: deroga %s"
+              % (len(margini_g), taglia, min(margini_g), perche))
     print("Il costo comprende sempre spedizione e IVA: e' quello che il negozio")
     print("paga davvero, e la spedizione al cliente e' gratuita per informativa.")
     if iva_vera is not None:

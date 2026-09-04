@@ -23,9 +23,9 @@
  * I NUMERI
  * Gli intervalli non sono inventati: collare S 30-45, M 35-52, L 38-60 cm
  * vengono dal catalogo Printful (printful-catalog/749.json e la nota in
- * scripts/varianti-fornitore.js); bandane 44/54/64 cm da 630.json; ciotole
- * 530/950 ml da 678.json; cucce e bandane americane dai titoli delle varianti
- * Printify. Se il fornitore cambia misure, questi vanno rifatti.
+ * scripts/varianti-fornitore.js); bandane 44/54/64 cm da 630.json; cucce e
+ * bandane americane dai titoli delle varianti Printify. Se il fornitore cambia
+ * misure, questi vanno rifatti.
  */
 (function () {
   'use strict';
@@ -92,8 +92,12 @@
     cuccia: { su: 'peso', unita: 'kg', taglie: [
       { chiave: '28" × 18"', da: 0, a: 11 }, { chiave: '40" × 30"', da: 11, a: 27 },
       { chiave: '50" × 40"', da: 27, a: 90 } ] },
-    ciotola_eu: { su: 'peso', unita: 'kg', taglie: [
-      { chiave: '530 ml', da: 0, a: 12 }, { chiave: '950 ml', da: 12, a: 90 } ] },
+    // La ciotola europea non e' piu' qui: dal 4 settembre si vende in una
+    // misura sola (530 ml), e su una misura sola non c'e' niente da
+    // consigliare. Il pannello si toglierebbe da solo lo stesso -- lo fa il
+    // controllo sulle pastiglie piu' sotto -- ma una tabella che consiglia una
+    // 950 ml che il negozio non vende tornerebbe viva il giorno in cui una
+    // ciotola avesse di nuovo due varianti.
   };
 
   function normalizza(s) {
