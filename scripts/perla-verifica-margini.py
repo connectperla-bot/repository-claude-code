@@ -20,7 +20,9 @@ DA DOVE VENGONO I NUMERI, TUTTI MISURATI E NESSUNO SCRITTO A MANO
   prezzi di vendita   perlaitaly.com/products.json -- la vetrina pubblica,
                       nessun token: e' esattamente cio' che vede il cliente
   costo Printify      API prodotti (costo per variante) + API spedizione del
-                      blueprint, profilo che contiene l'Italia
+                      blueprint, profilo degli STATI UNITI -- che e' l'unico
+                      paese fuori dalla UE in cui il negozio spedisce, e la
+                      linea Printify ai clienti UE non si vede nemmeno
   costo Printful      /orders/estimate-costs verso un indirizzo italiano vero:
                       e' l'unico numero che comprende gia' spedizione E IVA,
                       e l'IVA qui si paga davvero perche' il negozio non ha
@@ -69,18 +71,20 @@ PRINTIFY = {419: "cuccia", 562: "bandana", 566: "medaglietta", 570: "ciotola"}
 # esatto. Il negozio non ha partita IVA, quindi la paga e non la recupera: fa
 # parte del costo, ed e' contata.
 #
-# Su Printify no. L'unico ordine mai passato di li' e' ANNULLATO e ha
-# total_price, total_shipping e total_tax tutti a zero: non c'e' niente da
-# leggere. L'API il campo ce l'ha (total_tax compare nello schema dell'ordine),
-# quindi il giorno del primo ordine vero il numero si legge da solo -- ma oggi
-# indovinarlo sarebbe peggio che dichiararlo.
+# Su Printify l'ordine da cui leggerla non c'e' ancora: l'unico mai passato di
+# li' e' ANNULLATO e ha total_price, total_shipping e total_tax tutti a zero.
+# Per due tornate questo script ha percio' mostrato DUE colonne, con e senza,
+# dicendo che la seconda era un'ipotesi.
 #
-# Quanto pesa il dubbio: se anche Printify la addebita al 22%, i costi della
-# sua linea salgono di un quinto e i margini che questo script calcola sono
-# ottimisti di altrettanto. Per questo la tabella li mostra TUTTI E DUE, senza
-# bisogno di chiedere: la colonna "con IVA" e' lo scenario peggiore, quella
-# senza e' l'unico numero che oggi si puo' dimostrare.
-IVA_IPOTETICA_PRINTIFY = 0.22
+# Il 4 settembre la proprietaria l'ha chiusa lei: "considera che io pago l'IVA
+# sia su printful che printify". Non e' piu' un'ipotesi, e' un dato di chi
+# riceve le fatture. Quindi il costo Printify e' prodotto + spedizione + IVA,
+# una colonna sola, e i prezzi si fanno su quello.
+#
+# iva_da_un_ordine_printify() resta e ha la precedenza: il giorno del primo
+# ordine vero il numero si legge invece di darlo per buono, e se fosse diverso
+# dal 22% lo si scopre da solo.
+IVA_PRINTIFY = 0.22
 
 INDIRIZZO = {"address1": "Via della Beata Colomba 1", "city": "Perugia",
              "country_code": "IT", "zip": "06132"}
@@ -155,7 +159,31 @@ def costi_printify(tasso):
             break
         pagina += 1
 
-    # spedizione: il profilo che contiene l'Italia, per variante.
+    # SPEDIZIONE: IL PROFILO DEGLI STATI UNITI, E QUI PRIMA C'ERA UN ERRORE MIO.
+    #
+    # Fino al 3 settembre si prendeva il profilo che contiene l'ITALIA, e
+    # sembrava la scelta prudente: il caso piu' caro. Ma non e' il caso piu'
+    # caro, e' un caso che NON SUCCEDE MAI. La linea Printify e' nascosta ai
+    # visitatori europei -- lo fa snippets/perla-region-hidden.liquid, e la
+    # regola e' netta: "visitatore UE vede SOLO prodotti con un tag *-eu,
+    # visitatore non UE vede SOLO prodotti senza". Un cliente italiano non puo'
+    # comprare una cuccia Printify nemmeno volendo.
+    #
+    # E fuori dalla UE il negozio spedisce in un paese solo. L'informativa
+    # sulle spedizioni elenca Italia, UE, Regno Unito, Monaco, San Marino,
+    # Montenegro, Ucraina e Stati Uniti -- e i primi sette stanno tutti dentro
+    # perla_eu_countries, cioe' vedono la linea europea. Resta l'America.
+    #
+    # Quanto pesava l'errore, misurato sui profili veri:
+    #
+    #                    verso gli USA      verso la UE
+    #     bandana            5,69              15,09
+    #     cuccia          27,29-51,99       73,49-88,49
+    #
+    # Su una cuccia significava caricare fino a 37 dollari di spedizione che
+    # nessun cliente paga: il margine risultava schiacciato e il rimedio
+    # sarebbe stato alzare un prezzo che invece va bene.
+    #
     # Solo per i blueprint che vendiamo davvero: sul negozio Printify ne
     # restano altri (il vecchio collare 784) i cui prodotti su Shopify sono
     # archiviati, e chiederne la spedizione risponde 404 -- un allarme per
@@ -172,7 +200,7 @@ def costi_printify(tasso):
                   file=sys.stderr)
             continue
         for prof in d.get("profiles", []):
-            if "IT" not in prof.get("countries", []):
+            if "US" not in prof.get("countries", []):
                 continue
             for vid in prof.get("variant_ids", []):
                 spedizione[(bp, vid)] = prof["first_item"]["cost"] / 100.0
@@ -252,7 +280,7 @@ def main():
     tasso, quando = cambio_usd_eur()
     print("cambio 1 USD = %.4f EUR (%s)\n" % (tasso, quando))
     iva_vera = iva_da_un_ordine_printify()
-    iva_pf = iva_vera if iva_vera is not None else IVA_IPOTETICA_PRINTIFY
+    iva_pf = iva_vera if iva_vera is not None else IVA_PRINTIFY
 
     print("Chiedo i costi ai fornitori...", file=sys.stderr)
     costo = {}
@@ -275,49 +303,38 @@ def main():
                 senza.append((p["title"], v["title"]))
                 continue
             prezzo = float(v["price"])
-            # Sul Printful l'IVA e' gia' dentro il costo (la da' il preventivo).
-            # Sul Printify no: la' il costo e' prodotto + spedizione e basta.
+            # L'IVA e' dentro tutti e due i costi, per strade diverse: su
+            # Printful la da' gia' il preventivo, su Printify si aggiunge qui.
+            # La paga il negozio e non la recupera, quindi e' costo.
             printify = t in PRINTIFY.values()
             c_iva = c * (1 + iva_pf) if printify else c
             righe.append({"prodotto": p["title"], "taglia": v["title"], "prezzo": prezzo,
                           "fornitore": "Printify" if printify else "Printful",
-                          "costo": round(c, 2), "margine": round(100 * (prezzo - c) / prezzo, 1),
-                          "costo_con_iva": round(c_iva, 2),
-                          "margine_con_iva": round(100 * (prezzo - c_iva) / prezzo, 1)})
+                          "costo_senza_iva": round(c, 2),
+                          "costo": round(c_iva, 2),
+                          "margine": round(100 * (prezzo - c_iva) / prezzo, 1)})
 
     righe.sort(key=lambda r: r["margine"])
-    print("%-28s %-15s %7s %7s %8s %9s" % (
-        "prodotto", "taglia", "prezzo", "costo", "margine", "con IVA"))
+    print("%-28s %-15s %-9s %8s %8s %8s" % (
+        "prodotto", "taglia", "fornitore", "prezzo", "costo", "margine"))
     print("-" * 82)
     for r in righe[:25]:
-        con = ("%8.1f%%" % r["margine_con_iva"]) if r["fornitore"] == "Printify" else "        -"
-        print("%-28s %-15s %7.2f %7.2f %7.1f%% %s" % (
-            r["prodotto"][:28], r["taglia"][:15], r["prezzo"], r["costo"], r["margine"], con))
+        print("%-28s %-15s %-9s %8.2f %8.2f %7.1f%%" % (
+            r["prodotto"][:28], r["taglia"][:15], r["fornitore"],
+            r["prezzo"], r["costo"], r["margine"]))
     if len(righe) > 25:
         print("  … e altre %d varianti, tutte con margine piu' alto" % (len(righe) - 25))
 
     sotto = [r for r in righe if r["margine"] < opz.soglia]
     print("\n%d varianti misurate. Sotto il %.0f%%: %d" % (len(righe), opz.soglia, len(sotto)))
-
-    # L'IVA Printify: si dice come stanno le cose, non si fa finta di saperlo.
-    pf = [r for r in righe if r["fornitore"] == "Printify"]
-    if pf:
-        print("\n" + "-" * 82)
-        if iva_vera is not None:
-            print("IVA Printify LETTA da un ordine vero: %.1f%%. La colonna \"con IVA\" "
-                  "e' quella buona." % (100 * iva_vera))
-        else:
-            print("IVA Printify: NON DIMOSTRATA. L'unico ordine mai passato di li' e'")
-            print("annullato e ha total_tax a zero, quindi non c'e' niente da leggere.")
-            print("La colonna \"con IVA\" e' lo scenario al %.0f%%, cioe' il peggiore."
-                  % (100 * iva_pf))
-        sotto_iva = [r for r in pf if r["margine_con_iva"] < opz.soglia]
-        in_perdita = [r for r in pf if r["margine_con_iva"] < 0]
-        print("Sulle %d varianti Printify: margine minimo %.1f%% senza IVA, %.1f%% con."
-              % (len(pf), min(r["margine"] for r in pf),
-                 min(r["margine_con_iva"] for r in pf)))
-        print("Con l'IVA, sotto il %.0f%%: %d varianti; in perdita: %d."
-              % (opz.soglia, len(sotto_iva), len(in_perdita)))
+    print("Il costo comprende sempre spedizione e IVA: e' quello che il negozio")
+    print("paga davvero, e la spedizione al cliente e' gratuita per informativa.")
+    if iva_vera is not None:
+        print("IVA Printify LETTA da un ordine vero: %.1f%%." % (100 * iva_vera))
+    else:
+        print("IVA Printify al %.0f%%, come dichiarato dalla proprietaria: nessun"
+              % (100 * iva_pf))
+        print("ordine vero da cui leggerla, ma le fatture le riceve lei.")
     if senza:
         print("Senza costo noto (%d): %s" % (len(senza), ", ".join(
             "%s %s" % s for s in senza[:5])))

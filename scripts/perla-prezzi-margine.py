@@ -1,80 +1,171 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Costo fornitore + spedizione fornitore -> prezzo, e il margine che ne esce.
+"""Il prezzo di ogni variante, ricavato dal costo vero e da un margine solo.
 
-I prezzi qui sotto sono quelli APPLICATI il 22 agosto: rilanciando lo script si
-vede subito il margine di ogni famiglia con i costi di oggi, e se un fornitore
-ritocca i suoi si scopre qui, non a fine mese.
+LA REGOLA, DETTA DALLA PROPRIETARIA IL 4 SETTEMBRE
+"Devi uniformare il prezzo con questa regola: considera che io pago l'IVA sia
+su Printful che Printify e che voglio un margine del 20% su ogni prodotto."
 
-I COSTI SONO MISURATI, NON STIMATI
-Printify: /v1/catalog/.../shipping.json e i costi delle varianti dei prodotti
-veri del negozio. Printful: api.printful.com/products/<id> (pubblico), e il
-collare torna 17,23 esatto come il file printful-catalog/749.json gia' nel
-repository -- controprova che i numeri sono quelli giusti.
+Quindi una scala sola per tutto il catalogo:
 
-IL CAMBIO
-Il negozio ha base EUR e il listino USA e' una conversione allo 0% di
-scostamento: Shopify vende a 48,00 $ una bandana da 39,99 €, cioe' applica
-1,2003. Si usa quello, perche' e' il cambio con cui il negozio incassa davvero.
+    prezzo = costo / (1 - 0,20)
 
-LA SPEDIZIONE EUROPEA
-E' l'unico numero che non ho potuto leggere: le tariffe Printful stanno dietro
-autenticazione e la chiave vive solo su Render. Qui e' un parametro dichiarato
-(SPED_EU), non un numero nascosto in mezzo agli altri: cambiandolo si vede
-subito quanto sposta.
+dove `costo` e' quello che il negozio paga DAVVERO: prodotto + spedizione +
+IVA. La spedizione entra nel costo perche' al cliente e' gratuita -- lo dice
+l'informativa sulle spedizioni: "La spedizione e' gratuita, senza minimo
+d'ordine. Il costo e' gia' compreso nel prezzo che vedi sul prodotto".
+
+"Margine" e' sul PREZZO DI VENDITA, non ricarico sul costo: (prezzo - costo) /
+prezzo. E' la stessa definizione che usa gia' perla-verifica-margini.py, ed e'
+quella che risponde alla domanda "di ogni euro incassato, quanto mi resta".
+Un ricarico del 20% sul costo darebbe prezzi piu' bassi e margini del 16,7%.
+
+QUESTO FILE PRIMA ERA UN'ALTRA COSA, e vale la pena dirlo. Conteneva una
+tabella di quattordici righe scritta a mano il 22 agosto, con una scala di
+margini a scaglioni (42% fino a 25$, poi 40, 35, 30) e una spedizione europea
+DICHIARATA perche' non si riusciva a leggerla. Adesso i costi si leggono tutti
+dal vivo -- ci pensa perla-verifica-margini.py, che questo script importa
+invece di ricopiare -- e la scala a scaglioni non c'e' piu': una regola sola.
+
+L'ARROTONDAMENTO VA VERSO L'ALTO
+Al primo ,90 sopra il prezzo obiettivo, mai sotto: arrotondando per difetto il
+margine scenderebbe sotto il 20% proprio sui prodotti in bilico, che sono
+quelli per cui la regola esiste.
+
+USO
+    python3 scripts/perla-prezzi-margine.py                 # tabella, non tocca
+    python3 scripts/perla-prezzi-margine.py --margine 25    # un'altra asticella
+    python3 scripts/perla-prezzi-margine.py --scrivi        # prepara le mutation
+
+--scrivi NON tocca il negozio: prepara l'input di productVariantsBulkUpdate in
+generated-designs/prezzi-da-scrivere.json, da rileggere prima di applicarlo.
+E' la stessa scelta di perla-editor-allinea.py e perla-eu-foto-shopify.py: in
+config/printify.local.env non c'e' un token Admin di Shopify e non ci deve
+stare, perche' un token che riscrive i prezzi di tutto il catalogo e' molto
+piu' potere di quanto serva a un listino che si rifa' ogni tanto.
 """
-CAMBIO = 1.2003          # EUR -> USD, quello che applica Shopify
-SPED_EU = 5.00           # DA CONFERMARE: allocazione spedizione Printful, in USD
-# Scala scelta con Emanuele e Nicola: 40% di base, e piu' si sale col costo
-# piu' il margine scende. Un pezzo caro che rende il 30% porta a casa piu'
-# euro di uno che rende il 45% e resta sullo scaffale.
-def margine(sbarcato):
-    if sbarcato <= 25:  return 0.42
-    if sbarcato <= 50:  return 0.40
-    if sbarcato <= 100: return 0.35
-    return 0.30
+import argparse
+import collections
+import importlib.util
+import json
+import math
+import os
+import sys
 
-# (nome, costo USD, spedizione USD, prezzo EUR attuale, mercato)
-VOCI = [
-    ("Medaglietta",              11.27,  5.49,  24.90, "USA"),
-    ("Bandana 20x10",            14.25,  5.49,  28.90, "USA"),
-    ("Bandana 27x13",            16.05,  5.49,  31.90, "USA"),
-    ("Ciotola 16oz",             24.72, 14.29,  54.90, "USA"),
-    ("Cuccia 28x18",             29.26, 26.19,  71.90, "USA"),
-    ("Cuccia 40x30",             49.50, 29.99, 101.90, "USA"),
-    ("Cuccia 50x40",             79.86, 49.99, 154.90, "USA"),
-    ("Bandana EU",               10.15, SPED_EU, 21.90, "EU"),
-    ("Collare EU",               17.23, SPED_EU, 32.90, "EU"),
-    ("Guinzaglio EU",            19.77, SPED_EU, 35.90, "EU"),
-    ("Ciotola EU 530 ml",        21.49, SPED_EU, 36.90, "EU"),
-    ("Ciotola EU 950 ml",        24.49, SPED_EU, 41.90, "EU"),
-]
+QUI = os.path.dirname(os.path.abspath(__file__))
+RADICE = os.path.dirname(QUI)
+USCITA = os.path.join(RADICE, "generated-designs", "prezzi-da-scrivere.json")
+
+MARGINE = 0.20
 
 
-def arrotonda(eur):
-    """Alla cifra ,90 piu' vicina verso l'alto: una scala sola per tutti."""
-    import math
-    return math.floor(eur) + 0.90 if eur - int(eur) <= 0.90 else math.floor(eur) + 1.90
+def _modulo(nome, percorso):
+    spec = importlib.util.spec_from_file_location(nome, percorso)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+margini = _modulo("perla_verifica_margini",
+                  os.path.join(QUI, "perla-verifica-margini.py"))
+
+
+def al_90(eur):
+    """Il primo prezzo che finisce per ,90 non inferiore a `eur`."""
+    return math.ceil(eur - 0.90 - 1e-9) + 0.90
+
+
+def listino(margine):
+    """(righe, senza_costo). Ogni riga porta prezzo di oggi e prezzo nuovo."""
+    margini.ambiente()
+    tasso, quando = margini.cambio_usd_eur()
+    iva_vera = margini.iva_da_un_ordine_printify()
+    iva_pf = iva_vera if iva_vera is not None else margini.IVA_PRINTIFY
+
+    costo = dict(margini.costi_printful())
+    costo.update(margini.costi_printify(tasso))
+
+    righe, senza = [], []
+    for p in margini.chiedi(margini.VETRINA)["products"]:
+        t = margini.tipo_di(p)
+        for v in p["variants"]:
+            c = costo.get((t, v["title"]))
+            if c is None and t in margini.PRINTFUL:
+                # le taglie EU costano uguale: si accetta un'etichetta qualunque
+                candidati = [x for (tt, _), x in costo.items() if tt == t]
+                c = max(candidati) if candidati else None
+            if c is None:
+                senza.append((p["title"], v["title"]))
+                continue
+            printify = t in margini.PRINTIFY.values()
+            c_iva = c * (1 + iva_pf) if printify else c
+            prezzo = float(v["price"])
+            nuovo = al_90(c_iva / (1 - margine))
+            righe.append({
+                "prodotto": p["title"], "taglia": v["title"],
+                "fornitore": "Printify" if printify else "Printful",
+                # productVariantsBulkUpdate vuole il prodotto E la variante:
+                # senza l'id del prodotto l'input non si puo' nemmeno scrivere.
+                "prodotto_id": p["id"], "variante": v["id"],
+                "costo": round(c_iva, 2),
+                "prezzo": prezzo, "nuovo": nuovo,
+                "margine_ora": round(100 * (prezzo - c_iva) / prezzo, 1),
+                "margine_nuovo": round(100 * (nuovo - c_iva) / nuovo, 1)})
+    return righe, senza, tasso, quando
 
 
 def main():
-    print("cambio %.4f  |  spedizione EU ipotizzata %.2f$  |  margine 42%% fino a 25$, poi 40 / 35 / 30%%\n"
-          % (CAMBIO, SPED_EU))
-    print("%-19s %7s %7s %8s  %9s %8s   %9s %8s  %s" %
-          ("", "costo$", "sped$", "totale$", "in vetrina €", "margine", "proposto €", "margine", ""))
-    for nome, costo, sped, oggi_eur, mercato in VOCI:
-        sbarcato = costo + sped
-        oggi_usd = oggi_eur * CAMBIO
-        marg_oggi = (oggi_usd - sbarcato) / oggi_usd
-        obiettivo = margine(sbarcato)
-        nuovo_eur = arrotonda((sbarcato / (1 - obiettivo)) / CAMBIO)
-        marg_nuovo = (nuovo_eur * CAMBIO - sbarcato) / (nuovo_eur * CAMBIO)
-        delta = (nuovo_eur - oggi_eur) / oggi_eur * 100
-        segno = "  %+.0f%%" % delta if abs(delta) >= 3 else ""
-        print("%-19s %7.2f %7.2f %8.2f  %9.2f %7.0f%%   %9.2f %7.0f%%%s" %
-              (nome, costo, sped, sbarcato, oggi_eur, marg_oggi * 100,
-               nuovo_eur, marg_nuovo * 100, segno))
+    a = argparse.ArgumentParser()
+    a.add_argument("--margine", type=float, default=100 * MARGINE,
+                   help="margine sul prezzo di vendita, in percento")
+    a.add_argument("--scrivi", action="store_true",
+                   help="prepara l'input delle mutation, senza toccare il negozio")
+    opz = a.parse_args()
+    margine = opz.margine / 100.0
+
+    righe, senza, tasso, quando = listino(margine)
+    print("cambio 1 USD = %.4f EUR (%s)" % (tasso, quando))
+    print("margine voluto: %.0f%% sul prezzo di vendita\n" % opz.margine)
+
+    # Una riga per FAMIGLIA: le venti bandane con lo stesso costo e lo stesso
+    # prezzo sono una decisione sola, e venti righe uguali la nasconderebbero.
+    fam = collections.OrderedDict()
+    for r in righe:
+        chiave = (r["prodotto"].split("“")[0].strip() or r["prodotto"],
+                  r["taglia"], r["fornitore"], r["costo"], r["prezzo"], r["nuovo"])
+        fam[chiave] = fam.get(chiave, 0) + 1
+
+    print("%-13s %-14s %-9s %8s %8s %8s %8s %6s" % (
+        "famiglia", "taglia", "fornitore", "costo", "ora", "nuovo", "delta", "quante"))
+    print("-" * 88)
+    for (nome, taglia, forn, costo, prezzo, nuovo), quante in sorted(fam.items()):
+        print("%-13s %-14s %-9s %8.2f %8.2f %8.2f %+8.2f %6d" % (
+            nome[:13], taglia[:14], forn, costo, prezzo, nuovo, nuovo - prezzo, quante))
+
+    giu = sum(1 for r in righe if r["nuovo"] < r["prezzo"] - 0.005)
+    su = sum(1 for r in righe if r["nuovo"] > r["prezzo"] + 0.005)
+    print("\n%d varianti: %d scendono, %d salgono, %d restano uguali"
+          % (len(righe), giu, su, len(righe) - giu - su))
+    peggiore = min(righe, key=lambda r: r["margine_nuovo"])
+    print("margine piu' basso dopo: %.1f%% (%s %s)"
+          % (peggiore["margine_nuovo"], peggiore["prodotto"], peggiore["taglia"]))
+    if senza:
+        print("Senza costo noto (%d): %s" % (len(senza), ", ".join(
+            "%s %s" % s for s in senza[:5])))
+
+    if opz.scrivi:
+        da_fare = [r for r in righe if abs(r["nuovo"] - r["prezzo"]) > 0.005]
+        per_prodotto = collections.defaultdict(list)
+        for r in da_fare:
+            per_prodotto[r["prodotto"]].append(r)
+        os.makedirs(os.path.dirname(USCITA), exist_ok=True)
+        with open(USCITA, "w") as fh:
+            json.dump(da_fare, fh, indent=1, ensure_ascii=False)
+        print("\n%d varianti da cambiare su %d prodotti, in %s"
+              % (len(da_fare), len(per_prodotto), os.path.relpath(USCITA, RADICE)))
+        print("Si applicano con productVariantsBulkUpdate, un prodotto per volta.")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
