@@ -220,10 +220,34 @@ def test_l_inchiostro_si_adatta_al_fondo():
         'su fondo scuro l\'inchiostro nero non e\' stato schiarito: '
         'resta a %.0f' % piu_scuro(su_scuro))
 
-    su_medio = marchio._adatta(logo, 168)
-    assert piu_chiaro(su_medio) < piu_chiaro(logo) - 30, (
-        'su fondo medio l\'oro non e\' stato incupito: resta a %.0f'
-        % piu_chiaro(su_medio))
+    # ROUND 52 -- L'ORO NON SI INCUPISCE PIU', E QUI SI PRETENDE L'OPPOSTO DI
+    # PRIMA. Fino a ieri questa prova chiedeva che sul fondo medio l'oro fosse
+    # incupito. Era la regola che faceva uscire LO STESSO logo con luminosita'
+    # diverse da un prodotto all'altro -- misurato sui motivi veri, da 106 sul
+    # terracotta a 164 sulla marinara -- e la proprietaria l'ha visto: "non
+    # deve essere piu' scuro da nessuna parte, tutti uguali".
+    #
+    # La regola nuova e' piu' forte di quella vecchia: l'oro non deve solo
+    # staccare, deve uscire IDENTICO su qualunque fondo. A staccarlo ci pensa
+    # il contorno, che e' un'altra cosa e ha la sua prova piu' sotto.
+    #
+    # Si guarda l'ORO e non il pixel piu' chiaro del marchio: sul fondo scuro
+    # il quasi-nero viene tirato al crema, che e' piu' chiaro dell'oro, e il
+    # massimo lo darebbe lui.
+    grigio = list(logo.convert('L').getdata())
+    oro = [i for i in pieno if grigio[i] >= marchio.SOGLIA_INCHIOSTRO]
+
+    def oro_piu_chiaro(im):
+        d = list(im.convert('RGB').getdata())
+        return max(marchio._luminosita(d[i]) for i in oro)
+
+    riferimento = oro_piu_chiaro(su_scuro)
+    for nome, fondo in (('medio', 168), ('chiaro', 235), ('chiarissimo', 250)):
+        uscito = oro_piu_chiaro(marchio._adatta(logo, fondo))
+        assert abs(uscito - riferimento) <= 1, (
+            'l\'oro sul fondo %s esce a %.0f mentre sul fondo scuro esce a '
+            '%.0f: lo stesso logo non puo\' avere due luminosita\''
+            % (nome, uscito, riferimento))
 
 
 def test_si_legge_su_qualunque_fondo():

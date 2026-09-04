@@ -73,8 +73,8 @@ PRINTIFY = {419: "cuccia", 562: "bandana", 566: "medaglietta", 570: "ciotola"}
 #
 # La ciotola europea costa 41,24 (prodotto + spedizione + IVA): con la regola
 # del 20% il prezzo minimo sarebbe 51,90, e le sembrava alto. Fra le tre strade
-# proposte ha scelto di togliere la 950 ml e di tenere la 530 a 50,90, cioe' un
-# margine del 19,0%.
+# proposte ha tolto la 950 ml e tenuto la 530; poi, guardando il prezzo in
+# vetrina, l'ha voluto sotto i cinquanta -- 49,90, cioe' un margine del 17,4%.
 #
 # Sta scritta qui e non lasciata a mente per due motivi. Il primo: senza, il
 # controllo tornerebbe rosso ogni volta su una riga che e' una decisione e non

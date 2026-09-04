@@ -61,15 +61,20 @@ MARGINE = 0.20
 # L'UNICA ECCEZIONE ALLA REGOLA, DECISA DALLA PROPRIETARIA IL 4 SETTEMBRE
 #
 # La ciotola europea costa 41,24 (prodotto + spedizione + IVA): col 20% il
-# prezzo verrebbe 51,90, e le sembrava alto. Ha scelto di togliere la 950 ml e
-# di tenere la 530 a 50,90, cioe' un margine del 19,0%.
+# prezzo verrebbe 51,90, e le sembrava alto. Prima ha tolto la 950 ml e messo
+# la 530 a 50,90; poi, guardandola in vetrina, l'ha voluta sotto i cinquanta
+# "cosi' almeno si vede il 4". Quindi 49,90, cioe' un margine del 17,4%.
+#
+# 49,90 e non 49,80: ogni prezzo del negozio finisce per ,90 -- e' la
+# terminazione su cui e' costruito al_90() qui sotto -- e a 49,80 la ciotola
+# sarebbe l'unico prezzo del catalogo fuori passo. Il 4 si vede uguale.
 #
 # Il prezzo scritto qui VINCE sul calcolo. Senza questa riga il listino
 # riproporrebbe 51,90 a ogni giro, e qualcuno prima o poi lo riscriverebbe sul
 # negozio pensando di correggere un errore. La deroga corrispondente sta in
 # DEROGHE dentro perla-verifica-margini.py, cosi' il controllo la riconosce
 # invece di bocciarla.
-PREZZO_DECISO = {("ciotola-eu", "530 ml"): 50.90}
+PREZZO_DECISO = {("ciotola-eu", "530 ml"): 49.90}
 
 
 def _modulo(nome, percorso):

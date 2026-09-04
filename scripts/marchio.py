@@ -329,19 +329,41 @@ INCHIOSTRO_SCURO = (28, 26, 24)
 CREMA = (246, 240, 230)
 # Scarto di luminosita' sotto il quale un inchiostro sparisce nel fondo.
 CONTRASTO_MINIMO = 60
-# Sopra questa, il fondo e' cosi' chiaro che all'oro basta pochissimo aiuto.
-FONDO_CHIARISSIMO = 205
-# Di quanto si incupisce l'oro sui fondi medi e su quelli chiarissimi.
 #
-# PERCHE' DUE VALORI FISSI E NON UNA FORMULA. Provato: far inseguire all'oro
-# la soglia di contrasto, incupendolo punto per punto in base al fondo, migliora
-# ogni numero -- sulla salvia i pixel sotto soglia scendono dal 51% al 2% -- e
-# rovina il marchio. La ragione e' che "l'oro" non e' un colore solo: dentro ci
-# sono anche le luci della PERLA, e moltiplicarle per 0,3 le spegne. Guardato a
-# schermo, il medaglione diventa una macchia grigia. Il numero diceva meglio,
-# l'occhio diceva peggio, e su un logo decide l'occhio.
-CUPEZZA_MEDIO = 0.62
-CUPEZZA_CHIARO = 0.80
+# L'ORO NON SI INCUPISCE PIU', E PERCHE'
+#
+# Fino a qui, sui fondi chiari l'oro veniva moltiplicato per 0,62 (o 0,80 sopra
+# un fondo chiarissimo) per farlo staccare. Sui fondi scuri restava intatto.
+# Risultato: LO STESSO LOGO usciva con luminosita' diverse da un prodotto
+# all'altro, e la proprietaria l'ha visto -- "non deve essere piu' scuro da
+# nessuna parte, tutti uguali".
+#
+# Non era un'impressione. Misurata la luminanza mediana dell'oro del marchio
+# steso sui motivi veri:
+#
+#     motivo                fondo    oro con incupimento    oro senza
+#     collare terracotta     148            106                170
+#     bandana lino           177            107                171
+#     collare lino           235            136                170
+#     bandana marinara       106            164                164
+#     collare barocco         53            157                157
+#
+# Da 106 a 164 fra un prodotto e l'altro: 58 livelli, e sempre in peggio sui
+# tessuti chiari. Senza incupimento la forbice si chiude a 157-171, cioe' la
+# sola differenza che resta e' quella fra il ramo chiaro e quello scuro.
+#
+# SI PUO' FARE ADESSO E NON PRIMA. L'incupimento serviva quando dietro al
+# marchio non c'era niente: l'oro a 179 su un avorio a 235 non stacca. Da
+# ROUND 48 c'e' il contorno, e sul terracotta -- il caso peggiore, un fondo a
+# 148 in mezzo alla banda cieca dell'oro -- il filo crema regge da solo:
+# guardati affiancati a 1:1, con l'incupimento il medaglione e' un marrone
+# spento e la perla e' grigia, senza e' oro e la perla brilla. Si legge in
+# tutti e due, ma uno e' il logo e l'altro e' il logo sporcato.
+#
+# Resta vero quello che diceva la nota di prima -- "il numero diceva meglio,
+# l'occhio diceva peggio" -- solo che adesso il numero e l'occhio dicono la
+# stessa cosa, perche' a staccare ci pensa il contorno invece dell'inchiostro.
+#
 # Sotto questa luminosita' un pixel del logo e' "inchiostro scuro".
 SOGLIA_INCHIOSTRO = 100
 # Un pixel del marchio con alfa sotto questa soglia lascia vedere il tessuto:
@@ -418,44 +440,12 @@ ALONE_OPACITA = 1.00
 GUADAGNO_ALONE = 7.0
 
 
-def _cupezza(fondo):
-    """Di quanto incupire l'oro perche' stacchi da un fondo di quella luminosita'.
-
-    IL DIFETTO CHE CHIUDE, MISURATO
-    Fino a qui l'oro si incupiva di un fattore FISSO: 0,62 sotto FONDO_CHIARISSIMO
-    e 0,80 sopra. Su un avorio funziona. Su un fondo di mezzo no, e non e'
-    un'opinione -- contando i pixel opachi del marchio che restano sotto i
-    CONTRASTO_MINIMO=60 che questo file stesso dichiara:
-
-        fondo             luce   sotto i 60
-        antracite          38        0%
-        navy               33        0%
-        senape            179       19%
-        bordeaux           64       24%
-        oro (laurel)      163       37%
-        salvia            156       50%
-
-    Su meta' del marchio, sulla salvia, l'inchiostro non staccava. La ragione
-    e' aritmetica: l'oro nativo sta a 179, incupito di 0,62 arriva a 111, e su
-    un fondo a 156 sono 45 di scarto -- sotto la soglia. Con la cartella crema
-    non si vedeva, perche' il marchio aveva un fondo tutto suo; e' lo stesso
-    difetto che ROUND 48 ha trovato sul tessuto a righe, un passo piu' in la'.
-
-    LA REGOLA
-    Invece di due fattori scelti a mano, uno solo che insegue la soglia: l'oro
-    va portato a CONTRASTO_MINIMO SOTTO il fondo. Verso il basso, perche' da
-    179 in su c'e' poco spazio prima del bianco, mentre verso il nero ce n'e'
-    sempre.
-
-        fondo 120  ->  0,34    fondo 179  ->  0,66
-        fondo 156  ->  0,54    fondo 205  ->  0,81 (tagliato a 0,80)
-
-    I due vecchi valori non spariscono: 0,80 resta il tetto, ed e' esattamente
-    quello che la regola calcola sul chiarissimo. Il fisso 0,62 corrispondeva
-    a un fondo di 171: giusto per quello, sbagliato per tutti gli altri.
-    """
-    voluta = (fondo - CONTRASTO_MINIMO - MARGINE_CONTRASTO) / float(LUMINOSITA_ORO)
-    return max(CUPEZZA_MINIMA, min(CUPEZZA_MASSIMA, voluta))
+# NOTA. Qui viveva _cupezza(), una regola che calcolava di quanto incupire
+# l'oro inseguendo CONTRASTO_MINIMO. Non e' stata tolta per pulizia: e' morta
+# con l'incupimento stesso -- vedi la nota sopra a SOGLIA_INCHIOSTRO -- e per
+# giunta non era mai stata chiamata da nessuno, tanto che le costanti a cui si
+# appoggiava (MARGINE_CONTRASTO, LUMINOSITA_ORO, CUPEZZA_MINIMA e MASSIMA) in
+# questo file non esistono nemmeno: chiamarla avrebbe sollevato NameError.
 
 
 def _mappa_fondo(ritaglio, vista=None):
@@ -613,11 +603,9 @@ def _adatta(pezzo, fondo):
         rgb = Image.composite(Image.new("RGB", pezzo.size, CREMA), rgb, forza)
         tono_alone = INCHIOSTRO_SCURO
     else:
-        # L'oro incupito, il quasi-nero lasciato stare: sul chiaro si legge da
-        # solo. Quanto incupire dipende da quanto e' chiaro il fondo.
-        chiaro = grigio.point(lambda v: 255 if v >= SOGLIA_INCHIOSTRO else 0)
-        cupezza = CUPEZZA_CHIARO if luce >= FONDO_CHIARISSIMO else CUPEZZA_MEDIO
-        rgb = Image.composite(rgb.point(lambda v: int(v * cupezza)), rgb, chiaro)
+        # SUL CHIARO NON SI TOCCA NIENTE. L'oro resta l'oro, identico a come
+        # sta sui fondi scuri, e a staccarlo dal tessuto ci pensa il contorno.
+        # Vedi "L'ORO NON SI INCUPISCE PIU'" sopra a INCHIOSTRO_SCURO.
         tono_alone = CREMA
 
     marchio_inchiostrato = rgb.convert("RGBA")
