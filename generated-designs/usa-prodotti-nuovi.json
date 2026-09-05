@@ -1,0 +1,38 @@
+{
+ "collare-pelle": {
+  "id": "6a9b3ec630df13168a0b92ff",
+  "titolo": "Collare in Pelle “Crea il Tuo Design”",
+  "blueprint": 10700,
+  "provider": 217,
+  "immagini": {
+   "1950x270": "6a9b3ec001c0548bbdc62a96",
+   "1950x195": "6a9b3ec15a8c92ed8caa0a1e",
+   "1795x189": "6a9b3ec20326d222a7a5adec",
+   "1650x150": "6a9b3ec2ceaddfa376cead96"
+  }
+ },
+ "medaglietta-incisa": {
+  "id": "6a9b3eca8a5af0515e0c3bbf",
+  "titolo": "Medaglietta Incisa “Crea il Tuo Design”",
+  "blueprint": 10674,
+  "provider": 228,
+  "immagini": {
+   "756x907": "6a9b3fba39f37d436d18b178",
+   "756x827": "6a9b3fbbceaddfa376ceae6f",
+   "744x496": "6a9b3fbce376f19d249399c5"
+  }
+ },
+ "giacchetto": {
+  "id": "6a9b3ed33432a3f5f20c36bc",
+  "titolo": "Giacchetto Parka “Crea il Tuo Design”",
+  "blueprint": 10740,
+  "provider": 72,
+  "immagini": {
+   "2126x2717": "6a9b3fc0d2844881c07f4558",
+   "1654x2717": "6a9b3fc1e376f19d249399c6",
+   "1535x2362": "6a9b3fc26ec9b01142062730",
+   "1535x1535": "6a9b3fc36ec9b01142062763",
+   "1181x1181": "6a9b3fc48d4d71d96bf4d80e"
+  }
+ }
+}

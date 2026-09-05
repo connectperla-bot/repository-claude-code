@@ -1,0 +1,314 @@
+{
+ "fetchedAt": null,
+ "blueprint": {
+  "id": 10674
+ },
+ "providers": [
+  {
+   "id": 228
+  }
+ ],
+ "printProviderDetail": null,
+ "variants": [
+  {
+   "id": 397011,
+   "title": "Circle / Black / One size",
+   "options": {
+    "shape": "Circle",
+    "color": "Black",
+    "size": "One size"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "laser-engraving",
+     "width": 756,
+     "height": 907
+    }
+   ],
+   "decoration_methods": [
+    "laser-engraving"
+   ]
+  },
+  {
+   "id": 397012,
+   "title": "Circle / Blue / One size",
+   "options": {
+    "shape": "Circle",
+    "color": "Blue",
+    "size": "One size"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "laser-engraving",
+     "width": 756,
+     "height": 907
+    }
+   ],
+   "decoration_methods": [
+    "laser-engraving"
+   ]
+  },
+  {
+   "id": 397013,
+   "title": "Circle / Silver / One size",
+   "options": {
+    "shape": "Circle",
+    "color": "Silver",
+    "size": "One size"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "laser-engraving",
+     "width": 756,
+     "height": 907
+    }
+   ],
+   "decoration_methods": [
+    "laser-engraving"
+   ]
+  },
+  {
+   "id": 397014,
+   "title": "Circle / Red / One size",
+   "options": {
+    "shape": "Circle",
+    "color": "Red",
+    "size": "One size"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "laser-engraving",
+     "width": 756,
+     "height": 907
+    }
+   ],
+   "decoration_methods": [
+    "laser-engraving"
+   ]
+  },
+  {
+   "id": 397015,
+   "title": "Circle / Pink / One size",
+   "options": {
+    "shape": "Circle",
+    "color": "Pink",
+    "size": "One size"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "laser-engraving",
+     "width": 756,
+     "height": 907
+    }
+   ],
+   "decoration_methods": [
+    "laser-engraving"
+   ]
+  },
+  {
+   "id": 397016,
+   "title": "Heart / Black / One size",
+   "options": {
+    "shape": "Heart",
+    "color": "Black",
+    "size": "One size"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "laser-engraving",
+     "width": 756,
+     "height": 827
+    }
+   ],
+   "decoration_methods": [
+    "laser-engraving"
+   ]
+  },
+  {
+   "id": 397017,
+   "title": "Heart / Blue / One size",
+   "options": {
+    "shape": "Heart",
+    "color": "Blue",
+    "size": "One size"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "laser-engraving",
+     "width": 756,
+     "height": 827
+    }
+   ],
+   "decoration_methods": [
+    "laser-engraving"
+   ]
+  },
+  {
+   "id": 397018,
+   "title": "Heart / Silver / One size",
+   "options": {
+    "shape": "Heart",
+    "color": "Silver",
+    "size": "One size"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "laser-engraving",
+     "width": 756,
+     "height": 827
+    }
+   ],
+   "decoration_methods": [
+    "laser-engraving"
+   ]
+  },
+  {
+   "id": 397019,
+   "title": "Heart / Red / One size",
+   "options": {
+    "shape": "Heart",
+    "color": "Red",
+    "size": "One size"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "laser-engraving",
+     "width": 756,
+     "height": 827
+    }
+   ],
+   "decoration_methods": [
+    "laser-engraving"
+   ]
+  },
+  {
+   "id": 397020,
+   "title": "Heart / Pink / One size",
+   "options": {
+    "shape": "Heart",
+    "color": "Pink",
+    "size": "One size"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "laser-engraving",
+     "width": 756,
+     "height": 827
+    }
+   ],
+   "decoration_methods": [
+    "laser-engraving"
+   ]
+  },
+  {
+   "id": 397021,
+   "title": "Bone / Black / One size",
+   "options": {
+    "shape": "Bone",
+    "color": "Black",
+    "size": "One size"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "laser-engraving",
+     "width": 744,
+     "height": 496
+    }
+   ],
+   "decoration_methods": [
+    "laser-engraving"
+   ]
+  },
+  {
+   "id": 397022,
+   "title": "Bone / Blue / One size",
+   "options": {
+    "shape": "Bone",
+    "color": "Blue",
+    "size": "One size"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "laser-engraving",
+     "width": 744,
+     "height": 496
+    }
+   ],
+   "decoration_methods": [
+    "laser-engraving"
+   ]
+  },
+  {
+   "id": 397023,
+   "title": "Bone / Silver / One size",
+   "options": {
+    "shape": "Bone",
+    "color": "Silver",
+    "size": "One size"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "laser-engraving",
+     "width": 744,
+     "height": 496
+    }
+   ],
+   "decoration_methods": [
+    "laser-engraving"
+   ]
+  },
+  {
+   "id": 397024,
+   "title": "Bone / Red / One size",
+   "options": {
+    "shape": "Bone",
+    "color": "Red",
+    "size": "One size"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "laser-engraving",
+     "width": 744,
+     "height": 496
+    }
+   ],
+   "decoration_methods": [
+    "laser-engraving"
+   ]
+  },
+  {
+   "id": 397025,
+   "title": "Bone / Pink / One size",
+   "options": {
+    "shape": "Bone",
+    "color": "Pink",
+    "size": "One size"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "laser-engraving",
+     "width": 744,
+     "height": 496
+    }
+   ],
+   "decoration_methods": [
+    "laser-engraving"
+   ]
+  }
+ ]
+}

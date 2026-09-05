@@ -67,7 +67,22 @@ PRINTFUL = {
     "ciotola-eu":    [("530 ml", 16785, {})],
 }
 # I blueprint Printify in vendita, con il tipo che compare nel titolo Shopify.
-PRINTIFY = {419: "cuccia", 562: "bandana", 566: "medaglietta", 570: "ciotola"}
+# Gli ultimi tre sono del 4 settembre: collare di pelle inciso, medaglietta
+# incisa e giacchetto parka, scelti dalla proprietaria dal catalogo Printify.
+PRINTIFY = {419: "cuccia", 562: "bandana", 566: "medaglietta", 570: "ciotola",
+            10700: "collare-pelle", 10674: "medaglietta-incisa",
+            10740: "giacchetto"}
+
+# DUE TIPI DIVERSI CHE COMINCIANO CON LA STESSA PAROLA
+#
+# tipo_di() legge il tipo dalla PRIMA PAROLA del titolo, e da sola non basta
+# piu': "Collare in Pelle" comincia come i collari, "Medaglietta Incisa" come
+# le medagliette -- ma costano il doppio e la meta', e confonderli
+# significherebbe misurare il margine di un prodotto sul costo di un altro.
+# Qui il tipo si riconosce dall'handle, che e' piu' lungo e li distingue.
+PRINTIFY_HANDLE = {"collare-in-pelle": "collare-pelle",
+                   "medaglietta-incisa": "medaglietta-incisa",
+                   "giacchetto-parka": "giacchetto"}
 
 # L'UNICA DEROGA AL 20%, DECISA DALLA PROPRIETARIA IL 4 SETTEMBRE
 #
@@ -302,6 +317,9 @@ def tipo_di(prodotto):
     h = prodotto["handle"]
     for t in PRINTFUL:
         if h.startswith(t):
+            return t
+    for prefisso, t in PRINTIFY_HANDLE.items():
+        if h.startswith(prefisso):
             return t
     return prodotto["title"].split()[0].lower().strip(u"“\"")
 

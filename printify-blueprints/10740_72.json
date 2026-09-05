@@ -1,0 +1,170 @@
+{
+ "fetchedAt": null,
+ "blueprint": {
+  "id": 10740
+ },
+ "providers": [
+  {
+   "id": 72
+  }
+ ],
+ "printProviderDetail": null,
+ "variants": [
+  {
+   "id": 399935,
+   "title": "2XL / Khaki",
+   "options": {
+    "size": "2XL",
+    "color": "Khaki"
+   },
+   "placeholders": [
+    {
+     "position": "back_dtf",
+     "decoration_method": "dtf",
+     "width": 2126,
+     "height": 2717
+    },
+    {
+     "position": "back_dtg",
+     "decoration_method": "dtg",
+     "width": 2126,
+     "height": 2717
+    }
+   ],
+   "decoration_methods": [
+    "dtf",
+    "dtg"
+   ]
+  },
+  {
+   "id": 399936,
+   "title": "L / Khaki",
+   "options": {
+    "size": "L",
+    "color": "Khaki"
+   },
+   "placeholders": [
+    {
+     "position": "back_dtf",
+     "decoration_method": "dtf",
+     "width": 1654,
+     "height": 2717
+    },
+    {
+     "position": "back_dtg",
+     "decoration_method": "dtg",
+     "width": 1654,
+     "height": 2717
+    }
+   ],
+   "decoration_methods": [
+    "dtf",
+    "dtg"
+   ]
+  },
+  {
+   "id": 399937,
+   "title": "M / Khaki",
+   "options": {
+    "size": "M",
+    "color": "Khaki"
+   },
+   "placeholders": [
+    {
+     "position": "back_dtf",
+     "decoration_method": "dtf",
+     "width": 1535,
+     "height": 2362
+    },
+    {
+     "position": "back_dtg",
+     "decoration_method": "dtg",
+     "width": 1535,
+     "height": 2362
+    }
+   ],
+   "decoration_methods": [
+    "dtf",
+    "dtg"
+   ]
+  },
+  {
+   "id": 399938,
+   "title": "S / Khaki",
+   "options": {
+    "size": "S",
+    "color": "Khaki"
+   },
+   "placeholders": [
+    {
+     "position": "back_dtf",
+     "decoration_method": "dtf",
+     "width": 1535,
+     "height": 1535
+    },
+    {
+     "position": "back_dtg",
+     "decoration_method": "dtg",
+     "width": 1535,
+     "height": 1535
+    }
+   ],
+   "decoration_methods": [
+    "dtf",
+    "dtg"
+   ]
+  },
+  {
+   "id": 399939,
+   "title": "XL / Khaki",
+   "options": {
+    "size": "XL",
+    "color": "Khaki"
+   },
+   "placeholders": [
+    {
+     "position": "back_dtf",
+     "decoration_method": "dtf",
+     "width": 2126,
+     "height": 2717
+    },
+    {
+     "position": "back_dtg",
+     "decoration_method": "dtg",
+     "width": 2126,
+     "height": 2717
+    }
+   ],
+   "decoration_methods": [
+    "dtf",
+    "dtg"
+   ]
+  },
+  {
+   "id": 399940,
+   "title": "XS / Khaki",
+   "options": {
+    "size": "XS",
+    "color": "Khaki"
+   },
+   "placeholders": [
+    {
+     "position": "back_dtf",
+     "decoration_method": "dtf",
+     "width": 1181,
+     "height": 1181
+    },
+    {
+     "position": "back_dtg",
+     "decoration_method": "dtg",
+     "width": 1181,
+     "height": 1181
+    }
+   ],
+   "decoration_methods": [
+    "dtf",
+    "dtg"
+   ]
+  }
+ ]
+}

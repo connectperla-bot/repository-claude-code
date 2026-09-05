@@ -100,12 +100,61 @@ prova("il guinzaglio EU ha una misura sola, e l'id combacia", guinzaglio_a_parte
 
 
 def blueprint_giusti():
-    assert set(m.PRINTIFY) == {419, 562, 566, 570}, (
-        "attesi cuccia 419, bandana 562, medaglietta 566, ciotola 570; "
-        "trovati %s" % sorted(m.PRINTIFY))
+    # Elencati per nome uno per uno, e non contati: un elenco dice quale
+    # manca, un conteggio dice solo che qualcosa non torna. I primi quattro
+    # sono la linea americana di sempre; gli ultimi tre li ha scelti la
+    # proprietaria dal catalogo Printify il 4 settembre.
+    atteso = {419: "cuccia", 562: "bandana", 566: "medaglietta", 570: "ciotola",
+              10700: "collare-pelle", 10674: "medaglietta-incisa",
+              10740: "giacchetto"}
+    assert m.PRINTIFY == atteso, (
+        "i blueprint quotati non sono quelli in vendita.\n  attesi:  %s\n  "
+        "trovati: %s" % (sorted(atteso.items()), sorted(m.PRINTIFY.items())))
 
 
 prova("i blueprint Printify controllati sono quelli in vendita", blueprint_giusti)
+
+
+def tipi_nuovi_non_si_confondono():
+    """I tre nuovi cominciano come tre tipi che esistono gia'.
+
+    "Collare in Pelle" comincia per Collare, "Medaglietta Incisa" per
+    Medaglietta: se il tipo si leggesse dalla prima parola del titolo, il
+    collare di pelle da 31,26 di costo verrebbe misurato sul costo del
+    collare europeo da 24,58, e la medaglietta incisa da 13,02 su quella
+    stampata da 15,52. Nessuno dei due errori si vede guardando la tabella:
+    escono due margini plausibili e sbagliati.
+
+    Per questo tipo_di() guarda prima l'handle. Qui si controlla che li
+    distingua davvero, e insieme che NON rubi i prodotti vecchi.
+    """
+    casi = [
+        ({"handle": "collare-in-pelle-crea-il-tuo-design",
+          "title": u"Collare in Pelle “Crea il Tuo Design”"}, "collare-pelle"),
+        ({"handle": "medaglietta-incisa-crea-il-tuo-design",
+          "title": u"Medaglietta Incisa “Crea il Tuo Design”"}, "medaglietta-incisa"),
+        ({"handle": "giacchetto-parka-crea-il-tuo-design",
+          "title": u"Giacchetto Parka “Crea il Tuo Design”"}, "giacchetto"),
+        # e i vecchi restano quelli di prima
+        ({"handle": "collare-eu-tartan-fornitore-europeo",
+          "title": u"Collare “Tartan”"}, "collare-eu"),
+        ({"handle": "perla-italy-medaglietta-neutro-personalizza-il-tuo-design",
+          "title": u"Medaglietta “Crea il Tuo Design”"}, "medaglietta"),
+    ]
+    for prodotto, atteso in casi:
+        avuto = m.tipo_di(prodotto)
+        assert avuto == atteso, (
+            "%s doveva dare il tipo %s, ha dato %s"
+            % (prodotto["handle"], atteso, avuto))
+    # ogni tipo nominato in PRINTIFY_HANDLE deve esistere fra quelli quotati
+    for prefisso, tipo in m.PRINTIFY_HANDLE.items():
+        assert tipo in m.PRINTIFY.values(), (
+            "l'handle %s promette il tipo %s, che non e' fra i blueprint "
+            "quotati: nessun costo lo raggiungerebbe" % (prefisso, tipo))
+
+
+prova("i tre tipi nuovi non si confondono con quelli vecchi",
+      tipi_nuovi_non_si_confondono)
 
 
 def tipo_eu_dall_handle():
