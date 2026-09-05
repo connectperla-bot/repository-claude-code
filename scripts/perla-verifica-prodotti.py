@@ -52,6 +52,7 @@ confronto prima/dopo.
 import importlib.util
 import json
 import os
+import re
 import subprocess
 import sys
 
@@ -76,6 +77,20 @@ marchio = _modulo("marchio", os.path.join(QUI, "marchio.py"))
 SOGLIA_VUOTO = 0.01      # 1% di area scoperta
 SOGLIA_TAGLIO = 0.02     # 2% di immagine fuori
 SOGLIA_INGRANDIMENTO = 1.05   # 5% di stiramento
+
+# UN FILE CHE FINISCE PER "-perla" HA IL MARCHIO GIA' DENTRO
+#
+# Prima qui c'era nome.endswith("-perla.jpg"), e ha smesso di bastare il 4
+# settembre: i file dei tre prodotti americani nuovi si chiamano
+# collare-pelle-neutro-perla-1650x150.png -- PNG perche' l'incisione vuole la
+# trasparenza, e con la misura nel nome perche' se ne costruisce uno per ogni
+# area di stampa. Con la vecchia regola l'audit li dichiarava "senza marchio"
+# pur avendocelo composto dentro: un falso allarme su tre prodotti buoni
+# nasconde i difetti veri quanto un difetto non visto.
+#
+# La convenzione vera e' il suffisso "-perla", non l'estensione: la misura
+# facoltativa e l'estensione stanno dopo.
+MARCHIO_DENTRO = re.compile(r"-perla(-\d+x\d+)?\.(jpe?g|png)$", re.I)
 
 # Un difetto si racconta per esteso ("tagliato fino al 18%") ma si conta per
 # categoria, altrimenti il riepilogo elenca una riga per ogni sfumatura di
@@ -272,7 +287,7 @@ def esamina(p, token, cache, manifesto=None):
                 e_marchio = nome in marchio.LIVELLI_OBSOLETI
                 if e_marchio:
                     marchi_totali += 1
-                elif nome in manifesto or nome.endswith("-perla.jpg"):
+                elif nome in manifesto or MARCHIO_DENTRO.search(nome or ""):
                     marchio_nel_motivo += 1
                 for vid in ids:
                     misura = per_id.get(vid, {}).get("placeholders", {}).get(posizione)
