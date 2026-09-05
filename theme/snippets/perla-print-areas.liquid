@@ -97,6 +97,34 @@
   un'approssimazione, per lo stesso motivo scritto sopra a proposito del
   collare: e' arrotolato, e un rettangolo non segue una spirale.
 
+  ROUND 49 -- i tre americani nuovi: collare in pelle inciso, medaglietta
+  incisa, giacchetto parka.
+
+  IL RAPPORTO E' UNA MEDIANA, E VALE LA PENA DIRLO. Questa tabella tiene UN
+  rapporto per tipo, ma le varianti di questi tre non hanno affatto la stessa
+  area di stampa:
+
+    collare in pelle   1650x150  1795x189  1950x195  1950x270
+                        11,00      9,50     10,00      7,22
+    medaglietta incisa  756x907   756x827   744x496
+                         0,83      0,91      1,50      (cerchio, cuore, osso)
+    giacchetto         1181x1181 1535x1535 1535x2362 1654x2717 2126x2717
+                         1,00      1,00      0,65      0,61      0,78
+
+  Il file di STAMPA e' gia' giusto per ognuna: se ne costruisce uno per
+  misura (vedi scripts/perla-usa-prodotti-nuovi.py, e prima ancora
+  aree-stampa.py). Quello che resta approssimato e' solo la TELA
+  dell'editor, che di rapporti ne accetta uno. Si e' preso il valore
+  mediano, cioe' quello che sbaglia meno su tutte le taglie invece di
+  essere esatto su una e sbagliato sulle altre: 9,75 / 0,91 / 0,78.
+
+  I riquadri ov_* sono copiati dal tipo piu' somigliante -- collare per il
+  collare, medaglietta per la medaglietta, cuccia per il parka -- e non
+  misurati. Nel tema di oggi non li legge piu' nessuno (main-product.liquid
+  passa al customizer solo ov_radius), quindi misurarli adesso sarebbe
+  calibrare uno strumento spento; se tornassero in uso, le foto vere ci sono
+  gia' e vanno rifatti come in ROUND 47.
+
   Come sempre: non influisce sulla stampa, solo sull'anteprima a schermo.
 {%- endcomment -%}
-collare|tipo-collare,collar,collare|25.2|Collare|8|30|7|38|0#bandana|tipo-bandana,bandana|1.86|Bandana|8|37|8|44|0#medaglietta|tipo-medaglietta,tag,medaglietta|0.9|Medaglietta|20|27|20|63|50#ciotola|tipo-ciotola,bowl,ciotola|3.68|Ciotola|13|42|14|32|0#cuccia|tipo-cuccia,bed,cuccia|1.51|Cuccia|6|20|5|56|0#tappetino|tipo-tappetino,mat,tappetino|1.44|Tappetino|20|30|20|34|0#guinzaglio|tipo-guinzaglio,leash,guinzaglio|1.0|Guinzaglio|40|40|40|20|0#collare_eu|tipo-collare_eu,collare-eu|22.76|Collare EU|22|33|18|32|0#bandana_eu|tipo-bandana_eu,bandana-eu|1.0|Bandana EU|21|20|20|58|0#ciotola_eu|tipo-ciotola_eu,ciotola-eu|8.09|Ciotola EU|28|51|26|23|0#guinzaglio_eu|tipo-guinzaglio_eu,guinzaglio-eu|56.57|Guinzaglio EU|6|38|26|36|0
+collare|tipo-collare,collar,collare|25.2|Collare|8|30|7|38|0#bandana|tipo-bandana,bandana|1.86|Bandana|8|37|8|44|0#medaglietta|tipo-medaglietta,tag,medaglietta|0.9|Medaglietta|20|27|20|63|50#ciotola|tipo-ciotola,bowl,ciotola|3.68|Ciotola|13|42|14|32|0#cuccia|tipo-cuccia,bed,cuccia|1.51|Cuccia|6|20|5|56|0#tappetino|tipo-tappetino,mat,tappetino|1.44|Tappetino|20|30|20|34|0#guinzaglio|tipo-guinzaglio,leash,guinzaglio|1.0|Guinzaglio|40|40|40|20|0#collare_eu|tipo-collare_eu,collare-eu|22.76|Collare EU|22|33|18|32|0#bandana_eu|tipo-bandana_eu,bandana-eu|1.0|Bandana EU|21|20|20|58|0#ciotola_eu|tipo-ciotola_eu,ciotola-eu|8.09|Ciotola EU|28|51|26|23|0#guinzaglio_eu|tipo-guinzaglio_eu,guinzaglio-eu|56.57|Guinzaglio EU|6|38|26|36|0#collare_pelle|tipo-collare_pelle,collare-pelle|9.75|Collare in Pelle|8|30|7|38|0#medaglietta_incisa|tipo-medaglietta_incisa,medaglietta-incisa|0.91|Medaglietta Incisa|20|27|20|63|50#giacchetto|tipo-giacchetto,giacchetto|0.78|Giacchetto|6|20|5|56|0
