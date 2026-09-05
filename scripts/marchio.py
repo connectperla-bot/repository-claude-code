@@ -193,7 +193,31 @@ LIVELLI_OBSOLETI = ("LOGO PERLA - Copia.PNG", "logo-full.png",
 GEOMETRIA = {
     "collare":     {"altezza": 0.72, "ripeti": 8,  "forma": "rettangolo"},
     "guinzaglio":  {"altezza": 0.72, "ripeti": 12, "forma": "rettangolo"},
-    "ciotola":     {"altezza": 0.55, "ripeti": 6,  "forma": "rettangolo"},
+    # ROUND 54 -- UNO SOLO, CENTRATO, E NON SEI.
+    #
+    # La ciotola e' un CILINDRO: i 6496 px dell'area fanno il giro completo e
+    # il bordo destro tocca il sinistro sul prodotto finito. Le sei
+    # ripetizioni pero' venivano distribuite dentro l'area sicura, cioe' con
+    # il 4% di margine per lato -- quindi il passo fra due medaglioni era
+    # (1 - 0,08)/6 del giro, ma il passo ATTRAVERSO LA GIUNZIONE era 0,08 di
+    # giro piu' largo. Sulla faccia che si vede uscivano un medaglione intero
+    # e due tagliati a meta'.
+    #
+    # La proprietaria l'ha detto cosi': "la ciotola eu crea il tuo design ha
+    # il logo tagliato e doppio". Tutte e due le parole descrivono lo stesso
+    # difetto: la ripetizione non chiude il giro.
+    #
+    # Si poteva ripararlo distribuendo sul giro intero invece che nell'area
+    # sicura. Non e' la strada scelta: un marchio ripetuto sei volte attorno a
+    # una ciotola e' un motivo, non una firma, e su un prodotto "Crea il Tuo
+    # Design" il motivo lo porta il cliente. Uno solo, in mezzo alla faccia
+    # che si guarda.
+    "ciotola":     {"altezza": 0.55, "ripeti": 0, "centro": (0.50, 0.50),
+                    "forma": "rettangolo"},
+    # La ciotola europea e' lo stesso oggetto di un altro fornitore: stessa
+    # forma, stesso ragionamento, area piu' larga (6496x803 contro 2760x750).
+    "ciotola_eu":  {"altezza": 0.55, "ripeti": 0, "centro": (0.50, 0.50),
+                    "forma": "rettangolo"},
     # ROUND 53 -- 0,22 e non 0,34, e piu' in basso.
     #
     # A 0,34 il marchio era alto un terzo della bandana e cadeva in mezzo
@@ -232,6 +256,33 @@ GEOMETRIA = {
 # Quanto bordo dell'area non e' tessuto visibile. Sulla cuccia il bordo si
 # arrotola sotto (e' la ragione per cui il marchio vecchio finiva nella parte
 # nascosta, vedi perla-usa-marchio.py); sugli altri e' margine di taglio.
+# DOVE IL CENTRO DI GEOMETRIA CADE MALE, MOTIVO PER MOTIVO
+#
+# GEOMETRIA tiene un centro per TIPO, e va bene su diciotto bandane su
+# diciannove. Su "Monogramma Oro Rosa" no: il motivo ha il monogramma "PI"
+# incolonnato ogni 1366 px (0,331 della bandana) e il centro di tipo, 0,78,
+# cade dentro la colonna a 0,833. La proprietaria l'ha visto e l'ha detto
+# cosi': "il logo si intreccia con il design e sembra brutto".
+#
+# 0,667 e' il vuoto in mezzo fra la colonna a 0,50 e quella a 0,833: il
+# marchio e' largo 0,131 della bandana, quindi da 0,601 a 0,732, e non tocca
+# nessuna delle due. Il verticale non si sposta -- le righe del monogramma
+# stanno sulle colonne, e fuori colonna non c'e' niente da evitare.
+#
+# UNA RIGA PER MOTIVO E NON UN CENTRO NUOVO PER TUTTI: spostare il centro di
+# tipo sposterebbe il marchio anche sulle altre diciotto, dove sta bene e dove
+# nessuno ha chiesto niente.
+CENTRO_PER_MOTIVO = {
+    "bandana-art-deco-rosa": (0.667, 0.76),
+}
+
+
+def centro_di(nativo):
+    """Il centro da usare per questo motivo, o None per quello del tipo."""
+    base = os.path.splitext(os.path.basename(nativo or ""))[0]
+    return CENTRO_PER_MOTIVO.get(base)
+
+
 MARGINE = {"cuccia": 0.10, "tappetino": 0.06}
 MARGINE_PREDEFINITO = 0.04
 
@@ -275,7 +326,7 @@ def area_sicura(tipo, area):
     return (aw * m, ah * m, aw * (1 - m), ah * (1 - m))
 
 
-def riquadri(tipo, area, marchio_wh):
+def riquadri(tipo, area, marchio_wh, centro=None):
     """Dove va disegnato il marchio: una lista di (sinistra, alto, larghezza, altezza).
 
     Solleva ValueError se non ci sta nell'area sicura: meglio fermarsi qui che
@@ -303,7 +354,7 @@ def riquadri(tipo, area, marchio_wh):
             % (largo_px, alto_px, tipo, d - s, b - a, aw, ah, tipo))
 
     if not g.get("ripeti"):
-        cx, cy = g.get("centro", (0.5, 0.5))
+        cx, cy = centro or g.get("centro", (0.5, 0.5))
         cx, cy = cx * aw, cy * ah
         # riportato dentro l'area sicura se il centro chiesto lo porterebbe fuori
         cx = min(max(cx, s + largo_px / 2), d - largo_px / 2)
@@ -624,7 +675,7 @@ def _adatta(pezzo, fondo):
     fuori.alpha_composite(marchio_inchiostrato)
     return fuori
 
-def componi(immagine, tipo, percorso_marchio=None):
+def componi(immagine, tipo, percorso_marchio=None, centro=None):
     """Disegna il marchio sul file di stampa gia' costruito.
 
     Torna (immagine, riquadri_usati). I riquadri servono ai test e all'audit
@@ -633,7 +684,7 @@ def componi(immagine, tipo, percorso_marchio=None):
     """
     base = immagine.convert("RGBA") if immagine.mode != "RGBA" else immagine.copy()
     logo = _marchio(percorso_marchio)
-    box = riquadri(tipo, base.size, logo.size)
+    box = riquadri(tipo, base.size, logo.size, centro=centro)
 
     for s, a, largo, alto in box:
         largo, alto = max(1, round(largo)), max(1, round(alto))

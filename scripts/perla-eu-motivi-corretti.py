@@ -994,7 +994,11 @@ def costruisci(percorso, tipo):
         im = avvolgi(im, note)
 
     if marchio.serve(base) and tipo in GEOMETRIA_EU:
-        im, riquadri = marchio.componi(im, GEOMETRIA_EU[tipo])
+        # Il centro e' quello del tipo, tranne dove il motivo lo rende
+        # impossibile: vedi CENTRO_PER_MOTIVO in marchio.py. Torna None
+        # quando non c'e' eccezione, e componi() usa il centro di sempre.
+        im, riquadri = marchio.componi(im, GEOMETRIA_EU[tipo],
+                                       centro=marchio.centro_di(base))
         note.append("marchio composto: %d riquadro/i, il primo a (%d, %d) %dx%d"
                     % ((len(riquadri),) + tuple(round(v) for v in riquadri[0])))
     elif marchio.serve(base):

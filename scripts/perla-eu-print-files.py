@@ -42,6 +42,7 @@ USO
     python3 pipeline.py build     costruisce i file in out/
     python3 pipeline.py upload    li carica e scrive out/uploads.json
 """
+import importlib.util
 import json
 import os
 import subprocess
@@ -49,6 +50,18 @@ import sys
 import time
 
 from PIL import Image, ImageFilter
+
+QUI = os.path.dirname(os.path.abspath(__file__))
+
+
+def _modulo(nome, percorso):
+    spec = importlib.util.spec_from_file_location(nome, percorso)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+marchio = _modulo("marchio", os.path.join(QUI, "marchio.py"))
 
 SRC_COLLARI = "src"
 SRC_ALTRI = "src2"
@@ -162,6 +175,48 @@ def costruisci():
     print("\n%d file in %s" % (len(piano), OUT))
 
 
+def neutri():
+    """Ricostruisce i file di stampa dei prodotti "Crea il Tuo Design".
+
+    UNO SOLO ALLA VOLTA, E DI PROPOSITO
+    Si passa il tipo sulla riga di comando. I quattro file neutri sono in
+    catalogo da mesi e sono diversi fra loro -- il collare porta il
+    medaglione ripetuto dieci volte lungo la fettuccia, la ciotola sei volte
+    attorno al cilindro -- e ricostruirli tutti insieme cambierebbe prodotti
+    che nessuno ha chiesto di cambiare. Si rifa' quello che va rifatto.
+
+    PERCHE' NON ERANO GIA' QUI
+    Erano quattro PNG committati a mano, senza il codice che li aveva fatti:
+    per correggerne uno bisognava riaprire un editor di immagini e indovinare
+    la misura del marchio. Adesso il marchio lo mette marchio.componi(), lo
+    stesso che lo mette su tutto il resto del catalogo -- quindi inchiostro,
+    alone e area sicura sono quelli di tutti gli altri prodotti, e non una
+    seconda regola che nessuno ricorda di aggiornare.
+
+        python3 scripts/perla-eu-print-files.py neutri ciotola-eu
+    """
+    tipi = sys.argv[2:]
+    if not tipi:
+        raise SystemExit("uso: ... neutri <tipo> [tipo ...]  fra: %s"
+                         % ", ".join(sorted(NEUTRO_FILE)))
+    for tipo in tipi:
+        if tipo not in NEUTRO_FILE:
+            raise SystemExit("tipo sconosciuto: %s" % tipo)
+        larg, alt = AREE[tipo]
+        # Il fondo e' bianco perche' il prodotto neutro E' bianco: quello che
+        # il cliente disegna ci va sopra, e il marchio deve stare sul bianco
+        # esattamente come ci starebbe sul prodotto finito.
+        base = Image.new("RGB", (larg, alt), (255, 255, 255))
+        chiave = tipo.replace("-", "_")
+        fuori, box = marchio.componi(base, chiave)
+        percorso = os.path.join(NEUTRI, NEUTRO_FILE[tipo])
+        fuori.save(percorso)
+        print("%-14s %5dx%-5d  %d marchio/i  %s"
+              % (tipo, larg, alt, len(box), os.path.basename(percorso)))
+        for s_, a_, w_, h_ in box:
+            print("      a (%d, %d) grande %dx%d px" % (round(s_), round(a_), round(w_), round(h_)))
+
+
 def carica():
     piano = json.load(open(os.path.join(OUT, "piano.json")))
     fatto = {}
@@ -191,4 +246,4 @@ def carica():
 
 
 if __name__ == "__main__":
-    {"build": costruisci, "upload": carica}[sys.argv[1]]()
+    {"build": costruisci, "upload": carica, "neutri": neutri}[sys.argv[1]]()
