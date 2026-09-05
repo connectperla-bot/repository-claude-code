@@ -26,8 +26,66 @@ SPEDIZIONE_USA = (
     u"Spedizione gratuita.</p>")
 
 
-def spedizione(verbo=u"Stampato", genere=u"o"):
-    return SPEDIZIONE_USA % (verbo, genere)
+def spedizione(verbo=u"Stampat", genere=u"a"):
+    """La sezione Spedizione della linea americana.
+
+    Il genere e' un parametro e non una costante perche' l'italiano lo
+    chiede: bandana, ciotola, cuccia e medaglietta sono femminili, il
+    collare e il giacchetto no. Scrivere "Stampato e spedito" sotto una
+    bandana e' il genere di dettaglio che fa sembrare la scheda tradotta a
+    macchina, ed e' l'unica cosa che questo negozio non puo' permettersi.
+    """
+    return SPEDIZIONE_USA % (verbo + genere, genere)
+
+
+# Dove infilarla: PRIMA di Sicurezza, non in fondo. La scaletta delle altre
+# schede e' Dettagli, Taglie, Personalizzazione, Cura, Spedizione, Sicurezza
+# -- e Sicurezza chiude sempre, perche' e' l'avvertenza e non un dettaglio
+# commerciale. Se un domani una scheda non ce l'avesse, si aggiunge in fondo.
+#
+# Le schede vecchie non hanno un titolo "Sicurezza": chiudono con la riga
+# "Disegnata in Italia... Sorveglia sempre il tuo animale", che e' la stessa
+# avvertenza scritta in un paragrafo solo. Vale come ancora quanto l'altra --
+# senza, la spedizione finirebbe DOPO l'avvertenza di chiusura, che e' il
+# posto in cui non va.
+# Tre forme, perche' il catalogo si e' stratificato in tre tornate: le schede
+# nuove hanno un titolo "Sicurezza", trentadue lo chiamano "Personalizzazione e
+# sicurezza", e una vecchia non ha nessun titolo e chiude con la riga
+# "Disegnata in Italia... Sorveglia sempre il tuo animale". Sono la stessa
+# cosa: l'avvertenza di chiusura. Si cercano in quest'ordine, dalla piu'
+# specifica alla piu' generica.
+ANCORE = (u"<p><strong>Sicurezza</strong></p>",
+          u"<p><strong>Personalizzazione e sicurezza</strong></p>",
+          u"<p>Disegnata in Italia")
+
+
+def con_spedizione(corpo, verbo=u"Stampat", genere=u"a"):
+    """Il corpo della scheda con la sezione Spedizione al posto giusto.
+
+    Non riscrive niente di quello che c'e': la descrizione di questi 48
+    prodotti va gia' bene -- mediana 949 caratteri, Dettagli e Cura su tutti
+    -- e l'unica cosa che manca e' questa. Se c'e' gia', torna il corpo
+    com'era, cosi' rilanciare lo script due volte non produce due sezioni.
+    """
+    if u"<strong>Spedizione</strong>" in corpo:
+        return corpo
+    pezzo = spedizione(verbo, genere)
+    for ancora in ANCORE:
+        if ancora in corpo:
+            return corpo.replace(ancora, pezzo + ancora, 1)
+    return corpo + pezzo
+
+
+# Il genere della prima parola del titolo. Le quattro famiglie americane sono
+# tutte femminili; il collare e il giacchetto nuovi no, ma la loro scheda
+# nasce gia' completa e non passa di qui.
+GENERE = {u"bandana": u"a", u"ciotola": u"a", u"cuccia": u"a",
+          u"medaglietta": u"a", u"collare": u"o", u"giacchetto": u"o",
+          u"tappetino": u"o", u"guinzaglio": u"o"}
+
+
+def genere_di(titolo):
+    return GENERE.get(titolo.split()[0].strip(u"\u201c\"").lower(), u"o")
 
 
 # Le descrizioni tengono le sezioni degli altri 114 prodotti -- Dettagli,
