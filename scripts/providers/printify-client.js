@@ -8,12 +8,38 @@ const { riferimento } = require('../riferimento-ordine');
 // (vedi scripts/provider-router.js) invece di parlare SOLO con Printify.
 // Nessun comportamento cambiato per gli ordini che restano su Printify.
 
+// CHI DECIDE LA POSIZIONE DI STAMPA, E PERCHE' NON PUO' DECIDERLA IL TEMA
+//
+// L'editor scrive nell'ordine un campo `position` che vale sempre "front" sul
+// lato davanti e "back" sul retro: e' il LATO DELL'EDITOR, non il nome
+// dell'area di stampa del fornitore. Sono due cose diverse e su un prodotto
+// si vede: il giacchetto parka (blueprint 10740) il fronte NON ce l'ha,
+// l'unica area che Printify conosce si chiama 'back_dtf'. Un ordine spedito
+// con "front" verrebbe rifiutato o, peggio, stampato senza il disegno pagato.
+//
+// Quindi quando la configurazione del tipo dichiara una posizione, quella
+// vince. Dove non la dichiara -- cioe' su tutti i tipi storici -- decide come
+// prima il campo dell'editor, e il retro della medaglietta continua a
+// stampare sul retro.
+//
+// LA PRIMA STESURA DI QUESTA CORREZIONE NON FUNZIONAVA: passava la
+// configurazione come RIPIEGO (`data.position || fallback`), e siccome
+// l'editor scrive sempre "front", il ripiego non entrava mai in gioco. Se ne
+// e' accorto solo chi e' andato a leggere cosa scrive davvero il tema.
+function posizioneFronte(front, config) {
+  return (config && config.position) || (front && front.position) || 'front';
+}
+
+function posizioneRetro(back) {
+  return (back && back.position) || 'back';
+}
+
 // Costruisce un placeholder Printify (un lato di stampa) dai valori salvati
 // dall'editor: base_image_id opzionale (design di base, sotto) + il composito
 // del cliente (printify_image_id) con la sua trasformazione.
-function buildPlaceholder(data, fallbackPosition) {
+function buildPlaceholder(data, posizione) {
   return {
-    position: data.position || fallbackPosition,
+    position: posizione,
     images: [
       ...(data.base_image_id ? [{ id: data.base_image_id, x: 0.5, y: 0.5, scale: 1, angle: 0 }] : []),
       {
@@ -28,15 +54,9 @@ function buildPlaceholder(data, fallbackPosition) {
 }
 
 async function createProduct(order, item, front, back, config, apiKey, shopId) {
-  // La posizione di stampa viene dalla configurazione del tipo, non da
-  // 'front' scritto a mano: il giacchetto parka (blueprint 10740) il fronte
-  // NON ce l'ha -- l'unica posizione e' 'back_dtf' -- e un ordine spedito
-  // con una posizione inesistente verrebbe rifiutato o, peggio, stampato
-  // senza il disegno pagato. Per tutti gli altri tipi config.position non
-  // c'e' e resta 'front', identico a prima.
   const placeholders = [];
-  if (front && front.printify_image_id) placeholders.push(buildPlaceholder(front, config.position || 'front'));
-  if (back && back.printify_image_id) placeholders.push(buildPlaceholder(back, 'back'));
+  if (front && front.printify_image_id) placeholders.push(buildPlaceholder(front, posizioneFronte(front, config)));
+  if (back && back.printify_image_id) placeholders.push(buildPlaceholder(back, posizioneRetro(back)));
 
   const response = await fetch('https://api.printify.com/v1/shops/' + shopId + '/products.json', {
     method: 'POST',
@@ -132,4 +152,7 @@ async function fulfillOrder(ctx) {
   return { provider: 'printify', productId: product.id, orderId: printifyOrder.id, sentToProduction };
 }
 
-module.exports = { fulfillOrder };
+// posizioneFronte/posizioneRetro escono di qui perche' sono la regola che
+// decide DOVE si stampa, ed e' l'unica di questo file che si puo' provare
+// senza parlare con Printify: vedi tests/posizione-di-stampa.test.js.
+module.exports = { fulfillOrder, posizioneFronte, posizioneRetro };
