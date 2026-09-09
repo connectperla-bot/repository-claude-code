@@ -544,6 +544,28 @@ html {
   color: var(--color-footer-bg, #0F2240);
 }
 
+/* IL DISTINTIVO DA 10 PIXEL: RIMISURATO, E LA RISPOSTA E' ANCORA NO.
+   La nota al punto 5 in cima a questo file diceva gia' che gli 11px erano
+   stati provati e scartati. Rivedendo il negozio da un telefono vero (390x844)
+   quei 10px saltano di nuovo all'occhio -- sono le due scritte piu' piccole
+   della pagina -- e la tentazione di ritoccarli e' tornata, con l'idea che
+   stringendo lo spazio fra le lettere la larghezza restasse quella.
+
+   Non resta quella. Misurato sulle 48 schede vere del catalogo, a 390px:
+
+       10px (com'e' oggi)   larghezza max 136px    su due righe:  0 schede
+       11px + spazio -2%    larghezza max 145px    su due righe: 44 schede
+       12px                 larghezza max 145px    su due righe: 44 schede
+
+   145px e' il tetto: il cartellino sta in una scheda da 169px e li' si ferma,
+   quindi tutto quello che non ci sta va a capo, e la seconda riga finisce
+   sotto il cuore dei preferiti. Esattamente quello che diceva la nota.
+
+   Resta vero che 10px e' poco, ma la strada non e' il corpo del carattere:
+   e' accorciare la scritta ("Personalizzabile" ci sta in una riga sola) o
+   spostare il cuore. Sono due scelte di grafica, non correzioni, e le lascio
+   a chi disegna invece di rompere 44 schede su 48 per un pixel. */
+
 /* IL TITOLO DELL'EROE, MISURATO SUI PIXEL E NON SUL CSS
    Il fondo del titolo e' una fotografia con un velo sopra: nessun colore CSS
    lo descrive, quindi il contrasto si misura fotografando cio' che sta dietro
