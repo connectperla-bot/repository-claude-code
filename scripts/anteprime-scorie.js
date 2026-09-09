@@ -38,7 +38,12 @@ function scorieDaButtare(elenco, adesso) {
     // trovato prima che ci finisse davvero. Serve una stringa, e una data che
     // sta dopo l'epoca.
     if (typeof p.created_at !== 'string' || !p.created_at) return false;
-    const nato = new Date(p.created_at).getTime();
+    // Printify scrive "2026-09-09 20:04:20+00:00", con lo SPAZIO al posto
+    // della T. Node oggi la legge lo stesso, ma quel formato non e' ISO 8601
+    // e cosa ne fa un motore JavaScript e' lasciato all'implementazione: si
+    // normalizza invece di fidarsi. Se un giorno smettesse di leggerla, la
+    // spazzata non butterebbe piu' niente e non lo direbbe a nessuno.
+    const nato = new Date(p.created_at.replace(' ', 'T')).getTime();
     if (!isFinite(nato) || nato <= 0) return false;
     return nato < limite;
   });

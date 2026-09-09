@@ -96,5 +96,19 @@ prova('fra tante ne sceglie solo quelle giuste', function () {
   assert.strictEqual(scorie.scorieDaButtare(misto, Date.now()).length, 2);
 });
 
+prova('legge la data nel formato che manda davvero Printify', function () {
+  // Non ISO: lo spazio al posto della T. Preso da una risposta vera del
+  // 9 settembre 2026. Se questa prova diventa rossa, la spazzata smette di
+  // buttare qualsiasi cosa senza dirlo a nessuno.
+  const comeprintify = [{ id: 'x', title: scorie.ANTEPRIMA_TITOLO,
+                          created_at: '2026-09-09 20:04:20+00:00' }];
+  const dopo = new Date('2026-09-09T21:00:00Z').getTime();
+  assert.strictEqual(scorie.scorieDaButtare(comeprintify, dopo).length, 1,
+    'un\'anteprima di quasi un\'ora prima va buttata');
+  const subito = new Date('2026-09-09T20:05:00Z').getTime();
+  assert.strictEqual(scorie.scorieDaButtare(comeprintify, subito).length, 0,
+    'quaranta secondi dopo no: qualcuno la sta guardando');
+});
+
 console.log('\n' + passati + ' verifiche superate.' +
   (process.exitCode ? ' CI SONO FALLIMENTI.' : ''));

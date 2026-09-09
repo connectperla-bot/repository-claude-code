@@ -526,6 +526,20 @@
     {%- endcomment -%}
     <script src="{{ 'perla-studio-ui.js' | asset_url }}" defer></script>
     <script src="{{ 'motion.js' | asset_url }}" defer></script>
+    {%- comment -%}
+      ROUND 55 — dopo motion.js, e non e' un dettaglio d'ordine: legge
+      window.__perlaScrollY, che e' motion.js a pubblicare.
+
+      Misurato sulla scheda prodotto da desktop: si mette a fuoco "Aggiungi
+      al carrello" con il Tab e la pagina non si muove -- window.scrollY resta
+      0 e il pulsante resta a 1693 px su una finestra alta 900. Il fuoco della
+      tastiera finisce su un pulsante che non si vede. Succede perche' lo
+      smooth-scroll tiene tutta la pagina dentro un contenitore fisso: il
+      browser, per mostrare l'elemento a fuoco, cerca un antenato scorribile e
+      non ne trova. Con la rotella del mouse invece si scorre benissimo, ed e'
+      il motivo per cui non se n'era accorto nessuno.
+    {%- endcomment -%}
+    <script src="{{ 'perla-fuoco.js' | asset_url }}" defer></script>
     {%- if settings.enable_pearls -%}<script src="{{ 'pearls.js' | asset_url }}" defer></script>{%- endif -%}
     <script>document.addEventListener('DOMContentLoaded',function(){window.PerlaMotionInit&&window.PerlaMotionInit();window.PerlaPearlsInit&&window.PerlaPearlsInit();});</script>
 
