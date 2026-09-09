@@ -139,7 +139,11 @@ app.disable('x-powered-by');
 
 app.use(function (req, res, next) {
   res.header('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
-  res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  // GET c'e' perche' due rotte lo sono: /pattern-source e /health. Finora
+  // funzionavano lo stesso -- una GET semplice non fa il preflight, quindi
+  // nessuno leggeva questa riga -- ma dichiarare meno di quello che si accetta
+  // e' un modo di mentire al browser che prima o poi presenta il conto.
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
   // ROUND 40 -- intestazioni di sicurezza.
   //   nosniff      il browser non prova a indovinare il tipo di un file: senza,
@@ -191,6 +195,30 @@ function limitePerIp(req, res, next) {
   }
   next();
 }
+
+// ROUND 48 -- LA SVEGLIA.
+//
+// Su Render il piano gratuito spegne il servizio dopo ~15 minuti di silenzio,
+// e la prima richiesta che arriva dopo deve aspettare che riparta: misurato,
+// 24,0 secondi a freddo contro 0,52 a caldo. Quei 24 secondi cadevano proprio
+// addosso alla prima composizione del design, ed e' li' che il cliente si
+// vedeva tornare la personalizzazione sbagliata (vedi il commento in testa a
+// assets/perla-editor-sveglia.js per la catena completa).
+//
+// Questa rotta esiste per essere chiamata PRIMA, appena il cliente tocca la
+// pagina di un prodotto personalizzabile: risponde e basta, cosi' quando poi
+// preme "+ Testo" il servizio e' gia' in piedi.
+//
+// FUORI DAL LIMITATORE, DI PROPOSITO
+// limitePerIp protegge le rotte che spendono soldi veri: /upload carica su
+// Cloudinary, /generate-mockup crea un prodotto su Printify. Questa non spende
+// niente -- non tocca la rete, non legge il disco, non alloca. Tenerla dentro
+// il limite avrebbe l'effetto opposto a quello che serve: il cliente che ha
+// gia' fatto venti richieste si vedrebbe negare proprio la sveglia, cioe'
+// quella che gli evita l'attesa.
+app.get('/health', function (req, res) {
+  res.json({ ok: true });
+});
 
 app.post('/upload', limitePerIp, upload.single('photo'), async function (req, res) {
   if (!req.file) {
@@ -345,7 +373,56 @@ app.get('/pattern-source', limitePerIp, async function (req, res) {
 //    mai un prodotto "di scorta" riusato tra piu' richieste, perche' la foto
 //    personale di un cliente potrebbe comparire per sbaglio nell'anteprima
 //    generata nello stesso momento per un altro cliente.
-const MOCKUP_PRODUCT_TYPES = ['COLLARE', 'BANDANA', 'MEDAGLIETTA', 'CIOTOLA', 'CUCCIA', 'TAPPETINO', 'GUINZAGLIO'];
+// I tre in fondo sono i prodotti americani del 4 settembre: collare di pelle
+// inciso, medaglietta incisa, giacchetto parka. Mancavano e "Salva anteprima"
+// rispondeva "Tipo prodotto non riconosciuto" -- il tipo arriva dal tema
+// (data-product-type), ma questa lista e' il cancello, e un cancello chiuso
+// non chiede al tema niente.
+const MOCKUP_PRODUCT_TYPES = ['COLLARE', 'BANDANA', 'MEDAGLIETTA', 'CIOTOLA', 'CUCCIA', 'TAPPETINO', 'GUINZAGLIO',
+  'COLLARE_PELLE', 'MEDAGLIETTA_INCISA', 'GIACCHETTO'];
+
+// La posizione di stampa per tipo. Quasi tutti stampano su 'front'; il
+// giacchetto (blueprint 10740) il fronte NON ce l'ha -- l'unica posizione
+// e' 'back_dtf' -- e un prodotto temporaneo creato con 'front' non
+// genererebbe nessun mockup. Stessa regola di PRODUCT_TYPE_CONFIG in
+// perla-printify-order-sync.js: ordine e anteprima devono stampare nello
+// stesso posto, o l'anteprima mente.
+const MOCKUP_POSITION = { GIACCHETTO: 'back_dtf' };
+
+// VALORI DI RISERVA, PER NON DIPENDERE DA UN INCOLLA A MANO
+//
+// Fino a ROUND 55 blueprint, fornitore e variante si leggevano SOLO
+// dall'ambiente: senza le tre righe sul servizio, "Salva anteprima"
+// rispondeva "Configurazione blueprint/provider/variante mancante". Per i
+// sette tipi storici va bene cosi', le loro righe sul servizio ci sono da
+// mesi. Per i tre nuovi voleva dire che l'anteprima restava rotta finche'
+// qualcuno non apriva il pannello Render e incollava nove variabili: un
+// passaggio manuale fra il codice corretto e il cliente che lo usa.
+//
+// Questi numeri non sono un segreto e non cambiano col negozio: sono
+// l'identita' del prodotto nel catalogo Printify, gli stessi gia' scritti
+// come riserva in PRODUCT_TYPE_CONFIG di perla-printify-order-sync.js e in
+// scripts/perla-usa-prodotti-nuovi.py. L'ambiente ha comunque la
+// precedenza, quindi restano sovrascrivibili senza toccare il codice.
+//
+// La variante serve solo a poter creare il prodotto temporaneo: un prodotto
+// Printify ne vuole almeno una. Quella che finisce nell'ORDINE e' un'altra,
+// e la sceglie la taglia che il cliente ha pagato (varianti-fornitore.js).
+const MOCKUP_RISERVA = {
+  COLLARE_PELLE: { blueprint: 10700, provider: 217, variant: 397097 },
+  MEDAGLIETTA_INCISA: { blueprint: 10674, provider: 228, variant: 397011 },
+  GIACCHETTO: { blueprint: 10740, provider: 72, variant: 399940 },
+};
+
+function mockupConfig(type) {
+  const r = MOCKUP_RISERVA[type] || {};
+  return {
+    blueprintId: Number(process.env[type + '_BLUEPRINT_ID']) || r.blueprint || 0,
+    providerId: Number(process.env[type + '_PROVIDER_ID']) || r.provider || 0,
+    variantId: Number(process.env[type + '_VARIANT_ID']) || r.variant || 0,
+  };
+}
+
 const MOCKUP_POLL_ATTEMPTS = 6;
 const MOCKUP_POLL_DELAY_MS = 1500;
 
@@ -587,9 +664,7 @@ app.post('/generate-mockup', limitePerIp, express.json(), async function (req, r
   if (MOCKUP_PRODUCT_TYPES.indexOf(type) === -1) {
     return res.status(400).json({ error: 'Tipo prodotto non riconosciuto' });
   }
-  const blueprintId = Number(process.env[type + '_BLUEPRINT_ID']);
-  const providerId = Number(process.env[type + '_PROVIDER_ID']);
-  const variantId = Number(process.env[type + '_VARIANT_ID']);
+  const { blueprintId, providerId, variantId } = mockupConfig(type);
   if (!blueprintId || !providerId || !variantId) {
     return res.status(500).json({ error: 'Configurazione blueprint/provider/variante mancante sul server per questo tipo' });
   }
@@ -600,7 +675,7 @@ app.post('/generate-mockup', limitePerIp, express.json(), async function (req, r
     imgs.push({ id: compositeId, x: 0.5, y: 0.5, scale: 1, angle: 0 });
     return imgs;
   }
-  const placeholders = [{ position: 'front', images: buildMockupImages(baseImageId, compositeImageId) }];
+  const placeholders = [{ position: MOCKUP_POSITION[type] || 'front', images: buildMockupImages(baseImageId, compositeImageId) }];
   if (backCompositeImageId) {
     placeholders.push({ position: 'back', images: buildMockupImages(backBaseImageId, backCompositeImageId) });
   }

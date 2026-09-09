@@ -40,11 +40,18 @@ nuova, cosi' il disegno rifatto ha la stessa grana di quello che sostituisce.
 USO
     python3 scripts/perla-usa-file-stampa.py            # costruisce e basta
     python3 scripts/perla-usa-file-stampa.py --provino  # + provino da guardare
+    python3 scripts/perla-usa-file-stampa.py --rifai    # rifa' anche i gia' fatti
+    python3 scripts/perla-usa-file-stampa.py --collari  # include i collari (fermi)
+
+Da ROUND 47 esce UN FILE PER MISURA DI VARIANTE, non uno per prodotto: il
+nome porta il suffisso <larghezza>x<altezza>. Il perche' e' scritto sopra
+TIPI, qui sotto.
 
 I file finiscono in generated-designs/usa-print-files/ (ignorata da git:
 sono centinaia di MB rigenerabili con un comando).
 """
 import importlib.util
+import json
 import os
 import sys
 
@@ -68,17 +75,51 @@ def _modulo(nome, percorso):
 
 motivi = _modulo("perla_motivi_nuovi", os.path.join(QUI, "perla-motivi-nuovi.py"))
 eu = _modulo("perla_eu", os.path.join(QUI, "perla-build-eu-print-files.py"))
+aree = _modulo("aree_stampa", os.path.join(QUI, "aree-stampa.py"))
+marchio = _modulo("marchio", os.path.join(QUI, "marchio.py"))
 
-# Aree di stampa reali, prese dalle varianti Printify: sempre la piu' grande
-# del blueprint, perche' un file che basta alla variante grande basta anche
-# alle altre, mentre il contrario no.
-AREE = {
-    "cuccia":      (15600, 12600),
-    "collare":     (9519, 338),
-    "bandana":     (4275, 2325),
-    "ciotola":     (2760, 750),
-    "medaglietta": (810, 900),
+# ROUND 47 -- "un file che basta alla variante grande basta anche alle altre"
+# era FALSO, ed e' costato l'intero catalogo.
+#
+# Qui c'era un dizionario AREE con UNA misura per tipo, sempre la piu' grande
+# del blueprint. Il ragionamento sembra solido e non lo e': su Printify
+# `scale` e' la larghezza come frazione dell'AREA, quindi lo stesso file su
+# un'area di proporzioni diverse non si adatta, sfora o lascia vuoto. E le
+# varianti hanno proporzioni diverse davvero:
+#
+#     collare S 5764x229 (25,2:1) contro XL 9519x338 (28,2:1)
+#     cuccia 28"x18" 8850x5850 (1,51:1) contro 50"x40" 15600x12600 (1,24:1)
+#
+# Misurato con aree-stampa.py sui prodotti veri: il file XL sul collare M
+# lascia il 24% di fettuccia BIANCA, il file 50"x40" sulla cuccia 28"x18"
+# TAGLIA il 18% del disegno. Nessuno dei due si vede sulla variante per cui il
+# file era stato costruito, ed e' per questo che sono rimasti in catalogo.
+#
+# Ora si costruisce UN FILE PER MISURA, e print_areas di Printify ne prende
+# una voce per gruppo di varianti (vedi perla-usa-carica-stampe.py).
+#
+# blueprint e print provider sono gli stessi di render.yaml e di
+# config/printify.env.example: le misure si leggono da printify-blueprints/,
+# non si scrivono a mano.
+TIPI = {
+    "cuccia":      (419, 10),
+    "collare":     (784, 93),
+    "bandana":     (562, 70),
+    "ciotola":     (570, 70),
+    "medaglietta": (566, 70),
+    "tappetino":   (855, 70),
 }
+
+_MISURE = {}
+
+
+def misure(tipo, token=None):
+    """Le misure di stampa distinte di questo tipo di prodotto, dalla piu'
+    grande alla piu' piccola. Una per file da costruire."""
+    if tipo not in _MISURE:
+        bp, pr = TIPI[tipo]
+        _MISURE[tipo] = [g["misura"] for g in aree.gruppi(aree.varianti(bp, pr, token))]
+    return _MISURE[tipo]
 
 
 def periodo_relativo(percorso, minimo=1 / 14.0):
@@ -245,16 +286,38 @@ CATALOGO = {
 # Il tipo di prodotto si legge dal prefisso della sorgente.
 PREFISSO_TIPO = {"collar-": "collare", "bandana-": "bandana", "tag-": "medaglietta"}
 
+# Il prefisso funziona per i file nati in questo progetto. Qualcuno pero' e'
+# arrivato da fuori e non segue nessuna convenzione: si dichiara qui, invece
+# di piegare la regola generale su un caso singolo.
+TIPO_ESPLICITO = {"PINATA DOLIVO.jpg": "bandana"}
+
 
 def tipo_di(sorgente):
+    if sorgente in TIPO_ESPLICITO:
+        return TIPO_ESPLICITO[sorgente]
     for pre, tipo in PREFISSO_TIPO.items():
         if sorgente.startswith(pre):
             return tipo
     return None
 
 
-def nome_uscita(sorgente):
-    return "%s-da-%s" % (tipo_di(sorgente), os.path.splitext(sorgente)[0])
+def nome_uscita(sorgente, misura=None):
+    """Il nome del file costruito per questa sorgente e questa misura.
+
+    La misura entra nel nome perche' da ROUND 47 ce n'e' uno per ogni
+    proporzione di variante: senza il suffisso, il file della cuccia 28"x18"
+    sovrascriverebbe quello della 50"x40" e si tornerebbe al difetto di prima
+    senza accorgersene.
+    """
+    base = "%s-da-%s" % (tipo_di(sorgente), os.path.splitext(sorgente)[0])
+    return base if misura is None else "%s-%dx%d" % (base, misura[0], misura[1])
+
+
+def nome_catalogo(titolo, misura=None):
+    """Come nome_uscita(), ma per le voci del CATALOGO (chiave = titolo)."""
+    nome = titolo.lower().replace(" ", "-").replace("'", "").replace("\u2014", "")
+    nome = "-".join(p for p in nome.split("-") if p)[:60]
+    return nome if misura is None else "%s-%dx%d" % (nome, misura[0], misura[1])
 
 
 PER_SORGENTE = {
@@ -311,6 +374,38 @@ PER_SORGENTE = {
                                                     ("duotono", (16, 54, 42), (206, 174, 104)), None),
     "bandana-perla-only.jpg":                      ("bandana-ulivo-nuovo.jpg",
                                                     ("duotono", (18, 48, 38), (198, 168, 100)), None),
+    # ROUND 47 -- "Olive Branch Pet Bandana" stampava PINATA DOLIVO.jpg a
+    # scale 0,22 e y=0,74: un decoro singolo su bandana bianca, con il 91%
+    # dell'area vuoto e nessun marchio. Era rimasta fuori da tutte le tornate
+    # precedenti perche' il suo livello non somigliava a niente di conosciuto.
+    # bandana-ulivo-nuovo e' foglie d'ulivo tenui su crema, cioe' il nativo
+    # che corrisponde davvero al nome del prodotto, ed e' fra i tre senza
+    # marchio: quindi glielo compone marchio.py.
+    "PINATA DOLIVO.jpg":                           "bandana-ulivo-nuovo.jpg",
+
+    # ROUND 52 -- TRE BANDANE, UN DISEGNO SOLO
+    # La proprietaria ha visto tre bandane diverse con la stessa foto. Non era
+    # un errore delle foto: erano davvero lo stesso file. "Ramo" e "Nobile"
+    # stampavano tutte e due PINATA DOLIVO.jpg, e "Fiorellino"
+    # bandana-damask-burgundy-perla.jpg -- che pero' rimanda anch'esso a
+    # bandana-ulivo-nuovo. Tre sorgenti diverse, un nativo solo: Printify le
+    # ha caricate una volta e ha dato lo stesso id a tutte e tre
+    # (6a99339258c0241eaf18c240), perche' i byte erano identici.
+    #
+    # Il guaio e' che questa tabella e' indicizzata per ARTWORK ORIGINALE, e
+    # "Ramo" e "Nobile" ne hanno uno solo in due: qui non c'e' modo di
+    # separarli. Servono due identita' NUOVE, che non appartengono a nessun
+    # artwork esistente, e chi carica dice quale prodotto prende quale --
+    # per id, che e' l'unica cosa che li distingue davvero
+    # (PER_PRODOTTO in perla-usa-carica-stampe.py).
+    #
+    # Quale disegno l'ha scelto la proprietaria: "Ramo" tiene le foglie
+    # d'ulivo (e' l'"Olive Branch Pet Bandana", il nome dice gia' cosa deve
+    # esserci), "Nobile" prende il damasco bordeaux e oro -- si chiama
+    # "Vintage Damask Burgundy & Gold" e finalmente stampera' quello -- e
+    # "Fiorellino" il lino, crema con rametti sparsi.
+    "bandana-nobile-damasco.jpg":                  "bandana-damasco-diamante.jpg",
+    "bandana-fiorellino-lino.jpg":                 "bandana-lino.jpg",
 
     # --- medagliette: area 810x900, il nativo si riduce e si ritaglia ------
     "tag-paisley-burgundy-perla.jpg":              "bandana-paisley-cammeo.jpg",
@@ -323,6 +418,33 @@ PER_SORGENTE = {
 
 
 # ==========================================================================
+# GLI ARTWORK CHE NON VANNO SOSTITUITI, SOLO RIMESSI IN SQUADRA
+# ==========================================================================
+# Otto medagliette stampano ancora il loro artwork originale, quadrato a
+# 1024x1024, su un'area 810x900. Il file copre la larghezza e lascia il 10%
+# di altezza vuota: e' la "fascia vuota" che l'audit conta su otto prodotti.
+#
+# Qui NON serve cambiare disegno. L'artwork e' gia' quello scelto, porta gia'
+# il marchio dentro (sono tutti "-perla.jpg", la convenzione descritta in
+# perla-usa-marchio.py) e 1024 px bastano per un'area di 810x900: si RITAGLIA
+# alla proporzione giusta e si riduce. Nessun ingrandimento, nessuna scelta di
+# immagine presa al posto della titolare.
+#
+# La medaglietta e' tonda e il ritaglio e' centrato: quello che si perde sono
+# i bordi, che sul prodotto finito sono fuori dal cerchio comunque.
+DA_ARTWORK = {
+    "tag-baroque-purple-perla.jpg":        "medaglietta",
+    "tag-border-rose-perla.jpg":           "medaglietta",
+    "tag-central-rose-perla.jpg":          "medaglietta",
+    "tag-damask-burgundy-perla.jpg":       "medaglietta",
+    "tag-floral-burgundy-perla.jpg":       "medaglietta",
+    "tag-geometric-navy-silver-perla.jpg": "medaglietta",
+    "tag-medallion-emerald-perla.jpg":     "medaglietta",
+    "tag-olive-sage-perla.jpg":            "medaglietta",
+}
+
+
+# ==========================================================================
 # COSTRUZIONE
 # ==========================================================================
 
@@ -331,6 +453,25 @@ def _sorgente_eu(nome, ritocco, ritaglio, temporanei):
     percorso = os.path.join(NATIVI, nome)
     if not os.path.exists(percorso):
         raise SystemExit("nativo mancante: " + percorso)
+
+    # Otto nativi hanno UN SOLO medaglione "Perla Italia", sempre a
+    # x=0,81 y=0,79. Affiancati o ritagliati, quel medaglione finisce dove
+    # capita -- sulla medaglietta "Green Geometric" e' arrivato sul bordo ed e'
+    # stato tagliato dal tondo, lasciando una falce d'oro senza senso. Si
+    # ritaglia via, e il marchio lo compone marchio.py dove deve stare.
+    if os.path.basename(nome) in marchio.NATIVI_CON_MEDAGLIONE:
+        with Image.open(percorso) as _im:
+            dimensioni = _im.size
+        if not marchio.esclude_il_medaglione(ritaglio, dimensioni):
+            s0, a0, d0, b0 = marchio.RITAGLIO_SENZA_MEDAGLIONE
+            nuovo = (round(s0 * dimensioni[0]), round(a0 * dimensioni[1]),
+                     round(d0 * dimensioni[0]), round(b0 * dimensioni[1]))
+            # se c'era gia' un ritaglio esplicito si intersecano, cosi' non si
+            # perde la ragione per cui era stato messo
+            ritaglio = nuovo if not ritaglio else (
+                max(ritaglio[0], nuovo[0]), max(ritaglio[1], nuovo[1]),
+                min(ritaglio[2], nuovo[2]), min(ritaglio[3], nuovo[3]))
+
     if not ritocco and not ritaglio:
         return percorso
 
@@ -500,66 +641,162 @@ def _porta_all_altezza(percorso, altezza, temporanei):
     return fuori
 
 
-def costruisci(voce, tipo, temporanei):
-    """Un file di stampa alla misura esatta dell'area, senza ingrandire nulla."""
-    larghezza, altezza = AREE[tipo]
-    if voce[0] == "eu":
+def _da_artwork(nome, misura):
+    """Riporta un artwork esistente alla proporzione dell'area, ritagliando.
+
+    Solo riduzione: se l'artwork non ha abbastanza pixel ci si ferma, perche'
+    ingrandire e' esattamente il difetto che questo file esiste per togliere.
+    """
+    percorso = os.path.join(SORGENTI, nome)
+    if not os.path.exists(percorso):
+        raise SystemExit("artwork mancante: " + percorso)
+    im = Image.open(percorso).convert("RGB")
+    larghezza, altezza = misura
+    w, h = im.size
+    if w < larghezza or h < altezza:
+        raise SystemExit(
+            "%s e' %dx%d, l'area e' %dx%d: ingrandirlo sarebbe rifare il "
+            "difetto. Serve un artwork piu' grande." % (nome, w, h, larghezza, altezza))
+    proporzione = larghezza / float(altezza)
+    if w / float(h) > proporzione:
+        nw, nh = int(round(h * proporzione)), h
+    else:
+        nw, nh = w, int(round(w / proporzione))
+    im = im.crop(((w - nw) // 2, (h - nh) // 2, (w - nw) // 2 + nw, (h - nh) // 2 + nh))
+    return im.resize((larghezza, altezza), Image.LANCZOS)
+
+
+def costruisci(voce, tipo, misura, temporanei, passo_px=None):
+    """Un file di stampa alla misura esatta dell'area, senza ingrandire nulla.
+
+    `misura` e' quella del GRUPPO di varianti, non del tipo: lo stesso motivo
+    produce piu' file, uno per ogni proporzione che il blueprint ha davvero.
+
+    `passo_px` (solo motivi geometrici) e' il periodo in pixel calcolato una
+    volta sulla misura piu' grande e poi riusato uguale su tutte. Ricavarlo
+    ogni volta da `larghezza / ripetizioni` darebbe lo stesso NUMERO di
+    ripetizioni su una cuccia da 50 pollici e su una da 28, cioe' due scale
+    fisiche diverse dello stesso disegno: due prodotti diversi venduti con lo
+    stesso nome.
+    """
+    larghezza, altezza = misura
+    if voce[0] == "artwork":
+        im = _da_artwork(voce[1], misura)
+        # gli artwork "-perla.jpg" hanno il marchio dentro per convenzione
+        nativo = None if "-perla" not in voce[1] else voce[1]
+    elif voce[0] == "eu":
         _, nome, ritocco, ritaglio = voce
         percorso = _sorgente_eu(nome, ritocco, ritaglio, temporanei)
         percorso = _taglia_margini(percorso, temporanei)
         percorso = _riquadro_pulito(percorso, temporanei)
         percorso = _porta_all_altezza(percorso, altezza, temporanei)
-        # costruisci() affianca i tasselli dritti (mai specchiati: questi
+        # eu.costruisci() affianca i tasselli dritti (mai specchiati: questi
         # motivi contengono la scritta "PERLA ITALIA") e dissolve le
         # giunzioni. E' la stessa funzione che produce la linea EU.
-        return eu.costruisci(percorso, larghezza, altezza, trim=6, feather=180)
+        im = eu.costruisci(percorso, larghezza, altezza, trim=6, feather=180)
+        nativo = nome
+    else:
+        _, funzione, tinta, ripetizioni = voce
+        passo = passo_px or int(round(larghezza / float(ripetizioni)))
+        fn = motivi.GEOMETRICI[funzione.capitalize()]
+        im = motivi.tessitura(fn(larghezza, altezza, passo, motivi.PALETTE[tinta]))
+        nativo = None      # disegnato: il marchio non c'e' mai
 
-    _, funzione, tinta, ripetizioni = voce
-    passo = int(round(larghezza / float(ripetizioni)))
-    fn = motivi.GEOMETRICI[funzione.capitalize()]
-    return motivi.tessitura(fn(larghezza, altezza, passo, motivi.PALETTE[tinta]))
+    # Il file deve combaciare con l'area al pixel: e' quello che permette di
+    # caricarlo a scale=1 senza tagli ne' fasce vuote. Se non combacia,
+    # meglio fermarsi che scoprirlo dal mockup.
+    if im.size != (larghezza, altezza):
+        raise SystemExit("costruito %dx%d invece di %dx%d per %s"
+                         % (im.size[0], im.size[1], larghezza, altezza, tipo))
+
+    if marchio.serve(nativo):
+        im, _ = marchio.componi(im, tipo)
+        return im, "composto"
+    return im, "nel motivo"
 
 
 def main():
     provino = "--provino" in sys.argv
+    rifai = "--rifai" in sys.argv
     solo = [a for a in sys.argv[1:] if not a.startswith("--")]
     temporanei = os.path.join(USCITA, "_ritinti")
     os.makedirs(USCITA, exist_ok=True)
 
     fatti = []
+    # Il manifesto dice, per ogni file costruito, se il marchio ci sta perche'
+    # era gia' nel motivo o perche' l'abbiamo composto. Serve all'audit: da
+    # ROUND 47 il marchio non e' piu' un LIVELLO su Printify, quindi contare i
+    # livelli direbbe "senza marchio" su tutto il catalogo riparato.
+    percorso_manifesto = os.path.join(USCITA, "_marchio.json")
+    manifesto = {}
+    if os.path.exists(percorso_manifesto):
+        with open(percorso_manifesto) as fh:
+            manifesto = json.load(fh)
+
+    def scrivi(voce, tipo, chiave, nome_base, passo_px=None):
+        """Costruisce e salva un file per OGNI misura di quel tipo."""
+        # Da dove viene il marchio si sa dalla voce, senza dover ricostruire:
+        # cosi' il manifesto si compila anche sui file gia' presenti, e non
+        # resta vuoto quando la costruzione non ha niente da fare.
+        nativo = voce[1] if voce[0] in ("eu", "artwork") else None
+        if voce[0] == "artwork" and "-perla" not in (nativo or ""):
+            nativo = None
+        come = "composto" if marchio.serve(nativo) else "nel motivo"
+        for misura in misure(tipo):
+            fuori = os.path.join(USCITA, nome_base(misura) + ".jpg")
+            manifesto[os.path.basename(fuori)] = {
+                "tipo": tipo, "misura": list(misura), "marchio": come,
+                "sorgente": chiave}
+            if os.path.exists(fuori) and not rifai:
+                fatti.append((chiave, fuori, Image.open(fuori).size, voce[0], misura))
+                continue
+            im, _ = costruisci(voce, tipo, misura, temporanei, passo_px)
+            im.save(fuori, quality=92, subsampling=0)
+            fatti.append((chiave, fuori, im.size, voce[0], misura))
+            print("%-44s %5dx%-5d %-11s %.1f MB" % (
+                chiave[:44], im.size[0], im.size[1], tipo,
+                os.path.getsize(fuori) / 1e6))
+
     for sorgente, nativo in PER_SORGENTE.items():
         if solo and not any(x.lower() in sorgente.lower() for x in solo):
             continue
         tipo = tipo_di(sorgente)
+        # I collari hanno tutte le varianti disabilitate E non disponibili sul
+        # fornitore (verificato con perla-verifica-prodotti.py: 18 prodotti,
+        # 16 varianti ciascuno, is_enabled false). Costruire i loro file
+        # sarebbe mezz'ora di CPU e 300 MB per prodotti che non si possono
+        # vendere. Si riattivano da soli il giorno che il fornitore torna
+        # disponibile: basta togliere questa riga.
+        if tipo == "collare" and "--collari" not in sys.argv:
+            continue
         ritocco = ritaglio = None
+        voce_nativo = nativo
         if isinstance(nativo, tuple):
             if len(nativo) == 2:
-                nativo, ritaglio = nativo
+                voce_nativo, ritaglio = nativo
             else:
-                nativo, ritocco, ritaglio = nativo
-        fuori = os.path.join(USCITA, nome_uscita(sorgente) + ".jpg")
-        if os.path.exists(fuori):
-            fatti.append((sorgente, fuori, Image.open(fuori).size, "eu"))
+                voce_nativo, ritocco, ritaglio = nativo
+        scrivi(("eu", voce_nativo, ritocco, ritaglio), tipo, sorgente,
+               lambda m, s=sorgente: nome_uscita(s, m))
+
+    for sorgente, tipo in DA_ARTWORK.items():
+        if solo and not any(x.lower() in sorgente.lower() for x in solo):
             continue
-        im = costruisci(("eu", nativo, ritocco, ritaglio), tipo, temporanei)
-        im.save(fuori, quality=92, subsampling=0)
-        fatti.append((sorgente, fuori, im.size, "eu"))
-        print("%-52s %5dx%-5d %-7s %.1f MB" % (
-            sorgente[:52], im.size[0], im.size[1], tipo, os.path.getsize(fuori) / 1e6))
+        scrivi(("artwork", sorgente), tipo, sorgente,
+               lambda m, s=sorgente: nome_uscita(s, m))
 
     for titolo, voce in CATALOGO.items():
         if solo and not any(s.lower() in titolo.lower() for s in solo):
             continue
         tipo = "cuccia"      # per ora il catalogo copre le cucce
-        im = costruisci(voce, tipo, temporanei)
-        nome = titolo.lower().replace(" ", "-").replace("'", "").replace("—", "")
-        nome = "-".join(p for p in nome.split("-") if p)[:60]
-        fuori = os.path.join(USCITA, "%s-%s.jpg" % (tipo, nome))
-        im.save(fuori, quality=92, subsampling=0)
-        fatti.append((titolo, fuori, im.size, voce[0]))
-        print("%-52s %5dx%-5d %-7s %.1f MB" % (
-            titolo[:52], im.size[0], im.size[1], voce[0],
-            os.path.getsize(fuori) / 1e6))
+        # Il periodo dei motivi geometrici si fissa UNA volta sulla misura piu'
+        # grande e vale per tutte: vedi la docstring di costruisci().
+        passo_px = None
+        if voce[0] == "codice":
+            larghezza_max = misure(tipo)[0][0]
+            passo_px = int(round(larghezza_max / float(voce[3])))
+        scrivi(voce, tipo, titolo, lambda m, t=titolo: "%s-%s" % (tipo, nome_catalogo(t, m)),
+               passo_px)
 
     if provino and fatti:
         lato = 420
@@ -568,14 +805,18 @@ def main():
         sheet = Image.new("RGB", (colonne * lato, righe * (lato + 18)), "white")
         from PIL import ImageDraw
         d = ImageDraw.Draw(sheet)
-        for i, (titolo, f, dim, via) in enumerate(fatti):
+        for i, (titolo, f, dim, via, misura) in enumerate(fatti):
             im = Image.open(f).convert("RGB")
             h = round(lato * dim[1] / dim[0])
             x, y = (i % colonne) * lato, (i // colonne) * (lato + 18)
-            sheet.paste(im.resize((lato, h), Image.LANCZOS), (x, y))
-            d.text((x + 4, y + h + 2), titolo[:56], fill="black")
+            sheet.paste(im.resize((lato, max(1, h)), Image.LANCZOS), (x, y))
+            d.text((x + 4, y + max(1, h) + 2),
+                   ("%s %dx%d" % (titolo, misura[0], misura[1]))[:56], fill="black")
         sheet.save(os.path.join(USCITA, "_provino.jpg"), quality=90)
         print("\nprovino in", os.path.join(USCITA, "_provino.jpg"))
+
+    with open(percorso_manifesto, "w") as fh:
+        json.dump(manifesto, fh, indent=1, ensure_ascii=False)
 
     print("\n%d file di stampa in %s" % (len(fatti), USCITA))
 

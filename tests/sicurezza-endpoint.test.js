@@ -155,6 +155,36 @@ async function main() {
       assert.ok(ultimo.headers.get('retry-after'), 'manca l\'intestazione Retry-After');
     });
 
+    console.log('\nLa sveglia');
+
+    // Sta QUI, dopo il test del limite, e non altrove: a questo punto
+    // l'indirizzo e' gia' stato bloccato dal limitatore, quindi un 200 da
+    // /health dimostra che sta davvero fuori -- che e' la scelta di ROUND 48,
+    // non un caso. Il limite protegge le rotte che spendono soldi (/upload su
+    // Cloudinary, /generate-mockup crea un prodotto su Printify); /health non
+    // ne spende, e negarla proprio al cliente piu' attivo avrebbe l'effetto
+    // opposto a quello per cui esiste: fargli aspettare i ventiquattro secondi
+    // di riavvio che doveva evitare.
+    await prova('/health risponde anche a chi il limitatore ha gia\' bloccato', async function () {
+      const r = await fetch(BASE + '/health');
+      assert.strictEqual(r.status, 200, 'la sveglia non deve mai essere respinta');
+      const j = await r.json();
+      assert.strictEqual(j.ok, true, 'risposta inattesa: ' + JSON.stringify(j));
+    });
+
+    await prova('la sveglia non spende niente: risponde subito', async function () {
+      const inizio = Date.now();
+      await fetch(BASE + '/health');
+      const durata = Date.now() - inizio;
+      assert.ok(durata < 500, 'ci ha messo ' + durata + 'ms: sta facendo qualcosa che non dovrebbe');
+    });
+
+    await prova('GET e\' dichiarato fra i metodi ammessi', async function () {
+      const r = await fetch(BASE + '/health');
+      const metodi = r.headers.get('access-control-allow-methods') || '';
+      assert.ok(/GET/.test(metodi), 'dichiarati: ' + metodi);
+    });
+
     console.log('\n' + passati + ' verifiche superate.' + (process.exitCode ? ' CI SONO FALLIMENTI.' : ''));
   } finally {
     servizio.kill();

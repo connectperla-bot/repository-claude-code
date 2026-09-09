@@ -1,0 +1,150 @@
+{%- comment -%}
+  Perla — tutto il tracciamento del tema in un posto solo, e solo col consenso.
+
+  COSA C'E' QUI
+  Microsoft Clarity (mappe di calore e riproduzione delle sessioni), Google
+  Analytics 4 e il pixel di Meta. Prima GA4 e Meta stavano scritti dentro
+  layout/theme.liquid, nel <head>, e partivano appena la pagina apriva: senza
+  chiedere niente a nessuno. Il negozio vende in Italia, ha una Cookie Policy
+  e la pagina "Le tue scelte relative alla privacy" — quel comportamento non
+  era difendibile. Adesso passano tutti e tre di qui, e di qui non esce una
+  richiesta finche' il cliente non ha detto di si'.
+
+  PERCHE' CLARITY STA NEL TEMA E NON NEL PIXEL
+  I pixel personalizzati di Shopify girano dentro un iframe isolato, apposta
+  per non poter leggere la pagina. Clarity serve a leggere la pagina. Messo
+  li' dentro si caricherebbe senza dare errori e non registrerebbe niente —
+  il modo peggiore di sbagliare, perche' sembra funzionare. Quindi Clarity
+  sta qui, e Google Analytics sta nel pixel (dove serve, perche' il pixel
+  copre anche il checkout, che il tema non vede). Il codice del pixel e' in
+  docs/analytics-pixel-ga4.js.
+
+  ATTENZIONE AI DUE GA4
+  Se si usa il pixel GA4, il campo "ID misurazione GA4" qui nel tema va
+  lasciato VUOTO. Riempirli tutti e due vuol dire mandare ogni visita due
+  volte alla stessa proprieta': sessioni raddoppiate, frequenza di rimbalzo
+  falsata, e nessun modo di ripulire i dati dopo.
+
+  DOVE STA, E PERCHE' NON PIU' NEL <head>
+  Il consenso lo tiene Shopify e lo espone con la Customer Privacy API, che
+  pero' arriva con content_for_header: nel <head>, sopra a quella riga,
+  window.Shopify.customerPrivacy spesso non esiste ancora. Un controllo fatto
+  li' risponderebbe "no" a tutti, e chi aveva gia' accettato in una visita
+  precedente non verrebbe mai registrato — l'evento visitorConsentCollected
+  non si ripete. Quindi si sta in fondo al <body> e si aspetta che l'API ci
+  sia davvero. Qualche centinaio di millisecondi in piu' non cambia niente:
+  il consenso lo impone comunque.
+
+  SENZA ID NON SUCCEDE NIENTE
+  Gli ID si mettono dal personalizzatore del tema (Impostazioni tema ->
+  Marketing e Analytics). Finche' sono vuoti questo snippet non stampa una
+  riga di JavaScript: niente richieste, niente errori in console, nessun
+  cookie. L'ID di Clarity sta su clarity.microsoft.com -> il progetto ->
+  Settings -> Overview.
+{%- endcomment -%}
+
+{%- assign clarity_id = settings.clarity_project_id | strip -%}
+{%- assign ga4_id = settings.ga4_measurement_id | strip -%}
+{%- assign meta_id = settings.meta_pixel_id | strip -%}
+
+{%- if clarity_id != blank or ga4_id != blank or meta_id != blank -%}
+  <script>
+    (function () {
+      var CLARITY = {{ clarity_id | json }};
+      var GA4 = {{ ga4_id | json }};
+      var META = {{ meta_id | json }};
+      var partiti = false;
+
+      function apiPronta() {
+        return !!(window.Shopify
+          && window.Shopify.customerPrivacy
+          && typeof window.Shopify.customerPrivacy.analyticsProcessingAllowed === 'function');
+      }
+
+      function consentito() {
+        try {
+          return window.Shopify.customerPrivacy.analyticsProcessingAllowed();
+        } catch (e) {
+          // Se l'API non risponde si sta zitti: e' la scelta prudente, e la
+          // sola difendibile davanti a un garante.
+          return false;
+        }
+      }
+
+      function clarity() {
+        // Lo snippet ufficiale di Clarity, con l'id preso dalle impostazioni
+        // invece che scritto dentro: cambiare progetto non deve voler dire
+        // toccare il codice del tema.
+        (function (c, l, a, r, i, t, y) {
+          c[a] = c[a] || function () { (c[a].q = c[a].q || []).push(arguments); };
+          t = l.createElement(r); t.async = 1;
+          t.src = 'https://www.clarity.ms/tag/' + i;
+          y = l.getElementsByTagName(r)[0]; y.parentNode.insertBefore(t, y);
+        })(window, document, 'clarity', 'script', CLARITY);
+      }
+
+      function ga4() {
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(GA4);
+        document.head.appendChild(s);
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function () { window.dataLayer.push(arguments); };
+        gtag('js', new Date());
+        gtag('config', GA4);
+      }
+
+      function meta() {
+        !function (f, b, e, v, n, t, s) {
+          if (f.fbq) return; n = f.fbq = function () {
+            n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+          };
+          if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0';
+          n.queue = []; t = b.createElement(e); t.async = !0; t.src = v;
+          s = b.getElementsByTagName(e)[0]; s.parentNode.insertBefore(t, s);
+        }(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', META);
+        fbq('track', 'PageView');
+        // Il <img> di riserva per chi ha JavaScript spento non c'e' piu', ed
+        // e' voluto: quello partirebbe SEMPRE, consenso o no, perche' senza
+        // JavaScript non c'e' modo di chiederlo. Meglio perdere quella
+        // manciata di visite che tracciarle senza permesso.
+      }
+
+      function avvia() {
+        if (partiti || !consentito()) return;
+        partiti = true;
+        if (CLARITY) clarity();
+        if (GA4) ga4();
+        if (META) meta();
+      }
+
+      function quandoPronta(fai) {
+        if (apiPronta()) { fai(); return; }
+        // La via ufficiale: Shopify carica l'API su richiesta.
+        if (window.Shopify && typeof window.Shopify.loadFeatures === 'function') {
+          window.Shopify.loadFeatures(
+            [{ name: 'consent-tracking-api', version: '0.1' }],
+            function (errore) { if (!errore && apiPronta()) fai(); }
+          );
+          return;
+        }
+        // Ultima spiaggia: si guarda per dieci secondi, poi si lascia perdere.
+        // Un tracciamento che non parte e' un fastidio; uno che parte senza
+        // consenso e' una multa.
+        var tentativi = 0;
+        var attesa = setInterval(function () {
+          if (apiPronta()) { clearInterval(attesa); fai(); }
+          else if (++tentativi > 40) { clearInterval(attesa); }
+        }, 250);
+      }
+
+      quandoPronta(function () {
+        avvia();
+        // Se il consenso arriva dopo — il cliente accetta il banner a pagina
+        // gia' aperta — si parte da li', senza ricaricare.
+        document.addEventListener('visitorConsentCollected', avvia);
+      });
+    })();
+  </script>
+{%- endif -%}

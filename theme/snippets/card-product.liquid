@@ -1,0 +1,132 @@
+{%- comment -%} Usage: {% render 'card-product', card_product: product %} {%- endcomment -%}
+{%- comment -%}
+  FILTRO GEOGRAFICO.
+
+  ROUND 18 — la regola era parziale (nascondeva i prodotti globali solo per i
+  quattro tipi con un gemello europeo, quindi a un cliente italiano arrivavano
+  comunque cucce, tappetini e medagliette da Printify, con costi e tempi di
+  spedizione fuori mercato). Ora e' netta ed e' scritta una volta sola in
+  snippets/perla-region-hidden.liquid, perche' la usano anche le sezioni che
+  contano quante card mostrare — altrimenti chiedono otto prodotti, li vedono
+  sparire uno per uno e lasciano una riga vuota.
+{%- endcomment -%}
+{%- capture perla_region_hidden -%}{% render 'perla-region-hidden', product: card_product %}{%- endcapture -%}
+{%- unless perla_region_hidden contains '1' -%}
+{%- liquid
+  assign p = card_product
+  assign ratio_class = ''
+  if settings.card_image_ratio == 'square'
+    assign ratio_class = ' is-square'
+  endif
+
+  assign is_custom = false
+  if p.tags contains 'personalizzabile' or p.tags contains 'POD' or p.tags contains 'custom'
+    assign is_custom = true
+  endif
+  # "tipo-neutro" = prodotto senza disegno, da comporre interamente. Tutti gli
+  # altri personalizzabili accettano solo il nome sopra un disegno gia' fatto:
+  # due promesse molto diverse, che meritano due etichette diverse.
+  assign is_blank_design = false
+  if is_custom and p.tags contains 'tipo-neutro'
+    assign is_blank_design = true
+  endif
+
+  assign has_second = false
+  if settings.card_hover_second_image and p.media.size > 1
+    assign has_second = true
+  endif
+  # ROUND 27 -- le medagliette hanno come seconda immagine il retro vuoto
+  # (tinta unita, nessun disegno: serve all'anteprima fronte/retro nello studio
+  # di personalizzazione, non come seconda foto prodotto). Mostrarla al
+  # passaggio del mouse faceva sembrare il prodotto rotto.
+  if p.tags contains 'medaglietta'
+    assign has_second = false
+  endif
+  # ROUND 53 -- QUI C'ERA UN DIVIETO PER TUTTI I PRODOTTI EUROPEI, E ADESSO
+  # SAREBBE IL CONTRARIO DI QUELLO CHE SERVE.
+  #
+  # Il divieto era giusto quando l'ho scritto: la seconda immagine dei
+  # prodotti europei ERA il file di stampa, 1200x53 px su un collare, che
+  # stirato in un riquadro quadrato dava proprio l'immagine "sgranata"
+  # segnalata dal cliente.
+  #
+  # Da ROUND 34 in seconda posizione c'e' un'altra cosa: il primo piano del
+  # tessuto, quadrato, ritagliato a risoluzione nativa dal file che si stampa
+  # (perla-dettaglio-stampa.py). E' l'immagine PIU' nitida che quei prodotti
+  # abbiano -- il mockup Printful esce sempre 1000x1000 con la fettuccia alta
+  # ottanta pixel, il primo piano mostra il tessuto a grandezza naturale.
+  # Tenerla nascosta voleva dire nascondere la risposta al difetto.
+  #
+  # Non serve una regola nuova: basta togliere quella vecchia. La rete di
+  # sicurezza qui sotto scarta da sola qualunque seconda immagine dalle
+  # proporzioni da file tecnico, europea o no.
+  # Rete di sicurezza generale, valida anche per prodotti futuri: una seconda
+  # immagine con proporzioni fuori scala non e' una foto, e' un file tecnico.
+  if has_second
+    assign second_ratio = p.media[1].preview_image.aspect_ratio
+    if second_ratio < 0.6 or second_ratio > 1.6
+      assign has_second = false
+    endif
+  endif
+
+  assign single_variant = false
+  if p.variants.size == 1
+    assign single_variant = true
+  endif
+-%}
+<article class="card{% if has_second %} has-second{% endif %}" data-reveal {% if settings.enable_animations %}data-liquid data-tilt{% endif %} style="position:relative">
+  <a class="card__media{{ ratio_class }}" href="{{ p.url }}" aria-label="{{ p.title | escape }}" {% if settings.enable_animations %}data-scopri{% endif %}>
+    {%- if p.featured_media -%}
+      <img class="img-primary" src="{{ p.featured_media | image_url: width: 600 }}"
+        srcset="{{ p.featured_media | image_url: width: 400 }} 400w, {{ p.featured_media | image_url: width: 600 }} 600w, {{ p.featured_media | image_url: width: 900 }} 900w"
+        sizes="(max-width: 749px) 50vw, 25vw" width="600" height="750" alt="{{ p.featured_media.alt | escape }}" loading="lazy">
+      {%- if has_second -%}
+        <img class="img-secondary" src="{{ p.media[1] | image_url: width: 600 }}" sizes="(max-width: 749px) 50vw, 25vw" width="600" height="750" alt="" loading="lazy">
+      {%- endif -%}
+    {%- else -%}
+      {{ 'product-apparel-1' | placeholder_svg_tag: 'placeholder-svg' }}
+    {%- endif -%}
+
+    <div class="card__badges">
+      {%- unless p.available -%}<span class="badge badge--soldout">{{ 'products.product.sold_out' | t }}</span>{%- endunless -%}
+      {%- if p.compare_at_price > p.price and p.available -%}<span class="badge badge--sale">{{ 'products.product.on_sale' | t }}</span>{%- endif -%}
+      {%- if is_custom -%}
+        <span class="badge badge--custom">{% if is_blank_design %}{{ 'products.product.personalizable' | t }}{% else %}{{ 'products.product.name_only' | t }}{% endif %}</span>
+      {%- endif -%}
+    </div>
+
+    {%- if settings.enable_quick_view -%}
+      <button type="button" class="card__quick-view" data-quick-view="{{ p.handle }}" aria-label="{{ 'products.product.quick_view' | t }}">
+        {% render 'icon', icon: 'search' %}<span>{{ 'products.product.quick_view' | t }}</span>
+      </button>
+    {%- endif -%}
+  </a>
+
+  {%- comment -%}
+    ROUND 13 fix: wishlist-btn moved OUT of the <a class="card__media"> anchor
+    (was nested button-inside-anchor — invalid HTML, and the proximate cause
+    considered for "clicking the heart navigates to the product"). Now a
+    sibling positioned absolutely over the media via card__wishlist-slot,
+    same visual position as before since <article class="card"> is
+    position:relative (set above).
+  {%- endcomment -%}
+  {%- if settings.enable_wishlist -%}
+    <div class="card__wishlist-slot">
+      {% render 'wishlist-btn', handle: p.handle, title: p.title %}
+    </div>
+  {%- endif -%}
+
+  <div class="card__info">
+    <h3 class="card__title"><a href="{{ p.url }}">{{ p.title }}</a></h3>
+    {% render 'price', product: p %}
+  </div>
+
+  {%- if settings.card_quick_add and p.available -%}
+    {%- if single_variant -%}
+      <button type="button" class="card__add" data-quick-add data-variant-id="{{ p.selected_or_first_available_variant.id }}">{{ 'products.product.quick_add' | t }}</button>
+    {%- else -%}
+      <a class="card__add card__add--options" href="{{ p.url }}">{{ 'products.product.choose_options' | t }}</a>
+    {%- endif -%}
+  {%- endif -%}
+</article>
+{%- endunless -%}

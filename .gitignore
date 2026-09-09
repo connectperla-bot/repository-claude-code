@@ -40,6 +40,40 @@ out-foto/
 motivi/
 generated-designs/usa-print-files/
 
+# Uscita di scripts/perla-verifica-prodotti.py: e' una fotografia dello stato
+# dei prodotti in un dato momento, si rifa' con un comando. In git ci va lo
+# script, non il suo referto.
+generated-designs/audit-prodotti.json
+generated-designs/audit-mockup/
+
+# Uscita di scripts/perla-eu-mockup.py: mockup rigenerabili con un comando.
+generated-designs/eu-mockup/
+
+# Fotografia dei titoli di taglia su Shopify, per l'audit --eu. Va rifatta
+# quando i prodotti cambiano: la query sta in perla-verifica-prodotti.py.
+generated-designs/taglie-eu.json
+
+# Motivi EU corretti: 160 MB di file di stampa, si ricostruiscono con
+# scripts/perla-eu-motivi-corretti.py --costruisci --tutti. In git ci va lo
+# script, non i pixel.
+generated-designs/eu-motivi-corretti/
+
+# Cache di scripts/perla-dettaglio-stampa.py: i file di stampa scaricati e le
+# foto del tessuto che ne escono. Le copie che contano stanno su Cloudinary e
+# su Shopify; qui sarebbero 70 immagini rigenerabili in un comando.
+generated-designs/dettagli-stampa/
+generated-designs/dettaglio-da-attaccare.json
+
+# Fotografia di Shopify per l'audit --editor (tag, metafield, tabella dei tipi
+# dal tema pubblicato) e l'elenco delle scritture che ne discende. Come
+# taglie-eu.json: si rifanno quando i prodotti cambiano.
+generated-designs/editor-shopify.json
+generated-designs/editor-da-scrivere.json
+generated-designs/foto-eu-da-attaccare.json
+# Stessa natura: l'elenco dei prezzi da scrivere che esce da
+# perla-prezzi-margine.py --scrivi. Si rifa' in un comando, e i prezzi
+# che contano stanno su Shopify.
+generated-designs/prezzi-da-scrivere.json
 # File di stampa rigenerati da perla-rifai-motivi.py: 217 MB, e si
 # ricostruiscono in sei minuti dal codice che li disegna. Nel repository sta
 # la ricetta, non la torta.

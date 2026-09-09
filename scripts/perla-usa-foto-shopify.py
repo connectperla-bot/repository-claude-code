@@ -171,8 +171,38 @@ def main():
     for f in falliti:
         print('  DA RIFARE: ' + f[:62])
     if fatti:
-        print('\nLe immagini arrivano su Shopify in differita: ricontrolla fra')
-        print('qualche minuto che media.createdAt sia di oggi su tutti.')
+        print(FINESTRA_CIECA % fatti)
+
+
+# QUANTO CI METTE DAVVERO, E COSA SUCCEDE NEL FRATTEMPO
+#
+# Qui c'era scritto "ricontrolla fra qualche minuto". Sono venti, e nel
+# frattempo il prodotto sul negozio resta SENZA NESSUNA FOTO: l'app Printify
+# prima toglie le vecchie e poi carica le nuove, e in mezzo mediaCount e'
+# zero. Misurato sulle quattordici medagliette: pubblicate alle 12:21, ancora
+# a zero alle 12:40, tornate a posto alle 12:42.
+#
+# Non e' un dettaglio da nota a pie' di pagina: sono prodotti in vendita che
+# per venti minuti si presentano senza immagine. Va detto PRIMA di lanciare il
+# comando, e va detto quanto dura, cosi' chi lo lancia sceglie quando farlo.
+#
+# Se dopo mezz'ora un prodotto e' ancora a zero, la coda di Printify si e'
+# incastrata: si sblocca con publishing_succeeded.json e si ripubblica. Sulla
+# medaglietta "Nobile" ha funzionato al primo colpo -- ma attenzione, se nel
+# frattempo la coda si sblocca da sola le immagini si caricano DUE volte e
+# vanno tolte le doppie.
+FINESTRA_CIECA = '''
+%d prodotti sono ora in ripubblicazione su Printify.
+
+ATTENZIONE: per una ventina di minuti quei prodotti sul negozio restano SENZA
+FOTO. L'app Printify toglie le immagini vecchie e carica le nuove in due
+momenti diversi, e in mezzo la scheda prodotto e' senza immagine.
+
+Fra mezz'ora ricontrolla che mediaCount sia > 0 su tutti. Se qualcuno e'
+ancora a zero, la coda si e' incastrata: sblocca con
+  POST /v1/shops/<shop>/products/<id>/publishing_succeeded.json
+e ripubblica. Se poi ne trovi con le foto doppie, la coda si era sbloccata da
+sola: le doppie si tolgono con productDeleteMedia.'''
 
 
 if __name__ == '__main__':

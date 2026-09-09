@@ -91,6 +91,30 @@ const PRODUCT_TYPE_CONFIG = {
       printProviderId: Number(process.env.GUINZAGLIO_PROVIDER_ID || 80),
       variantId: Number(process.env.GUINZAGLIO_VARIANT_ID || 0),
     },
+    // I tre americani del 4 settembre. Nessun *_VARIANT_ID di ripiego,
+    // e non e' una dimenticanza: stanno tutti e tre in varianti-fornitore.js,
+    // quindi l'id lo decide la taglia che il cliente ha scelto e pagato. Una
+    // variante fissa qui sarebbe solo un modo per spedire la taglia sbagliata
+    // il giorno che la mappa non trova il titolo -- ed e' esattamente cio'
+    // che ROUND 42 ha tolto di mezzo.
+    collare_pelle: {
+      blueprintId: Number(process.env.COLLARE_PELLE_BLUEPRINT_ID || 10700),
+      printProviderId: Number(process.env.COLLARE_PELLE_PROVIDER_ID || 217),
+      variantId: Number(process.env.COLLARE_PELLE_VARIANT_ID || 0),
+    },
+    medaglietta_incisa: {
+      blueprintId: Number(process.env.MEDAGLIETTA_INCISA_BLUEPRINT_ID || 10674),
+      printProviderId: Number(process.env.MEDAGLIETTA_INCISA_PROVIDER_ID || 228),
+      variantId: Number(process.env.MEDAGLIETTA_INCISA_VARIANT_ID || 0),
+    },
+    giacchetto: {
+      blueprintId: Number(process.env.GIACCHETTO_BLUEPRINT_ID || 10740),
+      printProviderId: Number(process.env.GIACCHETTO_PROVIDER_ID || 72),
+      variantId: Number(process.env.GIACCHETTO_VARIANT_ID || 0),
+      // l'unica posizione che il blueprint 10740 conosce: il fronte non
+      // esiste, e senza questa riga l'ordine partirebbe con 'front'
+      position: 'back_dtf',
+    },
     // ROUND 18 — rete di sicurezza: se per errore un ordine non-EU (o senza
     // Printful configurato) arriva con product_type collare_eu/bandana_eu,
     // finisce comunque su Printify (stesso blueprint del collare/bandana
@@ -144,8 +168,16 @@ const PRODUCT_TYPE_CONFIG = {
     // guinzaglio_eu ("Pet Leash", id catalogo 745). Nessuna opzione extra
     // richiesta per questi due (verificato leggendo lo schema prodotto via
     // API, a differenza della bandana quadrata sopra che vuole
-    // stitch_color) -- da confermare con un ordine di prova reale come gia'
-    // fatto per collare_eu/bandana_eu, vedi commento in testa al file.
+    // stitch_color).
+    //
+    // ROUND 47 -- CONFERMATO con l'ordine di prova reale che mancava. Una
+    // bozza per ognuno dei quattro tipi EU sullo store nativo 18346388,
+    // accettata da Printful con il costo quotato, poi cancellata:
+    //   collare 24,58 EUR   bandana 16,30 EUR
+    //   ciotola 41,24 EUR   guinzaglio 27,32 EUR
+    // Vale anche come prova che gli ordini partono con ZERO prodotti
+    // registrati sull'account: si ordina sul catalogo, non su un prodotto
+    // sincronizzato. Rifallo con perla-verifica-prodotti.py --printful.
     ciotola_eu: {
       storeId: Number(process.env.PRINTFUL_STORE_ID || 0),
       variantId: Number(process.env.PRINTFUL_CIOTOLA_EU_VARIANT_ID || 0),

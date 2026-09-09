@@ -61,6 +61,9 @@ import urllib.request
 
 from PIL import Image
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+motivi = __import__("perla-eu-motivi-corretti")  # noqa: E402
+
 CDN = "https://perlaitaly.com/cdn/shop/t/49/assets/"
 CACHE = "print-src-cache"
 
@@ -77,6 +80,11 @@ MOTIVI = {
 # misure reali delle aree di stampa Printful, le stesse di
 # snippets/perla-print-areas.liquid e di PRINTFUL_MOCKUP_CONFIG
 AREE = {"ciotola_eu": (6496, 803), "guinzaglio_eu": (12389, 219)}
+
+# Le aree che sul prodotto finito fanno il GIRO: l'ultimo pixel della larghezza
+# tocca il primo. La ciotola e' un cilindro; il guinzaglio e' un nastro con due
+# capi che non si incontrano mai.
+ANELLI = ("ciotola_eu",)
 
 MOCKUP_LATO_LUNGO = 1600
 
@@ -127,8 +135,12 @@ def _fascia_orizzontale(src, larghezza, dissolvenza):
     """
     sw, sh = src.size
     if sw >= larghezza:
-        # e' il caso della ciotola (striscia 7169 contro area 6496): nessuna
-        # ripetizione orizzontale, quindi nessuna giunzione
+        # La striscia e' gia' piu' larga dell'area (collare 7169 contro ciotola
+        # 6496): basta tagliarla. ATTENZIONE, il commento che stava qui diceva
+        # "nessuna ripetizione orizzontale, quindi nessuna giunzione" ed era
+        # sbagliato per la ciotola: li' la giunzione c'e' lo stesso, perche' i
+        # 6496 px fanno il GIRO del cilindro e l'ultima colonna tocca la prima.
+        # La chiude costruisci(chiude_il_giro=True), sulla fascia finita.
         return src.crop((0, 0, larghezza, sh))
 
     periodo = _periodo_orizzontale(src)
@@ -149,7 +161,8 @@ def _fascia_orizzontale(src, larghezza, dissolvenza):
     return fascia.crop((0, 0, larghezza, sh))
 
 
-def costruisci(path, larghezza, altezza, trim=14, feather=90):
+def costruisci(path, larghezza, altezza, trim=14, feather=90,
+               chiude_il_giro=False):
     """Riempie l'area di stampa ripetendo la striscia, senza ingrandirla.
 
     SEMPRE DRITTA, MAI SPECCHIATA. Fino a ROUND 41 le file e le colonne
@@ -168,6 +181,12 @@ def costruisci(path, larghezza, altezza, trim=14, feather=90):
     e in verticale. Resta una fascia di sovrapposizione appena percettibile
     dove due tasselli si incontrano: molto meno grave di un marchio capovolto,
     ed e' il compromesso scelto consapevolmente.
+
+    CHIUDE_IL_GIRO serve per le aree ad ANELLO, cioe' la ciotola: li' i pixel
+    della larghezza fanno il giro del cilindro e l'ultima colonna va a toccare
+    la prima. Senza, il disegno si spezza in un punto -- il difetto segnalato
+    sulla ciotola "Barocco". Chi lo chiude e' avvolgi() in
+    perla-eu-motivi-corretti.py, dove sta anche la misura.
     """
     intera = Image.open(path).convert("RGB")
     src = intera.crop((0, trim, intera.width, intera.height - trim))
@@ -192,7 +211,13 @@ def costruisci(path, larghezza, altezza, trim=14, feather=90):
         y += passo
         riga += 1
 
-    return tela.crop((0, 0, larghezza, altezza))
+    fascia_finita = tela.crop((0, 0, larghezza, altezza))
+    if chiude_il_giro:
+        note = []
+        fascia_finita = motivi.avvolgi(fascia_finita, note)
+        for n in note:
+            print("    " + n)
+    return fascia_finita
 
 
 def main():
@@ -203,7 +228,8 @@ def main():
     for nome, asset in MOTIVI.items():
         src = scarica(asset)
         for tipo, (larghezza, altezza) in AREE.items():
-            grande = costruisci(src, larghezza, altezza)
+            grande = costruisci(src, larghezza, altezza,
+                                chiude_il_giro=tipo in ANELLI)
             base = os.path.join(uscita, "%s-%s" % (tipo, nome.lower()))
             grande.save(base + ".jpg", quality=95, subsampling=0)
 

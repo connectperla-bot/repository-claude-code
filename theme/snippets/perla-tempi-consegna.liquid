@@ -1,0 +1,33 @@
+{%- comment -%}
+  Perla — quanti giorni ci mette DAVVERO, per tipo di prodotto.
+
+  PERCHE' PER TIPO E NON UNA FRASE SOLA
+  Il sito prometteva "Italia 4-8 giorni" su tutto. Chiesto a Printful il
+  31/08/2026 (POST /shipping/rates, destinazione Milano), i tempi veri:
+
+      bandana_eu      4-5 giorni
+      ciotola_eu      5-12 giorni
+      collare_eu     20-25 giorni   (consegna stimata 24-29 settembre)
+      guinzaglio_eu  20-25 giorni
+
+  Non e' uno scarto di qualche giorno: sul collare e sul guinzaglio la
+  promessa era sbagliata di quattro volte. Una frase unica onesta avrebbe
+  dovuto dire "4-25 giorni", che fa sembrare lenta anche la bandana che
+  arriva in quattro. Quindi ogni tipo dichiara il suo.
+
+  I NUMERI QUI SOTTO NON SONO QUELLI DI PRINTFUL PARI PARI
+  Sono quelli di Printful con due o tre giorni di margine: la loro e' una
+  stima, e una stima sforata e' esattamente la brutta figura che si vuole
+  evitare. Meglio arrivare prima del previsto che dopo.
+
+  ATTENZIONE ALLE ULTIME RIGHE
+  I tipi Printify (linea americana) NON sono misurati: l'endpoint di
+  catalogo risponde 403 con la chiave che abbiamo. Quel 10-20 e' una stima
+  prudente basata sui tempi dichiarati da Printify, non una misura, ed e'
+  segnato con "0" nell'ultima colonna proprio per non confonderlo con gli
+  altri. Quando si riesce a misurarli, si aggiornano qui e si mette 1.
+
+  Formato riga: chiave|giorni_min|giorni_max|misurato
+  Consumato da sections/main-product.liquid.
+{%- endcomment -%}
+collare_eu|20|28|1#bandana_eu|5|9|1#ciotola_eu|7|15|1#guinzaglio_eu|20|28|1#collare|10|20|0#bandana|10|20|0#medaglietta|10|20|0#ciotola|10|20|0#cuccia|10|20|0#tappetino|10|20|0#guinzaglio|10|20|0

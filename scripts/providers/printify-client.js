@@ -28,8 +28,14 @@ function buildPlaceholder(data, fallbackPosition) {
 }
 
 async function createProduct(order, item, front, back, config, apiKey, shopId) {
+  // La posizione di stampa viene dalla configurazione del tipo, non da
+  // 'front' scritto a mano: il giacchetto parka (blueprint 10740) il fronte
+  // NON ce l'ha -- l'unica posizione e' 'back_dtf' -- e un ordine spedito
+  // con una posizione inesistente verrebbe rifiutato o, peggio, stampato
+  // senza il disegno pagato. Per tutti gli altri tipi config.position non
+  // c'e' e resta 'front', identico a prima.
   const placeholders = [];
-  if (front && front.printify_image_id) placeholders.push(buildPlaceholder(front, 'front'));
+  if (front && front.printify_image_id) placeholders.push(buildPlaceholder(front, config.position || 'front'));
   if (back && back.printify_image_id) placeholders.push(buildPlaceholder(back, 'back'));
 
   const response = await fetch('https://api.printify.com/v1/shops/' + shopId + '/products.json', {

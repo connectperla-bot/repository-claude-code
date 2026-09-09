@@ -1,0 +1,546 @@
+{
+ "fetchedAt": null,
+ "blueprint": {
+  "id": 10700
+ },
+ "providers": [
+  {
+   "id": 217
+  }
+ ],
+ "printProviderDetail": null,
+ "variants": [
+  {
+   "id": 397079,
+   "title": "Small / Blue / Silver",
+   "options": {
+    "size": "Small",
+    "color": "Blue / Silver"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "engraving",
+     "width": 1650,
+     "height": 150
+    }
+   ],
+   "decoration_methods": [
+    "engraving"
+   ]
+  },
+  {
+   "id": 397080,
+   "title": "Small / Gray / Black",
+   "options": {
+    "size": "Small",
+    "color": "Gray / Black"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "engraving",
+     "width": 1650,
+     "height": 150
+    }
+   ],
+   "decoration_methods": [
+    "engraving"
+   ]
+  },
+  {
+   "id": 397081,
+   "title": "Small / Pink / Black",
+   "options": {
+    "size": "Small",
+    "color": "Pink / Black"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "engraving",
+     "width": 1650,
+     "height": 150
+    }
+   ],
+   "decoration_methods": [
+    "engraving"
+   ]
+  },
+  {
+   "id": 397082,
+   "title": "Small / Rawhide / Black",
+   "options": {
+    "size": "Small",
+    "color": "Rawhide / Black"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "engraving",
+     "width": 1650,
+     "height": 150
+    }
+   ],
+   "decoration_methods": [
+    "engraving"
+   ]
+  },
+  {
+   "id": 397083,
+   "title": "Small / Red / Black",
+   "options": {
+    "size": "Small",
+    "color": "Red / Black"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "engraving",
+     "width": 1650,
+     "height": 150
+    }
+   ],
+   "decoration_methods": [
+    "engraving"
+   ]
+  },
+  {
+   "id": 397084,
+   "title": "Small / Teal / Black",
+   "options": {
+    "size": "Small",
+    "color": "Teal / Black"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "engraving",
+     "width": 1650,
+     "height": 150
+    }
+   ],
+   "decoration_methods": [
+    "engraving"
+   ]
+  },
+  {
+   "id": 397085,
+   "title": "Large / Blue / Silver",
+   "options": {
+    "size": "Large",
+    "color": "Blue / Silver"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "engraving",
+     "width": 1950,
+     "height": 195
+    }
+   ],
+   "decoration_methods": [
+    "engraving"
+   ]
+  },
+  {
+   "id": 397086,
+   "title": "Large / Gray / Black",
+   "options": {
+    "size": "Large",
+    "color": "Gray / Black"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "engraving",
+     "width": 1950,
+     "height": 195
+    }
+   ],
+   "decoration_methods": [
+    "engraving"
+   ]
+  },
+  {
+   "id": 397087,
+   "title": "Large / Pink / Black",
+   "options": {
+    "size": "Large",
+    "color": "Pink / Black"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "engraving",
+     "width": 1950,
+     "height": 195
+    }
+   ],
+   "decoration_methods": [
+    "engraving"
+   ]
+  },
+  {
+   "id": 397088,
+   "title": "Large / Rawhide / Black",
+   "options": {
+    "size": "Large",
+    "color": "Rawhide / Black"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "engraving",
+     "width": 1950,
+     "height": 195
+    }
+   ],
+   "decoration_methods": [
+    "engraving"
+   ]
+  },
+  {
+   "id": 397089,
+   "title": "Large / Red / Black",
+   "options": {
+    "size": "Large",
+    "color": "Red / Black"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "engraving",
+     "width": 1950,
+     "height": 195
+    }
+   ],
+   "decoration_methods": [
+    "engraving"
+   ]
+  },
+  {
+   "id": 397090,
+   "title": "Large / Teal / Black",
+   "options": {
+    "size": "Large",
+    "color": "Teal / Black"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "engraving",
+     "width": 1950,
+     "height": 195
+    }
+   ],
+   "decoration_methods": [
+    "engraving"
+   ]
+  },
+  {
+   "id": 397091,
+   "title": "Extra Large / Blue / Silver",
+   "options": {
+    "size": "Extra Large",
+    "color": "Blue / Silver"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "engraving",
+     "width": 1950,
+     "height": 270
+    }
+   ],
+   "decoration_methods": [
+    "engraving"
+   ]
+  },
+  {
+   "id": 397092,
+   "title": "Extra Large / Gray / Black",
+   "options": {
+    "size": "Extra Large",
+    "color": "Gray / Black"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "engraving",
+     "width": 1950,
+     "height": 270
+    }
+   ],
+   "decoration_methods": [
+    "engraving"
+   ]
+  },
+  {
+   "id": 397093,
+   "title": "Extra Large / Pink / Black",
+   "options": {
+    "size": "Extra Large",
+    "color": "Pink / Black"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "engraving",
+     "width": 1950,
+     "height": 270
+    }
+   ],
+   "decoration_methods": [
+    "engraving"
+   ]
+  },
+  {
+   "id": 397094,
+   "title": "Extra Large / Rawhide / Black",
+   "options": {
+    "size": "Extra Large",
+    "color": "Rawhide / Black"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "engraving",
+     "width": 1950,
+     "height": 270
+    }
+   ],
+   "decoration_methods": [
+    "engraving"
+   ]
+  },
+  {
+   "id": 397095,
+   "title": "Extra Large / Red / Black",
+   "options": {
+    "size": "Extra Large",
+    "color": "Red / Black"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "engraving",
+     "width": 1950,
+     "height": 270
+    }
+   ],
+   "decoration_methods": [
+    "engraving"
+   ]
+  },
+  {
+   "id": 397096,
+   "title": "Extra Large / Teal / Black",
+   "options": {
+    "size": "Extra Large",
+    "color": "Teal / Black"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "engraving",
+     "width": 1950,
+     "height": 270
+    }
+   ],
+   "decoration_methods": [
+    "engraving"
+   ]
+  },
+  {
+   "id": 397097,
+   "title": "Small / Black / Silver",
+   "options": {
+    "size": "Small",
+    "color": "Black / Silver"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "engraving",
+     "width": 1650,
+     "height": 150
+    }
+   ],
+   "decoration_methods": [
+    "engraving"
+   ]
+  },
+  {
+   "id": 397098,
+   "title": "Large / Black / Silver",
+   "options": {
+    "size": "Large",
+    "color": "Black / Silver"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "engraving",
+     "width": 1950,
+     "height": 195
+    }
+   ],
+   "decoration_methods": [
+    "engraving"
+   ]
+  },
+  {
+   "id": 397099,
+   "title": "Extra Large / Black / Silver",
+   "options": {
+    "size": "Extra Large",
+    "color": "Black / Silver"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "engraving",
+     "width": 1950,
+     "height": 270
+    }
+   ],
+   "decoration_methods": [
+    "engraving"
+   ]
+  },
+  {
+   "id": 397100,
+   "title": "Medium / Black / Silver",
+   "options": {
+    "size": "Medium",
+    "color": "Black / Silver"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "engraving",
+     "width": 1795,
+     "height": 189
+    }
+   ],
+   "decoration_methods": [
+    "engraving"
+   ]
+  },
+  {
+   "id": 397101,
+   "title": "Medium / Blue / Silver",
+   "options": {
+    "size": "Medium",
+    "color": "Blue / Silver"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "engraving",
+     "width": 1795,
+     "height": 189
+    }
+   ],
+   "decoration_methods": [
+    "engraving"
+   ]
+  },
+  {
+   "id": 397102,
+   "title": "Medium / Gray / Black",
+   "options": {
+    "size": "Medium",
+    "color": "Gray / Black"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "engraving",
+     "width": 1795,
+     "height": 189
+    }
+   ],
+   "decoration_methods": [
+    "engraving"
+   ]
+  },
+  {
+   "id": 397103,
+   "title": "Medium / Pink / Black",
+   "options": {
+    "size": "Medium",
+    "color": "Pink / Black"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "engraving",
+     "width": 1795,
+     "height": 189
+    }
+   ],
+   "decoration_methods": [
+    "engraving"
+   ]
+  },
+  {
+   "id": 397104,
+   "title": "Medium / Rawhide / Black",
+   "options": {
+    "size": "Medium",
+    "color": "Rawhide / Black"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "engraving",
+     "width": 1795,
+     "height": 189
+    }
+   ],
+   "decoration_methods": [
+    "engraving"
+   ]
+  },
+  {
+   "id": 397105,
+   "title": "Medium / Red / Black",
+   "options": {
+    "size": "Medium",
+    "color": "Red / Black"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "engraving",
+     "width": 1795,
+     "height": 189
+    }
+   ],
+   "decoration_methods": [
+    "engraving"
+   ]
+  },
+  {
+   "id": 397106,
+   "title": "Medium / Teal / Black",
+   "options": {
+    "size": "Medium",
+    "color": "Teal / Black"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "engraving",
+     "width": 1795,
+     "height": 189
+    }
+   ],
+   "decoration_methods": [
+    "engraving"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,68 @@
+/* La sagoma del pezzo e la finestra incisa, sopra la tela dell'editor.
+ *
+ * PERCHE' UN FILE A PARTE
+ * Le regole di .fabric-studio__shape-guide stanno in assets/perla-studio.css,
+ * che nel repository non c'e': il tema e' stato costruito altrove e qui
+ * arrivano solo i file perla-*. Aggiungere righe la' dentro vorrebbe dire
+ * modificare a scatola chiusa un file che non si puo' rileggere. Questo file
+ * si carica DOPO e aggiunge soltanto: non riscrive nessuna regola esistente.
+ *
+ * Lo carica sections/main-product.liquid, e solo sui tipi che hanno una riga
+ * in snippets/perla-forme-varianti.liquid -- oggi i tre americani nuovi.
+ */
+
+/* Il tracciato della sagoma. perla-studio.css veste gia' <polygon> (la
+ * bandana); <path> e' nuovo e va vestito uguale, se no il cuore e l'osso
+ * uscirebbero neri pieni sopra al disegno del cliente. */
+.fabric-studio__shape-guide-svg path {
+  fill: none;
+  stroke: var(--studio-guide, #2f6fed);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+/* LA FINESTRA
+ * Quattro pannelli attorno al rettangolo utile invece di una maschera:
+ * clip-path su un elemento che deve restare trasparente al tocco e' piu'
+ * fragile, e qui non serve -- il rettangolo e' un rettangolo. I pannelli
+ * velano quello che il fornitore NON incide, cosi' si vede a colpo d'occhio
+ * dove il nome arriva davvero. La cornice e' tratteggiata e in oro per non
+ * confondersi con la sagoma, che e' blu e continua. */
+.fabric-studio__finestra {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.fabric-studio__fuori {
+  position: absolute;
+  /* Velo, non coperchio: sotto c'e' il disegno del cliente e nasconderlo
+   * sarebbe peggio del difetto. Il messaggio lo porta la cornice
+   * tratteggiata, il velo dice solo "di qua e' un'altra cosa". */
+  background: color-mix(in srgb, var(--color-bg, #fff) 70%, transparent);
+}
+
+.fabric-studio__fuori--alto { left: 0; right: 0; top: 0; }
+.fabric-studio__fuori--basso { left: 0; right: 0; bottom: 0; }
+.fabric-studio__fuori--sx { left: 0; }
+.fabric-studio__fuori--dx { right: 0; }
+
+.fabric-studio__finestra-bordo {
+  position: absolute;
+  border: 1.5px dashed var(--color-gold, #c8862b);
+}
+
+/* Mentre la sezione si ricostruisce dopo un cambio di variante che cambia
+ * l'area (vedi assets/perla-forma.js) il riquadro resta al suo posto e si
+ * spegne appena: sparire e ricomparire farebbe saltare la pagina sotto le
+ * dita di chi ha appena toccato una pastiglia. */
+.product-personalize.is-rifacendo {
+  opacity: .55;
+  transition: opacity .18s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .product-personalize.is-rifacendo { transition: none; }
+}

@@ -1,0 +1,32 @@
+{
+ "fetchedAt": null,
+ "blueprint": {
+  "id": 570
+ },
+ "providers": [
+  {
+   "id": 70
+  }
+ ],
+ "printProviderDetail": null,
+ "variants": [
+  {
+   "id": 71135,
+   "title": "16oz",
+   "options": {
+    "size": "16oz"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "dye-sublimation",
+     "width": 2760,
+     "height": 750
+    }
+   ],
+   "decoration_methods": [
+    "dye-sublimation"
+   ]
+  }
+ ]
+}

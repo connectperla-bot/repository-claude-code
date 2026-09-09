@@ -72,6 +72,78 @@ const VARIANTI = {
     '1"': 70870, 'Unica (2,5 cm)': 70870,
   },
 
+  // ---- i tre americani nuovi del 4 settembre ------------------------------
+  //
+  // Qui i titoli sono ancora quelli inglesi che arrivano da Printify, perche'
+  // questi prodotti sono nati oggi e nessuno li ha ancora tradotti. Il giorno
+  // che si traducono si aggiunge la riga italiana ACCANTO a quella inglese,
+  // come gia' fatto per cuccia e bandana: gli ordini che stanno in carrello
+  // in quel momento arrivano ancora col titolo vecchio, e se la mappa
+  // conoscesse solo il nuovo si fermerebbero.
+  //
+  // Il collare ne ha ventotto -- quattro taglie per sette colori di pelle --
+  // ed e' il caso in cui una mappa serve di piu': con una variante fissa,
+  // chi compra una Extra Large nera riceverebbe una Small blu.
+
+  // printify-blueprints/10700_217.json (Leather Pet Collar, Fulfill Engine)
+  collare_pelle: {
+    'Small / Black / Silver': 397097,
+    'Small / Blue / Silver': 397079,
+    'Small / Gray / Black': 397080,
+    'Small / Pink / Black': 397081,
+    'Small / Rawhide / Black': 397082,
+    'Small / Red / Black': 397083,
+    'Small / Teal / Black': 397084,
+    'Medium / Black / Silver': 397100,
+    'Medium / Blue / Silver': 397101,
+    'Medium / Gray / Black': 397102,
+    'Medium / Pink / Black': 397103,
+    'Medium / Rawhide / Black': 397104,
+    'Medium / Red / Black': 397105,
+    'Medium / Teal / Black': 397106,
+    'Large / Black / Silver': 397098,
+    'Large / Blue / Silver': 397085,
+    'Large / Gray / Black': 397086,
+    'Large / Pink / Black': 397087,
+    'Large / Rawhide / Black': 397088,
+    'Large / Red / Black': 397089,
+    'Large / Teal / Black': 397090,
+    'Extra Large / Black / Silver': 397099,
+    'Extra Large / Blue / Silver': 397091,
+    'Extra Large / Gray / Black': 397092,
+    'Extra Large / Pink / Black': 397093,
+    'Extra Large / Rawhide / Black': 397094,
+    'Extra Large / Red / Black': 397095,
+    'Extra Large / Teal / Black': 397096,
+  },
+  // printify-blueprints/10674_228.json (Pet Tag Engraving, Taylor)
+  medaglietta_incisa: {
+    'Circle / Black / One size': 397011,
+    'Circle / Blue / One size': 397012,
+    'Circle / Silver / One size': 397013,
+    'Circle / Red / One size': 397014,
+    'Circle / Pink / One size': 397015,
+    'Heart / Black / One size': 397016,
+    'Heart / Blue / One size': 397017,
+    'Heart / Silver / One size': 397018,
+    'Heart / Red / One size': 397019,
+    'Heart / Pink / One size': 397020,
+    'Bone / Black / One size': 397021,
+    'Bone / Blue / One size': 397022,
+    'Bone / Silver / One size': 397023,
+    'Bone / Red / One size': 397024,
+    'Bone / Pink / One size': 397025,
+  },
+  // printify-blueprints/10740_72.json (Pet Parka Jacket, Print Clever)
+  giacchetto: {
+    'XS / Khaki': 399940,
+    'S / Khaki': 399938,
+    'M / Khaki': 399937,
+    'L / Khaki': 399936,
+    'XL / Khaki': 399939,
+    '2XL / Khaki': 399935,
+  },
+
   // ---- linea EU, fornitore Printful (printful-catalog/*.json) -------------
   //
   // ROUND 44 -- fino a ieri questi tipi non erano qui dentro, e finivano nel

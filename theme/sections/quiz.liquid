@@ -1,0 +1,280 @@
+{%- comment -%}
+  QUIZ — Round 25.
+
+  Prima faceva cinque domande e alla fine apriva una collezione: le risposte
+  non cambiavano niente. Adesso due domande costruiscono un consiglio vero.
+
+  DOVE VIVETE decide la palette (colori che stanno bene con lo sfondo di tutti
+  i giorni), COSA CERCHI decide il tipo. Quattro palette per quattro tipi fanno
+  sedici combinazioni, e per ognuna c'e' un prodotto scelto a mano.
+
+  Il colore del pelo e la taglia non cambiano il prodotto: cambiano la frase di
+  spiegazione. Sono consigli veri (contrasto, misura), non riempitivo.
+
+  REGIONE: i prodotti sono in due famiglie, Printify (globale) e Printful (UE).
+  Il handle giusto si sceglie qui, a monte, perche' Liquid puo' leggere al
+  massimo una ventina di prodotti per pagina: sedici lookup ci stanno, trentadue
+  no. Per sapere se il visitatore e' UE si interroga 'perla-region-hidden', che
+  resta l'unico posto dove vive la lista dei paesi.
+
+  La navigazione (passi, barra, nome, link finale) resta di initQuiz in
+  global.js: qui si aggiunge soltanto lo strato dei consigli, che ascolta i
+  click per conto suo e non tocca le variabili di nessuno.
+{%- endcomment -%}
+{%- liquid
+  assign c1 = section.settings.collection_1
+  assign c2 = section.settings.collection_2
+  assign c3 = section.settings.collection_3
+  assign c4 = section.settings.collection_4
+  assign def = section.settings.collection_default
+  assign def_url = def.url | default: routes.all_products_collection_url
+-%}
+{%- capture perla_eu_probe -%}{% render 'perla-region-hidden', link_url: 'medagliette-personalizzate' %}{%- endcapture -%}
+{%- assign perla_is_eu = false -%}
+{%- if perla_eu_probe contains '1' -%}{%- assign perla_is_eu = true -%}{%- endif -%}
+
+{%- comment -%}
+  palette|tipo|handle UE|handle globale
+{%- endcomment -%}
+{%- capture perla_combo_raw -%}
+citta|collare|collare-eu-minimal-antracite-argento-fornitore-europeo|monogrammed-noir-dog-collar-elegant-black-gold-pattern-with-initials,
+citta|guinzaglio|guinzaglio-eu-geometrico-fornitore-europeo|classic-black-dog-collar-durable-everyday-adjustable-collar-for-dogs,
+citta|bandana|bandana-eu-diamanti-nero-argento-fornitore-europeo|perla-italia-bandana-geometric-silver,
+citta|ciotola|ciotola-eu-geometrico-fornitore-europeo|perla-italy-ciotola-neutro-personalizza-il-tuo-design,
+campagna|collare|collare-eu-foglia-di-salvia-verde-salvia-oro-fornitore-europeo|olive-leaf-dog-collar-botanical-green-pattern-pet-collar,
+campagna|guinzaglio|guinzaglio-eu-smeraldo-fornitore-europeo|sage-floral-dog-collar-personalized-laurel-leaf-pet-collar,
+campagna|bandana|bandana-eu-ulivo-verde-salvia-fornitore-europeo|perla-italia-bandana-botanical-sage,
+campagna|ciotola|ciotola-eu-smeraldo-fornitore-europeo|perla-italy-ciotola-neutro-personalizza-il-tuo-design,
+mare|collare|collare-eu-onda-navy-oro-fornitore-europeo|perla-italia-collare-modern-wave-navy-gold,
+mare|guinzaglio|guinzaglio-eu-onda-fornitore-europeo|perla-italia-collare-modern-herringbone-teal,
+mare|bandana|bandana-eu-marinara-fornitore-europeo|perla-italia-bandana-wave-teal,
+mare|ciotola|ciotola-eu-petrolio-fornitore-europeo|perla-italy-ciotola-neutro-personalizza-il-tuo-design,
+casa|collare|collare-eu-damasco-bordeaux-oro-fornitore-europeo|perla-italia-collare-damask-burgundy-gold,
+casa|guinzaglio|guinzaglio-eu-damasco-bordeaux-oro-fornitore-europeo|maroon-damask-dog-collar-elegant-floral-pattern-pet-collar,
+casa|bandana|bandana-eu-damasco-reale-bordeaux-oro-fornitore-europeo|vintage-damask-pet-bandana-burgundy-gold-classic-collar-scarf-for-dogs-cats,
+casa|ciotola|ciotola-eu-damasco-bordeaux-oro-fornitore-europeo|perla-italy-ciotola-neutro-personalizza-il-tuo-design
+{%- endcapture -%}
+{%- assign perla_combos = perla_combo_raw | strip_newlines | split: ',' -%}
+
+<section class="section">
+  <div class="page-width">
+    <div class="quiz" data-quiz
+      data-pet-fallback="{{ 'sections.quiz.fallback' | t }}"
+      data-default-collection="{{ def_url }}"
+      data-frase-citta="{{ 'sections.quiz.luogo_frase_citta' | t | escape_once }}"
+      data-frase-campagna="{{ 'sections.quiz.luogo_frase_campagna' | t | escape_once }}"
+      data-frase-mare="{{ 'sections.quiz.luogo_frase_mare' | t | escape_once }}"
+      data-frase-casa="{{ 'sections.quiz.luogo_frase_casa' | t | escape_once }}"
+      data-pelo-chiaro="{{ 'sections.quiz.pelo_hint_chiaro' | t | escape_once }}"
+      data-pelo-scuro="{{ 'sections.quiz.pelo_hint_scuro' | t | escape_once }}"
+      data-pelo-rosso="{{ 'sections.quiz.pelo_hint_rosso' | t | escape_once }}"
+      data-pelo-misto="{{ 'sections.quiz.pelo_hint_misto' | t | escape_once }}"
+      data-taglia-small="{{ 'sections.quiz.taglia_hint_small' | t | escape_once }}"
+      data-taglia-medium="{{ 'sections.quiz.taglia_hint_medium' | t | escape_once }}"
+      data-taglia-large="{{ 'sections.quiz.taglia_hint_large' | t | escape_once }}"
+      data-taglia-cat="{{ 'sections.quiz.taglia_hint_cat' | t | escape_once }}"
+      data-collection-map='{"c1":"{{ c1.url | default: def_url }}","c2":"{{ c2.url | default: def_url }}","c3":"{{ c3.url | default: def_url }}","c4":"{{ c4.url | default: def_url }}"}'>
+      <div class="quiz__inner">
+        <div class="quiz__progress" aria-hidden="true"><span></span></div>
+        <span class="eyebrow" data-scramble>{{ 'sections.quiz.eyebrow' | t }}</span>
+
+        {%- comment -%} 1 — nome {%- endcomment -%}
+        <div class="quiz__step is-active" data-key="petname">
+          <h2 class="quiz__q">{{ 'sections.quiz.q_name' | t }}</h2>
+          {%- comment -%}
+            ROUND 52 — il campo aveva solo un placeholder ("Es. Rocky"), che
+            non e' un'etichetta: sparisce appena si scrive, e in modalita'
+            moduli un lettore di schermo legge il campo senza la domanda che
+            sta nell'h2 sopra. Cosi' il primo campo del quiz si annunciava
+            "casella di testo" e basta. L'aria-label ripete la domanda, che
+            e' gia' scritta e gia' tradotta.
+          {%- endcomment -%}
+          <div class="quiz__field">
+            <input type="text" aria-label="{{ 'sections.quiz.q_name' | t | escape }}" placeholder="{{ 'sections.quiz.name_ph' | t }}" autocomplete="off">
+          </div>
+          <div class="quiz__nav"><span></span><button type="button" class="btn btn--gold" data-quiz-next>{{ 'sections.quiz.btn_next' | t }}</button></div>
+        </div>
+
+        {%- comment -%} 2 — dove vivete: decide la palette {%- endcomment -%}
+        <div class="quiz__step" data-key="luogo">
+          <h2 class="quiz__q">{{ 'sections.quiz.q_luogo' | t }}</h2>
+          <div class="quiz__options">
+            <button type="button" class="quiz__option" data-value="citta"><span class="em">🏙️</span>{{ 'sections.quiz.luogo_citta' | t }}</button>
+            <button type="button" class="quiz__option" data-value="campagna"><span class="em">🌿</span>{{ 'sections.quiz.luogo_campagna' | t }}</button>
+            <button type="button" class="quiz__option" data-value="mare"><span class="em">🌊</span>{{ 'sections.quiz.luogo_mare' | t }}</button>
+            <button type="button" class="quiz__option" data-value="casa"><span class="em">🕯️</span>{{ 'sections.quiz.luogo_casa' | t }}</button>
+          </div>
+          <div class="quiz__nav"><button type="button" class="quiz__back" data-quiz-back>{{ 'sections.quiz.btn_back' | t }}</button><span></span></div>
+        </div>
+
+        {%- comment -%} 3 — taglia: decide la misura consigliata {%- endcomment -%}
+        <div class="quiz__step" data-key="taglia">
+          <h2 class="quiz__q">{{ 'sections.quiz.q_type' | t }}</h2>
+          <div class="quiz__options">
+            <button type="button" class="quiz__option" data-value="small"><span class="em">🐕</span>{{ 'sections.quiz.type_small' | t }}</button>
+            <button type="button" class="quiz__option" data-value="medium"><span class="em">🐕‍🦺</span>{{ 'sections.quiz.type_medium' | t }}</button>
+            <button type="button" class="quiz__option" data-value="large"><span class="em">🦮</span>{{ 'sections.quiz.type_large' | t }}</button>
+            <button type="button" class="quiz__option" data-value="cat"><span class="em">🐈</span>{{ 'sections.quiz.type_cat' | t }}</button>
+          </div>
+          <div class="quiz__nav"><button type="button" class="quiz__back" data-quiz-back>{{ 'sections.quiz.btn_back' | t }}</button><span></span></div>
+        </div>
+
+        {%- comment -%} 4 — colore del pelo: decide il consiglio sul contrasto {%- endcomment -%}
+        <div class="quiz__step" data-key="pelo">
+          <h2 class="quiz__q">{{ 'sections.quiz.q_pelo' | t }}</h2>
+          <div class="quiz__options">
+            <button type="button" class="quiz__option" data-value="chiaro"><span class="em">🤍</span>{{ 'sections.quiz.pelo_chiaro' | t }}</button>
+            <button type="button" class="quiz__option" data-value="scuro"><span class="em">🖤</span>{{ 'sections.quiz.pelo_scuro' | t }}</button>
+            <button type="button" class="quiz__option" data-value="rosso"><span class="em">🦊</span>{{ 'sections.quiz.pelo_rosso' | t }}</button>
+            <button type="button" class="quiz__option" data-value="misto"><span class="em">🐾</span>{{ 'sections.quiz.pelo_misto' | t }}</button>
+          </div>
+          <div class="quiz__nav"><button type="button" class="quiz__back" data-quiz-back>{{ 'sections.quiz.btn_back' | t }}</button><span></span></div>
+        </div>
+
+        {%- comment -%} 5 — cosa cerchi: decide il tipo (e la collezione del bottone) {%- endcomment -%}
+        <div class="quiz__step" data-key="interesse">
+          <h2 class="quiz__q">{{ 'sections.quiz.q_interest' | t }}</h2>
+          <div class="quiz__options">
+            <button type="button" class="quiz__option" data-value="c1" data-tipo="collare"><span class="em">🎀</span>{{ 'sections.quiz.int_collare' | t }}</button>
+            <button type="button" class="quiz__option" data-value="c1" data-tipo="guinzaglio"><span class="em">🦴</span>{{ 'sections.quiz.int_guinzaglio' | t }}</button>
+            <button type="button" class="quiz__option" data-value="c4" data-tipo="bandana"><span class="em">🧣</span>{{ 'sections.quiz.int_bandana' | t }}</button>
+            <button type="button" class="quiz__option" data-value="c3" data-tipo="ciotola"><span class="em">🍽️</span>{{ 'sections.quiz.int_ciotola' | t }}</button>
+          </div>
+          <div class="quiz__nav"><button type="button" class="quiz__back" data-quiz-back>{{ 'sections.quiz.btn_back' | t }}</button><span></span></div>
+        </div>
+
+        {%- comment -%} RISULTATO {%- endcomment -%}
+        <div class="quiz__result">
+          <span class="pearl" style="margin:0 auto 1.2rem"></span>
+          <h2>{{ 'sections.quiz.result_title' | t }} <span class="pet-name" data-petname></span>!</h2>
+
+          <div class="quiz__consigli" data-quiz-consigli hidden>
+            <p class="quiz__hint" data-quiz-hint></p>
+            <div class="quiz__picks">
+              {%- for combo in perla_combos -%}
+                {%- assign campi = combo | strip | split: '|' -%}
+                {%- if perla_is_eu -%}
+                  {%- assign handle_scelto = campi[2] -%}
+                {%- else -%}
+                  {%- assign handle_scelto = campi[3] -%}
+                {%- endif -%}
+                {%- assign prodotto = all_products[handle_scelto] -%}
+                {%- if prodotto.id -%}
+                  <a class="quiz__pick" data-combo="{{ campi[0] }}|{{ campi[1] }}" href="{{ prodotto.url }}" hidden>
+                    {%- comment -%}
+                      Niente src qui, e niente loading="lazy": la foto si
+                      carica quando la scheda si apre (vedi 'mostra' piu'
+                      sotto). Con lazy dentro un elemento hidden il browser
+                      non fa mai la richiesta, l'evento load non arriva, e
+                      motion.js -- che mette .img-fade a opacita' zero su ogni
+                      lazy piu' larga di 120px e la toglie al load -- lasciava
+                      la foto invisibile. Misurato: complete=false, opacity=0.
+                      Cosi' invece parte una sola richiesta, quella giusta.
+                    {%- endcomment -%}
+                    {%- if prodotto.featured_image -%}
+                      <img class="quiz__pick-img" data-src="{{ prodotto.featured_image | image_url: width: 320 }}" alt="{{ prodotto.featured_image.alt | escape }}" width="88" height="88" decoding="async">
+                    {%- endif -%}
+                    <span class="quiz__pick-testo">
+                      <span class="quiz__pick-nome">{{ prodotto.title }}</span>
+                      <span class="quiz__pick-prezzo">{{ prodotto.price | money }}</span>
+                      <span class="quiz__pick-cta">{{ 'sections.quiz.pick_cta' | t }}</span>
+                    </span>
+                  </a>
+                {%- endif -%}
+              {%- endfor -%}
+            </div>
+          </div>
+
+          <p style="opacity:.85;max-width:42ch;margin-inline:auto">{{ 'sections.quiz.result_text' | t }}</p>
+          <div class="quiz-code">{{ 'sections.quiz.code' | t }}</div>
+          <div class="btn-row" style="justify-content:center;margin:.4rem 0 1.6rem"><a class="btn btn--gold" data-quiz-shop-link href="{{ def_url }}">{{ 'sections.quiz.shop_btn' | t }} <span data-petname></span></a></div>
+          <div style="max-width:440px;margin-inline:auto;text-align:left">
+            <p style="font-weight:600;color:#fff;text-align:center">{{ 'sections.quiz.news_heading' | t }}</p>
+            {%- form 'customer', class: 'newsletter__form' -%}
+              <input type="hidden" name="contact[tags]" value="newsletter, quiz, prospect">
+              <input type="email" name="contact[email]" placeholder="{{ 'sections.quiz.news_ph' | t }}" required aria-label="Email">
+              <button type="submit" class="btn">{{ 'sections.quiz.news_button' | t }}</button>
+              {%- if form.posted_successfully? -%}<p class="form-note form-note--success" style="width:100%">{{ 'sections.quiz.news_success' | t }}</p>{%- endif -%}
+            {%- endform -%}
+            <p class="quiz-consent">{{ 'sections.quiz.consent' | t }}</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  (function () {
+    var quiz = document.querySelector('[data-quiz]');
+    if (!quiz || quiz.__consigliPronti) return;
+    quiz.__consigliPronti = true;
+
+    var risposte = {};
+    var box = quiz.querySelector('[data-quiz-consigli]');
+    var frase = quiz.querySelector('[data-quiz-hint]');
+    var schede = quiz.querySelectorAll('.quiz__pick');
+    var risultato = quiz.querySelector('.quiz__result');
+    if (!box || !risultato) return;
+
+    quiz.addEventListener('click', function (e) {
+      var opt = e.target.closest('.quiz__option');
+      if (!opt || !quiz.contains(opt)) return;
+      var passo = opt.closest('.quiz__step');
+      if (!passo) return;
+      var chiave = passo.getAttribute('data-key');
+      if (chiave === 'interesse') {
+        risposte.tipo = opt.getAttribute('data-tipo') || '';
+      } else if (chiave) {
+        risposte[chiave] = opt.getAttribute('data-value') || '';
+      }
+    });
+
+    function testo(nome) {
+      return quiz.getAttribute(nome) || '';
+    }
+
+    function mostra() {
+      var combo = (risposte.luogo || '') + '|' + (risposte.tipo || '');
+      var trovata = false;
+      for (var i = 0; i < schede.length; i++) {
+        var giusta = schede[i].getAttribute('data-combo') === combo;
+        schede[i].hidden = !giusta;
+        if (!giusta) continue;
+        trovata = true;
+        var foto = schede[i].querySelector('.quiz__pick-img');
+        if (foto && !foto.getAttribute('src')) foto.setAttribute('src', foto.getAttribute('data-src'));
+      }
+      var pezzi = [];
+      if (risposte.luogo) pezzi.push(testo('data-frase-' + risposte.luogo));
+      if (risposte.pelo) pezzi.push(testo('data-pelo-' + risposte.pelo));
+      if (risposte.taglia) pezzi.push(testo('data-taglia-' + risposte.taglia));
+      pezzi = pezzi.filter(function (p) { return p; });
+      if (frase) frase.textContent = pezzi.join(' ');
+      box.hidden = !(trovata || pezzi.length);
+    }
+
+    /* initQuiz apre il risultato aggiungendo is-active: e' il nostro segnale. */
+    if (window.MutationObserver) {
+      new MutationObserver(function () {
+        if (risultato.classList.contains('is-active')) mostra();
+      }).observe(risultato, { attributes: true, attributeFilter: ['class'] });
+    }
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Quiz prodotto",
+  "settings": [
+    { "type": "paragraph", "content": "Quiz 'Trova il prodotto perfetto'. Le risposte su dove vivete e cosa cerchi scelgono un prodotto vero fra sedici combinazioni; il colore del pelo e la taglia scrivono il perche'. Le collezioni qui sotto servono al bottone finale." },
+    { "type": "collection", "id": "collection_default", "label": "Collezione predefinita" },
+    { "type": "collection", "id": "collection_1", "label": "Bottone finale → Collari & guinzagli" },
+    { "type": "collection", "id": "collection_2", "label": "Bottone finale → Cucce & letti" },
+    { "type": "collection", "id": "collection_3", "label": "Bottone finale → Ciotole" },
+    { "type": "collection", "id": "collection_4", "label": "Bottone finale → Bandane" }
+  ],
+  "presets": [ { "name": "Quiz prodotto" } ]
+}
+{% endschema %}

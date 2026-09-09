@@ -209,5 +209,115 @@ prova('i nomi italiani portano allo stesso id di quelli inglesi', function () {
   }
 });
 
+// --------------------------------------------------------------------------
+// La posizione di stampa
+// --------------------------------------------------------------------------
+//
+// Il giacchetto parka (blueprint 10740) il fronte NON ce l'ha: l'unica
+// posizione e' 'back_dtf'. Fino a ROUND 54 sia l'ordine (providers/
+// printify-client.js) sia l'anteprima (perla-upload-endpoint.js) scrivevano
+// 'front' a mano, e un ordine con una posizione inesistente sarebbe stato
+// rifiutato o -- peggio -- stampato senza il disegno pagato. Adesso la
+// posizione viene dalla configurazione del tipo; qui si controlla che quella
+// configurazione dica il vero, confrontandola con i blueprint versionati.
+
+const BLUEPRINT_DEL_TIPO = {
+  collare_pelle: '10700_217.json',
+  medaglietta_incisa: '10674_228.json',
+  giacchetto: '10740_72.json',
+};
+
+function posizioniDelBlueprint(file) {
+  const dati = JSON.parse(fs.readFileSync(
+    path.join(__dirname, '..', 'printify-blueprints', file), 'utf8'));
+  const fuori = new Set();
+  for (const v of dati.variants) {
+    for (const ph of v.placeholders || []) fuori.add(ph.position);
+  }
+  return fuori;
+}
+
+// I due file si leggono come testo invece di richiederli: perla-upload-endpoint
+// avvia un server appena viene caricato, e perla-printify-order-sync legge
+// l'ambiente. Qui interessa cosa c'e' scritto, non cosa fanno.
+function sorgente(nome) {
+  return fs.readFileSync(path.join(__dirname, '..', 'scripts', nome), 'utf8');
+}
+
+console.log('\nLa posizione di stampa e\' una che esiste');
+
+prova('il parka ordina sul dorso, non su un fronte che non ha', function () {
+  const testo = sorgente('perla-printify-order-sync.js');
+  const blocco = testo.slice(testo.indexOf('    giacchetto: {'));
+  const riga = /position:\s*'([a-z_]+)'/.exec(blocco.slice(0, 500));
+  assert.ok(riga, 'il tipo giacchetto non dichiara nessuna position');
+  const vere = posizioniDelBlueprint(BLUEPRINT_DEL_TIPO.giacchetto);
+  assert.ok(vere.has(riga[1]),
+    'ordina su "' + riga[1] + '", che il blueprint non conosce: ' + [...vere].join(', '));
+  assert.ok(!vere.has('front'),
+    'se il fronte esistesse, questa riga sarebbe di troppo e andrebbe tolta');
+});
+
+prova('l\'anteprima usa la stessa posizione dell\'ordine', function () {
+  const riga = /const MOCKUP_POSITION = \{([^}]*)\}/.exec(sorgente('perla-upload-endpoint.js'));
+  assert.ok(riga, 'perla-upload-endpoint.js non ha piu\' MOCKUP_POSITION');
+  assert.ok(/GIACCHETTO:\s*'back_dtf'/.test(riga[1]),
+    'l\'anteprima del parka non segue l\'ordine: ' + riga[1].trim());
+});
+
+prova('i tre tipi nuovi sanno generare un\'anteprima', function () {
+  const testo = sorgente('perla-upload-endpoint.js');
+  const elenco = /const MOCKUP_PRODUCT_TYPES = \[([\s\S]*?)\]/.exec(testo);
+  assert.ok(elenco, 'MOCKUP_PRODUCT_TYPES non si trova piu\'');
+  for (const tipo of Object.keys(BLUEPRINT_DEL_TIPO)) {
+    assert.ok(elenco[1].indexOf("'" + tipo.toUpperCase() + "'") !== -1,
+      tipo + ' non e\' fra i tipi che generano l\'anteprima: "Salva anteprima" ' +
+      'risponderebbe "Tipo prodotto non riconosciuto"');
+  }
+});
+
+prova('l\'anteprima dei tre nuovi non dipende da un incolla a mano', function () {
+  // Fino a ROUND 55 blueprint/fornitore/variante si leggevano solo
+  // dall'ambiente: finche' qualcuno non apriva Render e incollava nove
+  // variabili, "Salva anteprima" rispondeva "Configurazione mancante".
+  // Adesso ci sono le riserve nel codice -- ma una riserva SBAGLIATA e'
+  // peggio di una mancante, perche' non lo dice: crea il prodotto
+  // temporaneo su un altro blueprint e mostra al cliente l'anteprima di
+  // un altro oggetto. Quindi si confrontano con i blueprint versionati.
+  const testo = sorgente('perla-upload-endpoint.js');
+  const blocco = /const MOCKUP_RISERVA = \{([\s\S]*?)\n\};/.exec(testo);
+  assert.ok(blocco, 'MOCKUP_RISERVA non si trova piu\' in perla-upload-endpoint.js');
+  const righe = [...blocco[1].matchAll(
+    /(\w+):\s*\{\s*blueprint:\s*(\d+),\s*provider:\s*(\d+),\s*variant:\s*(\d+)\s*\}/g)];
+  assert.strictEqual(righe.length, 3, 'attese 3 riserve, trovate ' + righe.length);
+
+  for (const [, tipo, bp, pp, variante] of righe) {
+    const chiave = tipo.toLowerCase();
+    const atteso = BLUEPRINT_DEL_TIPO[chiave];
+    assert.ok(atteso, 'riserva per un tipo che qui non si controlla: ' + tipo);
+    assert.strictEqual(atteso, bp + '_' + pp + '.json',
+      tipo + ': la riserva dice blueprint ' + bp + ' e fornitore ' + pp +
+      ', il catalogo dice ' + atteso.replace('.json', ''));
+    const dati = JSON.parse(fs.readFileSync(
+      path.join(__dirname, '..', 'printify-blueprints', atteso), 'utf8'));
+    assert.ok(dati.variants.some(v => String(v.id) === variante),
+      tipo + ': la variante ' + variante + ' non esiste nel blueprint');
+    // e deve essere una di quelle che vendiamo davvero
+    assert.ok(Object.values(varianti.VARIANTI[chiave]).map(String).includes(variante),
+      tipo + ': la variante ' + variante + ' non e\' fra quelle mappate in varianti-fornitore.js');
+  }
+});
+
+prova('gli altri due nuovi stampano dove dice il loro blueprint', function () {
+  // collare e medaglietta incisa non dichiarano una position: il ripiego e'
+  // 'front', e per loro e' giusto -- ma solo finche' il blueprint lo conferma
+  for (const tipo of ['collare_pelle', 'medaglietta_incisa']) {
+    const vere = posizioniDelBlueprint(BLUEPRINT_DEL_TIPO[tipo]);
+    assert.ok(vere.has('front'),
+      tipo + ' non ha piu\' il fronte (' + [...vere].join(', ') +
+      '): serve una position in PRODUCT_TYPE_CONFIG e in MOCKUP_POSITION');
+  }
+});
+
 console.log('\n' + passati + ' verifiche superate.' +
   (process.exitCode ? ' CI SONO FALLIMENTI.' : ''));

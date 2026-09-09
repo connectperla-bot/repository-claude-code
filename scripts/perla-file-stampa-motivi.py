@@ -120,7 +120,9 @@ def carica_indice():
         dati = json.load(fh)
     indice = {}
     for voce in dati:
-        m = re.match(r'(\w+)\s+"(.+)"', voce.get("title", ""))
+        # Virgolette dritte o "a sesto": vedi perla-eu-motivi-corretti.py.
+        m = re.match(u'(\\w+)\\s+[“"«](.+)[”"»]\\s*$',
+                     voce.get("title", ""))
         if not m:
             continue
         tipo, motivo = m.group(1), m.group(2)

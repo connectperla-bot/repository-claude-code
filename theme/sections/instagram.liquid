@@ -1,0 +1,50 @@
+<section class="section {% if section.settings.bg == 'cream' %}section--cream{% endif %}" data-drift="1">
+  <div class="page-width">
+    <div class="section-head" data-reveal>
+      {%- if section.settings.eyebrow != blank -%}<span class="eyebrow">{{ section.settings.eyebrow }}</span>{%- endif -%}
+      {%- if section.settings.heading != blank -%}<h2 data-words>{{ section.settings.heading }}</h2>{%- endif -%}
+      {%- if section.settings.handle != blank -%}<p><a class="link-underline" href="{{ section.settings.link }}" target="_blank" rel="noopener">{{ section.settings.handle }}</a></p>{%- endif -%}
+    </div>
+    <div class="ig-grid">
+      {%- comment -%}
+        ROUND 52 — Il nome del link stava nell'alt dell'immagine, ed era
+        "Instagram" o "Perla" per tutti e sei. Con un lettore di schermo la
+        griglia diceva sei volte la stessa parola: chi naviga per elenco di
+        link non poteva sceglierne uno. Ora il nome sta sull'ANCORA (che e'
+        il comando) e l'immagine e' decorativa con alt="", che e' come si
+        marca un'immagine il cui significato e' gia' detto dal link che la
+        contiene. Il numero serve a distinguerli fra loro.
+      {%- endcomment -%}
+      {%- for block in section.blocks -%}
+        <a href="{{ block.settings.link | default: section.settings.link | default: settings.social_instagram_link | default: routes.root_url }}" target="_blank" rel="noopener" aria-label="{{ 'sections.instagram.post_label' | t: numero: forloop.index }}" data-reveal data-reveal-delay="{{ forloop.index0 | modulo: 5 }}" {{ block.shopify_attributes }}>
+          {%- if block.settings.image != blank -%}
+            <img src="{{ block.settings.image | image_url: width: 400 }}" width="400" height="400" alt="" loading="lazy">
+          {%- else -%}
+            {%- assign ig_n = forloop.index0 | modulo: 6 | plus: 1 -%}
+            <img src="{{ 'ig-' | append: ig_n | append: '.jpg' | asset_url }}" width="400" height="400" alt="" loading="lazy">
+          {%- endif -%}
+        </a>
+      {%- endfor -%}
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Instagram",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Sopratitolo", "default": "@perlaitaly" },
+    { "type": "text", "id": "heading", "label": "Titolo", "default": "Unisciti alla #PerlaFamily" },
+    { "type": "text", "id": "handle", "label": "Handle visibile", "default": "Seguici su Instagram" },
+    { "type": "url", "id": "link", "label": "Link profilo" },
+    { "type": "select", "id": "bg", "label": "Sfondo", "options": [ {"value":"default","label":"Bianco perla"}, {"value":"cream","label":"Crema"} ], "default": "default" }
+  ],
+  "max_blocks": 12,
+  "blocks": [
+    { "type": "post", "name": "Post", "settings": [ { "type": "image_picker", "id": "image", "label": "Immagine" }, { "type": "url", "id": "link", "label": "Link post" } ] }
+  ],
+  "presets": [
+    { "name": "Instagram", "blocks": [ {"type":"post"},{"type":"post"},{"type":"post"},{"type":"post"},{"type":"post"},{"type":"post"} ] }
+  ]
+}
+{% endschema %}
