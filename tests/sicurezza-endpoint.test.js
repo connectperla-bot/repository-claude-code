@@ -56,6 +56,9 @@ async function main() {
       // credenziali finte: nessun caso provato arriva a usarle
       PRINTIFY_API_KEY: 'finta-per-il-test',
       PRINTIFY_SHOP_ID: '1',
+      // tiene ferma la spazzata delle anteprime rimaste, che all'avvio
+      // parlerebbe con Printify: qui non deve uscire niente
+      NODE_ENV: 'test',
       PORT: String(PORTA),
       RATE_MAX_AL_MINUTO: '5',
       ALLOWED_ORIGIN: 'https://perlaitaly.com',
