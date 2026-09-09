@@ -47,6 +47,17 @@
     try { return JSON.parse(el.textContent); } catch (e) { return null; }
   }
 
+  /* Il filtro `t` di Shopify restituisce la frase gia' passata per
+   * l'escape HTML, e dentro a un <script type="application/json"> nessuno
+   * la disfa: la finestra di conferma mostrerebbe "un&#39;area di stampa".
+   * Si disfano qui le cinque entita' che quell'escape produce -- a mano, e
+   * non con innerHTML, che su un testo qualsiasi sarebbe un buco. */
+  var ENTITA = { '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'" };
+
+  function testo(s) {
+    return String(s || '').replace(/&(amp|lt|gt|quot|#39);/g, function (e) { return ENTITA[e]; });
+  }
+
   function opzioniScelte(sez) {
     var scelte = [];
     var campi = sez.querySelectorAll('[data-option-index]');
@@ -141,7 +152,7 @@
           if (!v) return;
           var firma = conf.varianti[String(v.id)];
           if (!firma || firma === firmaOra) return;
-          if (editorPieno(sez) && !window.confirm(conf.avviso)) {
+          if (editorPieno(sez) && !window.confirm(testo(conf.avviso))) {
             if (primaDi) ripensaci(primaDi);
             return;
           }

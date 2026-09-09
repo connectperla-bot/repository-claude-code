@@ -536,7 +536,13 @@
                                 <path d="M14 14l1.7-1.7a1.5 1.5 0 012.1 0L21 15.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
                                 <circle cx="15.5" cy="9" r="1.4" stroke="currentColor" stroke-width="1.4"/>
                               </svg>
-                              <p class="photo-studio__empty-text">{{ 'sections.product.empty_hint' | t }}</p>
+                              <p class="photo-studio__empty-text">
+                                {%- if editor_pieno -%}
+                                  {{ 'sections.product.empty_hint' | t }}
+                                {%- else -%}
+                                  {{ 'sections.product.empty_hint_text' | t }}
+                                {%- endif -%}
+                              </p>
                             </div>
                           {%- endif -%}
 
@@ -560,7 +566,7 @@
                         <button type="button" class="photo-studio__tool" data-view-zoom-in aria-label="{{ 'sections.product.view_zoom_in' | t }}">{% render 'icon', icon: 'zoom-in' %}</button>
                       </div>
 
-                      {%- if is_blank_design -%}
+                      {%- if editor_pieno -%}
                         <div class="fabric-studio__toolbar fabric-studio__toolbar--toggle" role="group" aria-label="{{ 'sections.product.logo_variant_group' | t }}" data-logo-variant-row>
                           <button type="button" class="fabric-studio__add-btn is-active" data-logo-variant="icon">{{ 'sections.product.logo_icon_only' | t }}</button>
                           <button type="button" class="fabric-studio__add-btn" data-logo-variant="full">{{ 'sections.product.logo_with_name' | t }}</button>
@@ -569,21 +575,21 @@
 
                       {%- capture add_btn_icon -%}<svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>{%- endcapture -%}
                       <div class="fabric-studio__toolbar" role="group" aria-label="{{ 'sections.product.photo_toolbar' | t }}">
-                        {%- if is_blank_design -%}
+                        {%- if editor_pieno -%}
                           <label class="fabric-studio__add-btn" for="PetPhoto-{{ product.id }}">
                             {{ add_btn_icon }}<span>{{ 'sections.product.add_photo' | t }}</span>
                             <input type="file" id="PetPhoto-{{ product.id }}" accept="image/png,image/jpeg,image/webp" data-photo-input multiple hidden>
                           </label>
                         {%- endif -%}
                         <button type="button" class="fabric-studio__add-btn" data-add-text>{{ add_btn_icon }}{{ 'sections.product.add_text' | t }}</button>
-                        {%- if is_blank_design -%}
+                        {%- if editor_pieno -%}
                           <button type="button" class="fabric-studio__add-btn" data-sticker-toggle>{{ add_btn_icon }}{{ 'sections.product.add_sticker' | t }}</button>
                         {%- endif -%}
                         <button type="button" class="photo-studio__tool" data-undo disabled aria-label="{{ 'sections.product.photo_undo' | t }}">{% render 'icon', icon: 'return' %}</button>
                         <button type="button" class="photo-studio__tool photo-studio__tool--danger" data-clear-all aria-label="{{ 'sections.product.photo_clear_all' | t }}">{% render 'icon', icon: 'delete-photo' %}</button>
                       </div>
 
-                      {%- if is_blank_design -%}
+                      {%- if editor_pieno -%}
                       <div class="fabric-studio__stickers" data-sticker-picker hidden>
                         <button type="button" class="fabric-studio__sticker" data-add-sticker="star" aria-label="{{ 'sections.product.sticker_star' | t }}">★</button>
                         <button type="button" class="fabric-studio__sticker" data-add-sticker="heart" aria-label="{{ 'sections.product.sticker_heart' | t }}">♥</button>

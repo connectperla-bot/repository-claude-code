@@ -244,6 +244,28 @@ def il_foglio_di_stile_e_il_codice_si_caricano():
         assert os.path.exists(os.path.join(TEMA, "assets", nome)), "manca assets/%s" % nome
 
 
+def l_editor_pieno_e_gia_spento_nel_markup():
+    """Sui tipi a incisione l'editor deve offrire solo il testo.
+
+    Trovato dal vivo su Round 18: l'etichetta diceva gia' "Incisione" ma
+    "Aggiungi foto" e gli adesivi erano ancora li'. La copia dell'editor
+    dentro main-product.liquid (quella dei prodotti a un lato solo, cioe'
+    proprio questi) li teneva dietro is_blank_design, che sul neutro e' vero
+    comunque. Vanno tenuti dietro editor_pieno, che sui tipi a incisione e'
+    falso. Una foto su un laser non e' una foto: e' una macchia.
+    """
+    testo = leggi(TEMPLATE[0])
+    for gancio in ("data-photo-input", "data-sticker-toggle",
+                   "data-sticker-picker", "data-logo-variant-row"):
+        i = testo.find(gancio)
+        assert i > 0, "sparito il gancio %s" % gancio
+        aperture = re.findall(r"\{%-?\s*if ([^%]+?)-?%\}", testo[:i])
+        assert aperture, "%s: nessun if prima" % gancio
+        assert "editor_pieno" in aperture[-1], (
+            "%s e' dietro 'if %s', non dietro editor_pieno"
+            % (gancio, aperture[-1].strip()))
+
+
 def le_frasi_nuove_esistono_nelle_due_lingue():
     for lingua in ("it.default.json", "en.json"):
         testo = leggi(os.path.join(TEMA, "locales", lingua))
@@ -269,6 +291,8 @@ prova("la sagoma riceve tutto quello che le serve",
       la_sagoma_riceve_tutto_quello_che_le_serve)
 prova("il foglio di stile e il codice si caricano",
       il_foglio_di_stile_e_il_codice_si_caricano)
+prova("sui tipi a incisione l'editor pieno e' gia' spento nel markup",
+      l_editor_pieno_e_gia_spento_nel_markup)
 prova("le frasi nuove esistono nelle due lingue",
       le_frasi_nuove_esistono_nelle_due_lingue)
 
