@@ -544,6 +544,26 @@ html {
   color: var(--color-footer-bg, #0F2240);
 }
 
+/* IL DISTINTIVO DA 10 PIXEL, GUARDATO DA UN TELEFONO VERO
+   Misurato aprendo il negozio a 390x844 (iPhone 13) con un browser vero:
+   "Personalizzabile" e "Aggiungi il suo nome" escono a 10px, ed erano le due
+   scritte piu' piccole di tutta la pagina. Su uno schermo da scrivania si
+   leggono; su un telefono, che e' da dove arriva la maggior parte di chi
+   compra, no -- e sono proprio le due parole che dicono al cliente perche'
+   questo negozio e' diverso dagli altri.
+
+   Undici pixel, non dodici: il distintivo sta dentro la scheda prodotto
+   accanto a "Esaurito" e "Offerta", e deve restare un'etichetta, non
+   diventare una riga di testo. Con lo spazio fra le lettere leggermente
+   ridotto occupa la stessa larghezza di prima, quindi nessuna scheda si
+   riallunga. Solo sotto i 750px: sul desktop era gia' a posto. */
+@media screen and (max-width: 749px) {
+  .badge--custom {
+    font-size: 11px;
+    letter-spacing: 0.02em;
+  }
+}
+
 /* IL TITOLO DELL'EROE, MISURATO SUI PIXEL E NON SUL CSS
    Il fondo del titolo e' una fotografia con un velo sopra: nessun colore CSS
    lo descrive, quindi il contrasto si misura fotografando cio' che sta dietro
