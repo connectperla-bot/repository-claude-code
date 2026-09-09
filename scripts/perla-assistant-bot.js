@@ -10,6 +10,7 @@
 // e imposta GEMINI_API_KEY, poi caricalo nell'ambiente prima di avviare.
 
 const express = require('express');
+const { salute } = require('./salute');
 
 const { GEMINI_API_KEY, PORT = 3002, ALLOWED_ORIGIN = 'https://perlaitaly.com' } = process.env;
 
@@ -141,6 +142,13 @@ function limitePerIp(req, res, next) {
   }
   next();
 }
+
+// ROUND 56 -- fuori dal limite di richieste di proposito: serve a sapere se il
+// servizio e' vivo e quale versione sta rispondendo, e negarlo a chi ha appena
+// fatto dieci domande sarebbe l'opposto di cio' per cui esiste.
+app.get('/health', function (req, res) {
+  res.json(salute(process.env, 'perla-assistant-bot', ['GEMINI_API_KEY'], ['ALLOWED_ORIGIN']));
+});
 
 app.post('/assistant/ask', limitePerIp, async function (req, res) {
   const message = (req.body && req.body.message || '').toString().trim().slice(0, 500);

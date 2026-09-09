@@ -12,6 +12,7 @@ const multer = require('multer');
 const crypto = require('crypto');
 const motivoDiBase = require('./motivo-di-base');
 const { scorieDaButtare } = require('./anteprime-scorie');
+const { salute } = require('./salute');
 
 const {
   PRINTIFY_API_KEY, PRINTIFY_SHOP_ID, PRINTFUL_API_KEY, PRINTFUL_STORE_ID,
@@ -217,8 +218,15 @@ function limitePerIp(req, res, next) {
 // il limite avrebbe l'effetto opposto a quello che serve: il cliente che ha
 // gia' fatto venti richieste si vedrebbe negare proprio la sveglia, cioe'
 // quella che gli evita l'attesa.
+// Il tema chiama questa rotta per svegliare il servizio addormentato dal piano
+// gratuito, quindi deve restare leggera e senza limite di richieste. Da ROUND
+// 56 dice anche QUALE versione sta rispondendo e se le manca una chiave: vedi
+// scripts/salute.js per il perche'. Nessun valore esce mai, solo i nomi.
 app.get('/health', function (req, res) {
-  res.json({ ok: true });
+  res.json(salute(process.env, 'perla-upload-endpoint',
+    ['PRINTIFY_API_KEY'],
+    ['PRINTIFY_SHOP_ID', 'PRINTFUL_API_KEY', 'PRINTFUL_STORE_ID',
+     'CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET']));
 });
 
 app.post('/upload', limitePerIp, upload.single('photo'), async function (req, res) {

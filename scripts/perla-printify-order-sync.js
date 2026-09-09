@@ -35,6 +35,7 @@ const providerRouter = require('./provider-router');
 const variantiFornitore = require('./varianti-fornitore');
 const { segnalaRigheSenzaPersonalizzazione } = require('./righe-senza-personalizzazione');
 const evasione = require('./evasione-shopify');
+const { salute } = require('./salute');
 
 const {
   SHOPIFY_WEBHOOK_SECRET,
@@ -234,6 +235,24 @@ function verifyShopifyWebhook(req) {
     return false;
   }
 }
+
+// ROUND 56 -- questo servizio non aveva nessuna rotta che dicesse "sono vivo,
+// e sono questa versione". Quando Render ha detto "deploy failed" l'unico modo
+// di sapere se il negozio stesse servendo il codice vecchio o quello nuovo e'
+// stato mandare un ordine di prova vero e andare a guardare su Printify cosa
+// era arrivato. Adesso basta:  curl .../health
+//
+// SHOPIFY_ADMIN_TOKEN sta fra le "utili" e non fra le "richieste" di
+// proposito: senza, gli ordini si evadono lo stesso, ma un'evasione fallita
+// non lascia piu' nessun segno dove la titolare guarda (vedi segnalaSuShopify).
+// E' esattamente il tipo di mancanza che non si vede finche' non serve, ed e'
+// per questo che va elencata.
+app.get('/health', function (req, res) {
+  res.json(salute(process.env, 'perla-printify-order-sync',
+    ['SHOPIFY_WEBHOOK_SECRET', 'PRINTIFY_API_KEY', 'PRINTIFY_SHOP_ID'],
+    ['SHOPIFY_ADMIN_TOKEN', 'SHOPIFY_SHOP_DOMAIN', 'PERLA_LOGO_IMAGE_ID',
+     'CLOUDINARY_CLOUD_NAME', 'PRINTFUL_API_KEY', 'PRINTFUL_STORE_ID']));
+});
 
 // Le rotte che riportano la spedizione a Shopify vivono nel loro modulo,
 // accanto alla logica che servono: vedi evasione-shopify.js.
