@@ -1,5 +1,7 @@
 'use strict';
 
+const { riferimento } = require('../riferimento-ordine');
+
 // Client Printful — account reale collegato dal 2026-07-29 (store "Personal
 // orders"), variantId per ogni tipo EU in config/printify.local.env. Scritto
 // seguendo la documentazione ufficiale dell'API Printful (POST /orders).
@@ -130,7 +132,11 @@ async function createOrderOnPrintful(order, item, front, back, config, apiKey, a
       'X-PF-Store-Id': String(config.storeId),
     },
     body: JSON.stringify({
-      external_id: String(order.id),
+      // Un riferimento per RIGA, non per ordine: vedi riferimento-ordine.js.
+      // Con l'id del solo ordine, la seconda riga personalizzata veniva
+      // rifiutata da Printful (external_id duplicato) e la spedizione, al
+      // ritorno, non si sapeva a quale riga appartenesse.
+      external_id: riferimento(order, item),
       // ROUND 35 -- confirm:false (default): l'ordine arriva su Printful
       // come bozza in "Draft orders", in attesa che la titolare lo confermi
       // da li' (approvazione manuale voluta "all'inizio"). Diventa

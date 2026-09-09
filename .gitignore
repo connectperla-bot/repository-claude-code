@@ -74,3 +74,8 @@ generated-designs/foto-eu-da-attaccare.json
 # perla-prezzi-margine.py --scrivi. Si rifa' in un comando, e i prezzi
 # che contano stanno su Shopify.
 generated-designs/prezzi-da-scrivere.json
+# File di stampa rigenerati da perla-rifai-motivi.py: 217 MB, e si
+# ricostruiscono in sei minuti dal codice che li disegna. Nel repository sta
+# la ricetta, non la torta.
+generated-designs/motivi-rifatti/
+scripts/anteprima-motivi-ornati.png

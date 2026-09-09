@@ -9,10 +9,71 @@
  */
 {
   "sections": {
-    "main": { "type": "main-product", "settings": {} },
-    "taglia": { "type": "perla-consiglia-taglia", "settings": {} },
-    "related": { "type": "related-products", "settings": { "heading": "Si abbina bene con" } },
-    "recently_viewed": { "type": "recently-viewed", "settings": { "eyebrow": "", "heading": "Visti di recente", "limit": 6, "columns": 4, "bg": "cream" } }
+    "main": {
+      "type": "main-product",
+      "settings": {
+        "show_vendor": false,
+        "show_payment_badges": true,
+        "show_low_stock": true,
+        "low_stock_threshold": 6,
+        "details_text": "",
+        "size_guide": "<p><strong>Come misurare il collo</strong> (collari, bandane, guinzagli): fai passare un metro da sarta attorno al collo, all'altezza in cui poggia il collare. Tienilo aderente ma non stretto, tanto da poterci infilare due dita. Se la misura cade fra due taglie, prendi la più grande.</p><p>Se hai un dubbio scrivici razza e peso del tuo cane: ti diciamo noi quale prendere.</p>",
+        "shipping_returns": "<p>Spedizione gratuita in Europa, senza minimo d'ordine. Italia 4-8 giorni lavorativi, resto dell'Unione Europea 5-12. Fuori dalla UE la spedizione si calcola al checkout. Quando l'ordine parte ricevi il codice di tracciamento via email.</p><p>Reso entro 30 giorni dalla consegna sui prodotti non personalizzati. Sui prodotti personalizzati il reso per ripensamento non è previsto (art. 59 Codice del Consumo), ma se arriva un pezzo difettoso o con un errore nostro lo rifacciamo noi.</p>",
+        "compliance_note": "",
+        "bis_action": "",
+        "show_bundle": false,
+        "bundle_heading": "Spesso acquistati insieme",
+        "bundle_products": []
+      }
+    },
+    "taglia": {
+      "type": "perla-consiglia-taglia",
+      "settings": {}
+    },
+    "related": {
+      "type": "related-products",
+      "settings": {
+        "heading": "Si abbina bene con"
+      }
+    },
+    "recently_viewed": {
+      "type": "recently-viewed",
+      "settings": {
+        "eyebrow": "",
+        "heading": "Visti di recente",
+        "limit": 6,
+        "columns": 4,
+        "bg": "cream"
+      }
+    },
+    "17878214535245bfb9": {
+      "type": "apps",
+      "blocks": {
+        "judge_me_reviews_review_widget_qQVa3W": {
+          "type": "shopify://apps/judge-me-reviews/blocks/review_widget/61ccd3b1-a9f2-4160-9fe9-4fec8413e5d8",
+          "settings": {
+            "review_data": "sample_data",
+            "max_width": 1200,
+            "show_shop_reviews": false,
+            "empty_state": "empty_widget"
+          }
+        }
+      },
+      "block_order": [
+        "judge_me_reviews_review_widget_qQVa3W"
+      ],
+      "settings": {
+        "eyebrow": "Cosa dicono",
+        "heading": "Recensioni",
+        "bg": "cream"
+      }
+    }
   },
-  "order": ["main", "taglia", "related", "recently_viewed"]
+  "order": [
+    "main",
+    "taglia",
+    "related",
+    "recently_viewed",
+    "17878214535245bfb9"
+  ]
 }
