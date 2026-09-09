@@ -373,7 +373,21 @@ app.get('/pattern-source', limitePerIp, async function (req, res) {
 //    mai un prodotto "di scorta" riusato tra piu' richieste, perche' la foto
 //    personale di un cliente potrebbe comparire per sbaglio nell'anteprima
 //    generata nello stesso momento per un altro cliente.
-const MOCKUP_PRODUCT_TYPES = ['COLLARE', 'BANDANA', 'MEDAGLIETTA', 'CIOTOLA', 'CUCCIA', 'TAPPETINO', 'GUINZAGLIO'];
+// I tre in fondo sono i prodotti americani del 4 settembre: collare di pelle
+// inciso, medaglietta incisa, giacchetto parka. Mancavano e "Salva anteprima"
+// rispondeva "Tipo prodotto non riconosciuto" -- il tipo arriva dal tema
+// (data-product-type), ma questa lista e' il cancello, e un cancello chiuso
+// non chiede al tema niente.
+const MOCKUP_PRODUCT_TYPES = ['COLLARE', 'BANDANA', 'MEDAGLIETTA', 'CIOTOLA', 'CUCCIA', 'TAPPETINO', 'GUINZAGLIO',
+  'COLLARE_PELLE', 'MEDAGLIETTA_INCISA', 'GIACCHETTO'];
+
+// La posizione di stampa per tipo. Quasi tutti stampano su 'front'; il
+// giacchetto (blueprint 10740) il fronte NON ce l'ha -- l'unica posizione
+// e' 'back_dtf' -- e un prodotto temporaneo creato con 'front' non
+// genererebbe nessun mockup. Stessa regola di PRODUCT_TYPE_CONFIG in
+// perla-printify-order-sync.js: ordine e anteprima devono stampare nello
+// stesso posto, o l'anteprima mente.
+const MOCKUP_POSITION = { GIACCHETTO: 'back_dtf' };
 const MOCKUP_POLL_ATTEMPTS = 6;
 const MOCKUP_POLL_DELAY_MS = 1500;
 
@@ -628,7 +642,7 @@ app.post('/generate-mockup', limitePerIp, express.json(), async function (req, r
     imgs.push({ id: compositeId, x: 0.5, y: 0.5, scale: 1, angle: 0 });
     return imgs;
   }
-  const placeholders = [{ position: 'front', images: buildMockupImages(baseImageId, compositeImageId) }];
+  const placeholders = [{ position: MOCKUP_POSITION[type] || 'front', images: buildMockupImages(baseImageId, compositeImageId) }];
   if (backCompositeImageId) {
     placeholders.push({ position: 'back', images: buildMockupImages(backBaseImageId, backCompositeImageId) });
   }

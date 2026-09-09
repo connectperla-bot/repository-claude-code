@@ -110,6 +110,9 @@ const PRODUCT_TYPE_CONFIG = {
       blueprintId: Number(process.env.GIACCHETTO_BLUEPRINT_ID || 10740),
       printProviderId: Number(process.env.GIACCHETTO_PROVIDER_ID || 72),
       variantId: Number(process.env.GIACCHETTO_VARIANT_ID || 0),
+      // l'unica posizione che il blueprint 10740 conosce: il fronte non
+      // esiste, e senza questa riga l'ordine partirebbe con 'front'
+      position: 'back_dtf',
     },
     // ROUND 18 — rete di sicurezza: se per errore un ordine non-EU (o senza
     // Printful configurato) arriva con product_type collare_eu/bandana_eu,

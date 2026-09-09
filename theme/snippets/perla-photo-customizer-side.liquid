@@ -15,6 +15,11 @@
     prodotto "neutro"); false = solo testo libero (pattern gia' pronto sul
     fronte, oppure il retro — che su TUTTE le medagliette e' pensato per i
     contatti del proprietario, non per foto/adesivi).
+  - sagoma, fin_sx, fin_alto, fin_dx, fin_basso (ROUND 55): la forma vera del
+    pezzo e la finestra che il fornitore incide/stampa davvero, entrambe
+    passate a snippets/perla-sagoma.liquid. Vengono dalla riga della VARIANTE
+    scelta in snippets/perla-forme-varianti.liquid; sui tipi che non hanno
+    quella riga restano vuote e non cambia niente rispetto a prima.
 
   ROUND 33 — tre cambiamenti, nessuno strutturale: le barre hanno una classe
   modificatore che ne definisce il ruolo visivo (vedi assets/perla-studio.css),
@@ -176,19 +181,20 @@
             </div>
           {%- endif -%}
 
-          <div class="fabric-studio__shape-guide" aria-hidden="true">
-            {%- if photo_type == 'bandana' -%}
-              <svg class="fabric-studio__shape-guide-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <polygon points="4,8 96,8 50,92"></polygon>
-              </svg>
-            {%- else -%}
-              <span class="fabric-studio__shape-guide-rect" style="border-radius: {{ ov_radius }}%;"></span>
-            {%- endif -%}
-          </div>
+          {%- render 'perla-sagoma', photo_type: photo_type, ov_radius: ov_radius, sagoma: sagoma, fin_sx: fin_sx, fin_alto: fin_alto, fin_dx: fin_dx, fin_basso: fin_basso -%}
           <span class="fabric-studio__snap-line fabric-studio__snap-line--v" data-snap-v hidden aria-hidden="true"></span>
           <span class="fabric-studio__snap-line fabric-studio__snap-line--h" data-snap-h hidden aria-hidden="true"></span>
         </div>
       </div>
+      {%- comment -%}
+        ROUND 55 -- la didascalia della finestra. Il riquadro tratteggiato si
+        vede, ma da solo non dice cosa vuol dire: senza una riga di testo un
+        cliente puo' leggerlo come "guida per centrare" invece che come
+        "oltre questo bordo non si stampa", e scoprirlo dal pezzo arrivato.
+      {%- endcomment -%}
+      {%- if fin_sx > 0 or fin_alto > 0 or fin_dx < 100 or fin_basso < 100 -%}
+        <p class="photo-studio__note">{{ 'sections.product.finestra_nota' | t }}</p>
+      {%- endif -%}
       <div class="fabric-studio__toolbar fabric-studio__toolbar--view" role="group" aria-label="{{ 'sections.product.view_zoom_group' | t }}">
         <button type="button" class="photo-studio__tool" data-view-zoom-out aria-label="{{ 'sections.product.view_zoom_out' | t }}">{% render 'icon', icon: 'zoom-out' %}</button>
         <button type="button" class="photo-studio__tool" data-view-zoom-reset aria-label="{{ 'sections.product.view_zoom_reset_label' | t }}">{{ 'sections.product.view_zoom_reset' | t }}</button>

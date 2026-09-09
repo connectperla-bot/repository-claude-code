@@ -1,0 +1,67 @@
+{%- comment -%}
+  Perla — la SAGOMA del pezzo sopra la tela dell'editor, e la finestra che
+  viene incisa davvero.
+
+  DUE DISEGNI, DUE MESTIERI DIVERSI
+
+  1) la sagoma. Fino a ROUND 54 qui c'era un rettangolo con gli angoli
+     arrotondati (border-radius: ov_radius%) e, sulla bandana, un triangolo.
+     Sul tondo della medaglietta incisa quel rettangolo con raggio 50% e' un
+     OVALE, perche' la tela non e' quadrata: l'area di stampa del tondo e'
+     756x907, quindi un cerchio inscritto in un riquadro alto il 20% in piu'
+     esce schiacciato. Cuore e osso non c'erano proprio. Qui ognuna delle tre
+     ha il suo tracciato vero.
+
+     I tracciati non sono disegnati a mano: sono RICALCATI dal mockup del
+     fornitore. Ho mandato a Printify un file a tinta piatta grande quanto
+     tutta l'area dichiarata, ho riscaricato il mockup — dove l'unico segno
+     scuro rimasto e' il contorno del pezzo — e ho seguito quel contorno
+     (traccia di Moore + Douglas-Peucker). Le coordinate sono in millesimi
+     dell'area di stampa, quindi con preserveAspectRatio="none" la sagoma
+     cade esattamente dove cade sul pezzo, qualunque sia la larghezza della
+     colonna.
+
+  2) la finestra. Sempre dal mockup: il fornitore rende a pieno contrasto
+     solo una parte dell'area e sbiadisce il resto. Quella parte e' cio' che
+     il laser incide (o, sul parka, cio' che la stampa lascia vedere). Fuori
+     di li' il nome del cane non ci arriva. Si disegna come quattro pannelli
+     opachi attorno al rettangolo utile: quattro riquadri normali, nessun
+     clip-path e nessuna maschera, cosi' funziona anche dove il supporto per
+     clip-path e' parziale.
+
+  Parametri: photo_type, ov_radius, sagoma, fin_sx, fin_alto, fin_dx,
+  fin_basso (percentuali dell'area), fin_etichetta.
+{%- endcomment -%}
+<div class="fabric-studio__shape-guide" aria-hidden="true">
+  {%- case sagoma -%}
+    {%- when 'tondo' -%}
+      <svg class="fabric-studio__shape-guide-svg" viewBox="0 0 1000 1000" preserveAspectRatio="none">
+        <path d="M488,0 L518,0.8 L546,6.7 L572,17.5 L589,28.3 L608,45.8 L626,74.2 L633,99.2 L634,145.8 L641,161.7 L652,175 L672,189.2 L750,220 L801,248.3 L837,273.3 L869,300 L904,335.8 L940,383.3 L974,448.3 L993,511.7 L1000,573.3 L999,610.8 L993,651.7 L983,690 L968,729.2 L949,765.8 L927,799.2 L905,826.7 L871,861.7 L834,892.5 L792,920.8 L747,945 L710,960.8 L669,975 L611,989.2 L524,999.2 L479,999.2 L420,994.2 L334,975.8 L290,960.8 L250,943.3 L207,920 L164,890.8 L130,862.5 L92,823.3 L68,792.5 L45,755.8 L26,716.7 L11,672.5 L3,635 L-1,595 L4,521.7 L21,458.3 L49,399.2 L87,345 L130,300 L189,254.2 L249,220 L323,190.8 L345,176.7 L355,165.8 L364,148.3 L368,88.3 L376,67.5 L390,46.7 L412,26.7 L430,15.8 L462,4.2 L488,0 Z"></path>
+      </svg>
+    {%- when 'cuore' -%}
+      <svg class="fabric-studio__shape-guide-svg" viewBox="0 0 1000 1000" preserveAspectRatio="none">
+        <path d="M492.7,-0.8 L516.5,0 L543,5.8 L568.6,16.7 L587.8,29.2 L616.1,60.1 L626.1,79.3 L634.4,105.2 L646.3,117.7 L657.2,121 L726.7,125.2 L789.8,139.4 L821.8,151.1 L854.7,166.9 L876.6,180.3 L907.7,204.5 L929.6,227 L948.8,252.1 L977.1,306.3 L992.7,360.6 L1000,429.9 L999.1,476.6 L995.4,502.5 L985.4,539.2 L971.7,574.3 L929.6,651.9 L898.5,696.2 L866.5,735.4 L787.9,814.7 L701.1,884.8 L584.1,961.6 L529.3,992.5 L505.5,1000 L488.1,999.2 L471.7,993.3 L415,961.6 L338.2,913.2 L283.4,874 L232.2,833.1 L149.9,754.6 L114.3,713.7 L84.1,673.6 L38.4,597.7 L20.1,556.8 L5.5,510.9 L0.9,487.5 L-0.9,452.4 L2.7,383.1 L18.3,316.4 L44.8,260.4 L69.5,227 L88.7,207 L137.1,171.1 L199.3,142.7 L261.4,126.9 L303.5,121.9 L341.9,121 L352.8,117.7 L364.7,105.2 L372.9,79.3 L383,60.1 L409.5,30.9 L430.5,16.7 L448.8,8.3 L492.7,-0.8 Z"></path>
+      </svg>
+    {%- when 'osso' -%}
+      <svg class="fabric-studio__shape-guide-svg" viewBox="0 0 1000 1000" preserveAspectRatio="none">
+        <path d="M485.8,-2.5 L519.2,0 L545.1,12.5 L565.9,31.3 L587.6,62.7 L599.3,89 L611,132.8 L614.4,162.9 L614.4,198 L611,226.8 L612.7,233.1 L620.2,240.6 L719.5,240.6 L747.9,191.7 L777.1,159.1 L811.4,137.8 L844.7,130.3 L877.3,134.1 L911.5,150.4 L942.4,179.2 L970.8,224.3 L986.6,266.9 L995,307 L998.3,344.6 L995.8,398.5 L987.5,441.1 L973.3,481.2 L945.7,527.6 L921.5,553.9 L919.9,573.9 L961.6,629.1 L978.3,664.2 L989.1,699.2 L995,729.3 L997.5,800.8 L990.8,847.1 L977.5,891 L957.4,931.1 L936.6,958.6 L907.3,983.7 L874,998.7 L837.2,1001.3 L811.4,995 L785.5,981.2 L755.4,953.6 L730.4,916 L712.9,872.2 L707,864.7 L288.8,864.7 L283.8,869.7 L261.3,919.8 L245.4,942.4 L226.2,962.4 L202.8,978.7 L179.5,988.7 L138.6,992.5 L106,983.7 L77.6,966.2 L52.6,941.1 L25,896 L13.4,865.9 L2.5,820.8 L-0.8,790.7 L1.7,720.6 L9.2,684.2 L24.2,641.6 L36.7,617.8 L54.3,592.7 L72.6,573.9 L76,563.9 L73.5,542.6 L45.1,510 L23.4,471.2 L10.9,436.1 L1.7,392.2 L-0.8,365.9 L1.7,300.8 L11.7,254.4 L27.5,213 L52.6,172.9 L89.3,139.1 L124.4,124.1 L154.4,121.6 L186.1,129.1 L224.5,154.1 L252.9,188 L278.8,236.8 L376.5,238.1 L383.1,228.1 L379.8,180.5 L383.1,136.6 L390.7,102.8 L403.2,70.2 L423.2,37.6 L439.9,20.1 L464.9,3.8 L485.8,-2.5 Z"></path>
+      </svg>
+    {%- else -%}
+      {%- if photo_type == 'bandana' -%}
+        <svg class="fabric-studio__shape-guide-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <polygon points="4,8 96,8 50,92"></polygon>
+        </svg>
+      {%- else -%}
+        <span class="fabric-studio__shape-guide-rect" style="border-radius: {{ ov_radius }}%;"></span>
+      {%- endif -%}
+  {%- endcase -%}
+</div>
+{%- if fin_sx > 0 or fin_alto > 0 or fin_dx < 100 or fin_basso < 100 -%}
+  <div class="fabric-studio__finestra" aria-hidden="true">
+    <span class="fabric-studio__fuori fabric-studio__fuori--alto" style="height: {{ fin_alto }}%;"></span>
+    <span class="fabric-studio__fuori fabric-studio__fuori--basso" style="top: {{ fin_basso }}%;"></span>
+    <span class="fabric-studio__fuori fabric-studio__fuori--sx" style="top: {{ fin_alto }}%; height: {{ fin_basso | minus: fin_alto }}%; width: {{ fin_sx }}%;"></span>
+    <span class="fabric-studio__fuori fabric-studio__fuori--dx" style="top: {{ fin_alto }}%; height: {{ fin_basso | minus: fin_alto }}%; left: {{ fin_dx }}%;"></span>
+    <span class="fabric-studio__finestra-bordo" style="left: {{ fin_sx }}%; top: {{ fin_alto }}%; width: {{ fin_dx | minus: fin_sx }}%; height: {{ fin_basso | minus: fin_alto }}%;"></span>
+  </div>
+{%- endif -%}

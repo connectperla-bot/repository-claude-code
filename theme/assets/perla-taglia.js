@@ -98,6 +98,25 @@
     // controllo sulle pastiglie piu' sotto -- ma una tabella che consiglia una
     // 950 ml che il negozio non vende tornerebbe viva il giorno in cui una
     // ciotola avesse di nuovo due varianti.
+    //
+    // IL COLLARE DI PELLE E IL PARKA NON HANNO UNA TABELLA, E NON E' UNA
+    // DIMENTICANZA.
+    //
+    // Un consiglio di taglia si fa con le misure vere del fornitore: quanti
+    // centimetri di collo copre ogni taglia, quanti centimetri di schiena. Per
+    // questi due il fornitore non le pubblica -- ne' nella scheda del
+    // blueprint, ne' nelle varianti, e l'endpoint size-guide risponde "Not
+    // found" su tutti e due (provato il 9 settembre su 10700/217 e 10740/72).
+    //
+    // Inventarle sarebbe peggio che non averle: un collare stretto o un
+    // giacchetto che non si chiude e' un reso, e questo pannello esiste
+    // proprio per evitarli. Quando le misure arrivano -- dal fornitore, o
+    // misurando un pezzo vero -- si aggiungono qui due righe come le altre.
+    //
+    // UNA COSA DA CHIEDERE AL FORNITORE, gia' che ci si scrive: la scheda del
+    // collare 10700 dice "available in three sizes: small, large, extra
+    // large", ma le varianti in vendita sono QUATTRO -- la Medium esiste e si
+    // puo' comprare. O la scheda e' vecchia, o la Medium non andrebbe venduta.
   };
 
   function normalizza(s) {

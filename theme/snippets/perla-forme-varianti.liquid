@@ -1,0 +1,52 @@
+{%- comment -%}
+  Perla — l'area di stampa VARIANTE PER VARIANTE, e la finestra che il
+  fornitore incide davvero.
+
+  PERCHE' ESISTE UNA SECONDA TABELLA
+  snippets/perla-print-areas.liquid tiene UN rapporto per tipo, e per quasi
+  tutto il catalogo basta: le due misure di bandana hanno lo stesso rapporto,
+  le tre ciotole pure. Sui tre americani nuovi no, e non di poco:
+
+      collare in pelle   1650x150  1795x189  1950x195  1950x270
+                          11,00      9,50     10,00      7,22
+      medaglietta incisa  756x907   756x827   744x496
+                           0,83      0,91      1,50   (tondo, cuore, osso)
+      giacchetto         1181x1181 1535x1535 1535x2362 1654x2717 2126x2717
+                           1,00      1,00      0,65      0,61      0,78
+
+  La tela dell'editor deve avere le proporzioni dell'area di stampa, se no
+  quello che il cliente scrive esce stampato deformato: sta scritto per esteso
+  nel commento ROUND 24 di snippets/perla-photo-customizer-side.liquid. Con un
+  rapporto mediano (0,91 sulla medaglietta) il tondo diventa un ovale e l'osso
+  viene schiacciato del 65%. Da qui la riga per variante.
+
+  LA FINESTRA NON E' L'AREA, ed e' la scoperta di ROUND 55.
+  Ho riempito l'area DICHIARATA di ognuna con una scacchiera numerata, l'ho
+  mandata a Printify e ho guardato il mockup che torna (stesso metodo di
+  ROUND 47 sui riquadri europei). Sulla medaglietta il fornitore rende a pieno
+  contrasto solo un rettangolo al centro e sbiadisce tutto il resto: quel
+  rettangolo e' la finestra che il laser incide davvero. Sul parka la
+  scacchiera torna tagliata sopra e sotto: resta la fascia centrale. Sul
+  collare invece torna intera, e infatti la finestra e' 0/0/100/100.
+
+  Non sono numeri dichiarati dal fornitore: sono misurati sui mockup, e i file
+  della sonda stanno in scratchpad (sonda/*.png) insieme alle sagome ricalcate.
+
+  Formato riga:
+    tipo|valore dell'opzione|larghezza|altezza|fin_sx,fin_alto,fin_dx,fin_basso|sagoma
+
+  - "valore dell'opzione" e' UNA delle opzioni della variante su Shopify
+    (Shape=Circle, Size=Small, ...). Si confronta con variant.options, non con
+    il titolo intero, cosi' il colore non c'entra: "Circle / Pink / One size" e
+    "Circle / Black / One size" trovano la stessa riga.
+  - la finestra e' in percentuale dell'area, nell'ordine sinistra, alto,
+    destra, basso.
+  - "sagoma" e' la forma vera del pezzo (vedi snippets/perla-sagoma.liquid);
+    vuoto = rettangolo.
+
+  Chi la consuma: sections/main-product.liquid, che con la variante scelta
+  sovrascrive photo_ratio e passa finestra e sagoma all'editor, e
+  assets/perla-forma.js, che rifa' la sezione quando il cliente cambia
+  variante e l'area cambia con lei.
+{%- endcomment -%}
+medaglietta_incisa|Circle|756|907|10.2,39,89.8,72.3|tondo#medaglietta_incisa|Heart|756|827|18.5,34.3,81.5,65.7|cuore#medaglietta_incisa|Bone|744|496|9.4,25.6,90.3,85.2|osso#collare_pelle|Small|1650|150|0,0,100,100|#collare_pelle|Medium|1795|189|0,0,100,100|#collare_pelle|Large|1950|195|0,0,100,100|#collare_pelle|Extra Large|1950|270|0,0,100,100|#giacchetto|XS|1181|1181|0,8,100,92|#giacchetto|S|1535|1535|0,8,100,92|#giacchetto|M|1535|2362|0,8,100,92|#giacchetto|L|1654|2717|0,8,100,92|#giacchetto|XL|2126|2717|0,8,100,92|#giacchetto|2XL|2126|2717|0,8,100,92|

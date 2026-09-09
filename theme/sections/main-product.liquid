@@ -100,6 +100,101 @@
   endif
 
   comment
+    ROUND 54 -- I TIPI CHE SI INCIDONO, non si stampano.
+
+    Il collare di pelle (blueprint Printify 10700) e la medaglietta incisa
+    (10674) hanno una sola posizione di stampa e una sola decorazione:
+    engraving e laser-engraving. Non c'e' colore, non c'e' fotografia: c'e'
+    un solco. L'editor pieno -- foto, adesivi, logo -- offre lì cose che il
+    fornitore non sa fare, e il cliente se ne accorgerebbe solo ricevendo il
+    pezzo.
+
+    Il tema la modalita' giusta ce l'ha gia': allow_full_editor a false
+    accende l'editor SOLO TESTO, lo stesso che si usa da ROUND 19 sul retro
+    delle medagliette. Qui si impone anche sui prodotti "neutro", che
+    altrimenti lo accenderebbero pieno perche' is_blank_design e' true.
+
+    E la medaglietta incisa resta a UN LATO SOLO: il blueprint 10674 espone
+    solo 'front', su Printify non esiste nessuna medaglietta incisa
+    fronte/retro (cercati tutti i blueprint: la 566, quella stampata che il
+    negozio vende gia', e' l'unica col retro). is_double_sided sopra guarda
+    'medaglietta' e non 'medaglietta_incisa', quindi e' gia' cosi' -- questo
+    commento c'e' perche' la prossima persona non lo "aggiusti".
+  endcomment
+  assign tipi_a_incisione = 'collare_pelle,medaglietta_incisa' | split: ','
+  assign is_incisione = false
+  for t in tipi_a_incisione
+    if photo_type == t
+      assign is_incisione = true
+    endif
+  endfor
+
+  comment
+    L'editor pieno resta acceso dove ha senso: prodotto neutro E non a
+    incisione. Da qui in giu' si passa editor_pieno, non is_blank_design.
+  endcomment
+  assign editor_pieno = is_blank_design
+  if is_incisione
+    assign editor_pieno = false
+    assign photo_type_label = 'sections.product.type_incisione' | t
+  endif
+
+  comment
+    ROUND 55 -- l'AREA DELLA VARIANTE SCELTA, dove le varianti non hanno la
+    stessa area. La tabella qui sopra (perla-print-areas) ne tiene una per
+    tipo, e per quasi tutto il catalogo basta; sui tre americani nuovi no:
+    tondo 0,83 / cuore 0,91 / osso 1,50 sulla medaglietta incisa, da 7,22 a
+    11,00 sul collare, da 0,61 a 1,00 sul parka. Con il rapporto mediano il
+    tondo si vedeva come un ovale -- e' proprio il difetto segnalato -- e
+    l'osso sarebbe uscito schiacciato del 65% in stampa.
+
+    Le righe stanno in snippets/perla-forme-varianti.liquid: rapporto vero,
+    finestra che il fornitore incide davvero (misurata sui mockup, non
+    dichiarata) e sagoma del pezzo. Si cerca la riga il cui valore compare
+    fra le opzioni della variante scelta, cosi' il colore non c'entra.
+
+    Quando il cliente cambia variante e l'area cambia con lei, la pagina si
+    ricarica con ?variant=<id>: il perche' sta in assets/perla-forma.js.
+  endcomment
+  assign sagoma = ''
+  assign fin_sx = 0
+  assign fin_alto = 0
+  assign fin_dx = 100
+  assign fin_basso = 100
+  assign forme_righe = ''
+  assign tipo_ha_forme = false
+  if photo_type != ''
+    capture perla_forme_raw
+      render 'perla-forme-varianti'
+    endcapture
+    assign forme_righe = perla_forme_raw | strip | split: '#'
+    for frow in forme_righe
+      assign fcols = frow | split: '|'
+      if fcols[0] != photo_type
+        continue
+      endif
+      assign tipo_ha_forme = true
+      assign combacia = false
+      for o in current_variant.options
+        if o == fcols[1]
+          assign combacia = true
+        endif
+      endfor
+      if combacia
+        assign f_alt = fcols[3] | times: 1.0
+        assign photo_ratio = fcols[2] | times: 1.0 | divided_by: f_alt
+        assign finestra = fcols[4] | split: ','
+        assign fin_sx = finestra[0] | times: 1.0
+        assign fin_alto = finestra[1] | times: 1.0
+        assign fin_dx = finestra[2] | times: 1.0
+        assign fin_basso = finestra[3] | times: 1.0
+        assign sagoma = fcols[5]
+        break
+      endif
+    endfor
+  endif
+
+  comment
     ROUND 18 -- rimando al gemello interamente personalizzabile. Su questo
     prodotto si puo' aggiungere solo il nome sopra un disegno gia' fatto; il
     "neutro" dello stesso tipo parte invece da una tela bianca. La mappa
@@ -175,6 +270,13 @@
   endif
 -%}
 <section class="section" data-product>
+{%- comment -%}
+  ROUND 55 -- la vestizione della sagoma e della finestra. Sta in un file suo
+  e si carica solo dove serve: assets/perla-studio.css, dove vivono le altre
+  regole dell'editor, nel repository non c'e' (il tema e' stato costruito
+  altrove), quindi la si aggiunge invece di riscriverla a scatola chiusa.
+{%- endcomment -%}
+{%- if tipo_ha_forme -%}{{ 'perla-forma.css' | asset_url | stylesheet_tag }}{%- endif -%}
   <div class="page-width">
     <nav class="breadcrumb" aria-label="Breadcrumb">
       <a href="{{ routes.root_url }}">{{ 'general.breadcrumb.home' | t }}</a><span>/</span>
@@ -281,7 +383,7 @@
                     <button type="button" class="fabric-studio__add-btn" data-side-tab="back">{{ 'sections.product.side_back' | t }}</button>
                   </div>
                   <div data-side-panel="front">
-                    {%- render 'perla-photo-customizer-side', product: product, photo_type: photo_type, photo_ratio: photo_ratio, photo_type_label: photo_type_label, ov_radius: ov_radius, side: 'front', prop_name: '_Personalizzazione', allow_full_editor: is_blank_design, is_blank_design: is_blank_design -%}
+                    {%- render 'perla-photo-customizer-side', product: product, photo_type: photo_type, photo_ratio: photo_ratio, photo_type_label: photo_type_label, ov_radius: ov_radius, sagoma: sagoma, fin_sx: fin_sx, fin_alto: fin_alto, fin_dx: fin_dx, fin_basso: fin_basso, side: 'front', prop_name: '_Personalizzazione', allow_full_editor: editor_pieno, is_blank_design: is_blank_design -%}
                   </div>
                   <div data-side-panel="back" hidden>
                     {%- assign medaglietta_back_label = 'sections.product.medaglietta_back_type' | t -%}
@@ -292,7 +394,7 @@
                       sul retro lo sfondo restava mostrato anche su un prodotto
                       neutro, disallineato dal fronte.
                     {%- endcomment -%}
-                    {%- render 'perla-photo-customizer-side', product: product, photo_type: photo_type, photo_ratio: photo_ratio, photo_type_label: medaglietta_back_label, ov_radius: ov_radius, side: 'back', prop_name: '_Personalizzazione_Retro', allow_full_editor: false, is_blank_design: is_blank_design -%}
+                    {%- render 'perla-photo-customizer-side', product: product, photo_type: photo_type, photo_ratio: photo_ratio, photo_type_label: medaglietta_back_label, ov_radius: ov_radius, sagoma: sagoma, fin_sx: fin_sx, fin_alto: fin_alto, fin_dx: fin_dx, fin_basso: fin_basso, side: 'back', prop_name: '_Personalizzazione_Retro', allow_full_editor: false, is_blank_design: is_blank_design -%}
                   </div>
                   <div class="photo-studio__panel photo-studio__panel--mockup" data-shared-mockup data-product-type="{{ photo_type }}" data-upload-endpoint="{{ settings.photo_upload_endpoint | escape }}">
                     <p class="photo-studio__panel-label">{{ 'sections.product.photo_mockup_label' | t }}</p>
@@ -321,7 +423,7 @@
                     prima di mandarli a Printful.
                   {%- endcomment -%}
                   data-pattern-url="{{ product.metafields.custom.editor_pattern_image.value }}"
-                  {%- if is_blank_design %}
+                  {%- if editor_pieno %}
                   data-logo-url="{{ 'emblem-mark.png' | asset_url }}"
                   {%- endif %}
                 >
@@ -438,19 +540,20 @@
                             </div>
                           {%- endif -%}
 
-                          <div class="fabric-studio__shape-guide" aria-hidden="true">
-                            {%- if photo_type == 'bandana' -%}
-                              <svg class="fabric-studio__shape-guide-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
-                                <polygon points="4,8 96,8 50,92"></polygon>
-                              </svg>
-                            {%- else -%}
-                              <span class="fabric-studio__shape-guide-rect" style="border-radius: {{ ov_radius }}%;"></span>
-                            {%- endif -%}
-                          </div>
+                          {%- render 'perla-sagoma', photo_type: photo_type, ov_radius: ov_radius, sagoma: sagoma, fin_sx: fin_sx, fin_alto: fin_alto, fin_dx: fin_dx, fin_basso: fin_basso -%}
                           <span class="fabric-studio__snap-line fabric-studio__snap-line--v" data-snap-v hidden aria-hidden="true"></span>
                           <span class="fabric-studio__snap-line fabric-studio__snap-line--h" data-snap-h hidden aria-hidden="true"></span>
                         </div>
                       </div>
+                      {%- comment -%}
+                        ROUND 55 -- la didascalia della finestra. Il riquadro tratteggiato si
+                        vede, ma da solo non dice cosa vuol dire: senza una riga di testo un
+                        cliente puo' leggerlo come "guida per centrare" invece che come
+                        "oltre questo bordo non si stampa", e scoprirlo dal pezzo arrivato.
+                      {%- endcomment -%}
+                      {%- if fin_sx > 0 or fin_alto > 0 or fin_dx < 100 or fin_basso < 100 -%}
+                        <p class="photo-studio__note">{{ 'sections.product.finestra_nota' | t }}</p>
+                      {%- endif -%}
                       <div class="fabric-studio__toolbar fabric-studio__toolbar--view" role="group" aria-label="{{ 'sections.product.view_zoom_group' | t }}">
                         <button type="button" class="photo-studio__tool" data-view-zoom-out aria-label="{{ 'sections.product.view_zoom_out' | t }}">{% render 'icon', icon: 'zoom-out' %}</button>
                         <button type="button" class="photo-studio__tool" data-view-zoom-reset aria-label="{{ 'sections.product.view_zoom_reset_label' | t }}">{{ 'sections.product.view_zoom_reset' | t }}</button>
@@ -685,6 +788,39 @@
 
   <!-- product data for JS -->
   <script type="application/json" data-product-json>{{ product | json }}</script>
+
+  {%- comment -%}
+    ROUND 55 -- l'area di ogni variante, per assets/perla-forma.js. Compare
+    solo sui tipi che hanno righe in perla-forme-varianti.liquid: su tutto il
+    resto del catalogo le varianti condividono l'area e non c'e' niente da
+    sorvegliare. La "firma" e' misura + finestra + sagoma: se cambia, cambia
+    la tela, e la scheda si rifa'; se e' uguale (cioe' e' cambiato solo il
+    colore) non succede niente.
+  {%- endcomment -%}
+  {%- if tipo_ha_forme -%}
+    {%- capture forme_map -%}
+      {%- for v in product.variants -%}
+        {%- assign firma = '' -%}
+        {%- for frow in forme_righe -%}
+          {%- assign fcols = frow | split: '|' -%}
+          {%- if fcols[0] == photo_type -%}
+            {%- assign combacia = false -%}
+            {%- for o in v.options -%}
+              {%- if o == fcols[1] -%}{%- assign combacia = true -%}{%- endif -%}
+            {%- endfor -%}
+            {%- if combacia -%}
+              {%- assign firma = fcols[2] | append: 'x' | append: fcols[3] | append: '|' | append: fcols[4] | append: '|' | append: fcols[5] -%}
+              {%- break -%}
+            {%- endif -%}
+          {%- endif -%}
+        {%- endfor -%}
+        {%- if firma != '' -%},"{{ v.id }}":"{{ firma }}"{%- endif -%}
+      {%- endfor -%}
+    {%- endcapture -%}
+    {%- assign forme_map = forme_map | strip | remove_first: ',' -%}
+    <script type="application/json" data-perla-forme>{"url":{{ product.url | json }},"attuale":{{ current_variant.id }},"avviso":{{ 'sections.product.forma_avviso' | t | json }},"varianti":{ {{- forme_map -}} }}</script>
+    <script src="{{ 'perla-forma.js' | asset_url }}" defer></script>
+  {%- endif -%}
 </section>
 
 <!-- gallery lightbox -->
