@@ -276,6 +276,38 @@ prova('i tre tipi nuovi sanno generare un\'anteprima', function () {
   }
 });
 
+prova('l\'anteprima dei tre nuovi non dipende da un incolla a mano', function () {
+  // Fino a ROUND 55 blueprint/fornitore/variante si leggevano solo
+  // dall'ambiente: finche' qualcuno non apriva Render e incollava nove
+  // variabili, "Salva anteprima" rispondeva "Configurazione mancante".
+  // Adesso ci sono le riserve nel codice -- ma una riserva SBAGLIATA e'
+  // peggio di una mancante, perche' non lo dice: crea il prodotto
+  // temporaneo su un altro blueprint e mostra al cliente l'anteprima di
+  // un altro oggetto. Quindi si confrontano con i blueprint versionati.
+  const testo = sorgente('perla-upload-endpoint.js');
+  const blocco = /const MOCKUP_RISERVA = \{([\s\S]*?)\n\};/.exec(testo);
+  assert.ok(blocco, 'MOCKUP_RISERVA non si trova piu\' in perla-upload-endpoint.js');
+  const righe = [...blocco[1].matchAll(
+    /(\w+):\s*\{\s*blueprint:\s*(\d+),\s*provider:\s*(\d+),\s*variant:\s*(\d+)\s*\}/g)];
+  assert.strictEqual(righe.length, 3, 'attese 3 riserve, trovate ' + righe.length);
+
+  for (const [, tipo, bp, pp, variante] of righe) {
+    const chiave = tipo.toLowerCase();
+    const atteso = BLUEPRINT_DEL_TIPO[chiave];
+    assert.ok(atteso, 'riserva per un tipo che qui non si controlla: ' + tipo);
+    assert.strictEqual(atteso, bp + '_' + pp + '.json',
+      tipo + ': la riserva dice blueprint ' + bp + ' e fornitore ' + pp +
+      ', il catalogo dice ' + atteso.replace('.json', ''));
+    const dati = JSON.parse(fs.readFileSync(
+      path.join(__dirname, '..', 'printify-blueprints', atteso), 'utf8'));
+    assert.ok(dati.variants.some(v => String(v.id) === variante),
+      tipo + ': la variante ' + variante + ' non esiste nel blueprint');
+    // e deve essere una di quelle che vendiamo davvero
+    assert.ok(Object.values(varianti.VARIANTI[chiave]).map(String).includes(variante),
+      tipo + ': la variante ' + variante + ' non e\' fra quelle mappate in varianti-fornitore.js');
+  }
+});
+
 prova('gli altri due nuovi stampano dove dice il loro blueprint', function () {
   // collare e medaglietta incisa non dichiarano una position: il ripiego e'
   // 'front', e per loro e' giusto -- ma solo finche' il blueprint lo conferma

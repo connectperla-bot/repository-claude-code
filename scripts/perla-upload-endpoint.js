@@ -388,6 +388,41 @@ const MOCKUP_PRODUCT_TYPES = ['COLLARE', 'BANDANA', 'MEDAGLIETTA', 'CIOTOLA', 'C
 // perla-printify-order-sync.js: ordine e anteprima devono stampare nello
 // stesso posto, o l'anteprima mente.
 const MOCKUP_POSITION = { GIACCHETTO: 'back_dtf' };
+
+// VALORI DI RISERVA, PER NON DIPENDERE DA UN INCOLLA A MANO
+//
+// Fino a ROUND 55 blueprint, fornitore e variante si leggevano SOLO
+// dall'ambiente: senza le tre righe sul servizio, "Salva anteprima"
+// rispondeva "Configurazione blueprint/provider/variante mancante". Per i
+// sette tipi storici va bene cosi', le loro righe sul servizio ci sono da
+// mesi. Per i tre nuovi voleva dire che l'anteprima restava rotta finche'
+// qualcuno non apriva il pannello Render e incollava nove variabili: un
+// passaggio manuale fra il codice corretto e il cliente che lo usa.
+//
+// Questi numeri non sono un segreto e non cambiano col negozio: sono
+// l'identita' del prodotto nel catalogo Printify, gli stessi gia' scritti
+// come riserva in PRODUCT_TYPE_CONFIG di perla-printify-order-sync.js e in
+// scripts/perla-usa-prodotti-nuovi.py. L'ambiente ha comunque la
+// precedenza, quindi restano sovrascrivibili senza toccare il codice.
+//
+// La variante serve solo a poter creare il prodotto temporaneo: un prodotto
+// Printify ne vuole almeno una. Quella che finisce nell'ORDINE e' un'altra,
+// e la sceglie la taglia che il cliente ha pagato (varianti-fornitore.js).
+const MOCKUP_RISERVA = {
+  COLLARE_PELLE: { blueprint: 10700, provider: 217, variant: 397097 },
+  MEDAGLIETTA_INCISA: { blueprint: 10674, provider: 228, variant: 397011 },
+  GIACCHETTO: { blueprint: 10740, provider: 72, variant: 399940 },
+};
+
+function mockupConfig(type) {
+  const r = MOCKUP_RISERVA[type] || {};
+  return {
+    blueprintId: Number(process.env[type + '_BLUEPRINT_ID']) || r.blueprint || 0,
+    providerId: Number(process.env[type + '_PROVIDER_ID']) || r.provider || 0,
+    variantId: Number(process.env[type + '_VARIANT_ID']) || r.variant || 0,
+  };
+}
+
 const MOCKUP_POLL_ATTEMPTS = 6;
 const MOCKUP_POLL_DELAY_MS = 1500;
 
@@ -629,9 +664,7 @@ app.post('/generate-mockup', limitePerIp, express.json(), async function (req, r
   if (MOCKUP_PRODUCT_TYPES.indexOf(type) === -1) {
     return res.status(400).json({ error: 'Tipo prodotto non riconosciuto' });
   }
-  const blueprintId = Number(process.env[type + '_BLUEPRINT_ID']);
-  const providerId = Number(process.env[type + '_PROVIDER_ID']);
-  const variantId = Number(process.env[type + '_VARIANT_ID']);
+  const { blueprintId, providerId, variantId } = mockupConfig(type);
   if (!blueprintId || !providerId || !variantId) {
     return res.status(500).json({ error: 'Configurazione blueprint/provider/variante mancante sul server per questo tipo' });
   }

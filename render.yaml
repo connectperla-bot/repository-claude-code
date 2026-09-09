@@ -90,6 +90,31 @@ services:
         value: "80"
       - key: GUINZAGLIO_VARIANT_ID
         value: "150707"
+      # ROUND 55 -- i tre americani nuovi. Scritte qui perche' questo file e'
+      # dove si dichiara la configurazione, ma il servizio NON ne ha bisogno
+      # per funzionare: perla-upload-endpoint.js porta gli stessi numeri come
+      # riserva nel codice (MOCKUP_RISERVA), cosi' l'anteprima parte al primo
+      # deploy invece di aspettare che qualcuno le incolli a mano.
+      # La variante serve solo a creare il prodotto temporaneo dell'anteprima;
+      # quella dell'ordine la sceglie la taglia comprata.
+      - key: COLLARE_PELLE_BLUEPRINT_ID
+        value: "10700"
+      - key: COLLARE_PELLE_PROVIDER_ID
+        value: "217"
+      - key: COLLARE_PELLE_VARIANT_ID
+        value: "397097"
+      - key: MEDAGLIETTA_INCISA_BLUEPRINT_ID
+        value: "10674"
+      - key: MEDAGLIETTA_INCISA_PROVIDER_ID
+        value: "228"
+      - key: MEDAGLIETTA_INCISA_VARIANT_ID
+        value: "397011"
+      - key: GIACCHETTO_BLUEPRINT_ID
+        value: "10740"
+      - key: GIACCHETTO_PROVIDER_ID
+        value: "72"
+      - key: GIACCHETTO_VARIANT_ID
+        value: "399940"
 
   # L'INDIRIZZO, che non era scritto da nessuna parte:
   #     https://perla-printify-order-sync-yizy.onrender.com
