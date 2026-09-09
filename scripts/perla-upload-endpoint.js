@@ -11,6 +11,7 @@ const express = require('express');
 const multer = require('multer');
 const crypto = require('crypto');
 const motivoDiBase = require('./motivo-di-base');
+const { scorieDaButtare } = require('./anteprime-scorie');
 
 const {
   PRINTIFY_API_KEY, PRINTIFY_SHOP_ID, PRINTFUL_API_KEY, PRINTFUL_STORE_ID,
@@ -784,6 +785,56 @@ app.use(function (err, req, res, next) {
   res.status(400).json({ error: 'Richiesta non valida' });
 });
 
+// LE ANTEPRIME TEMPORANEE CHE NESSUNO HA CANCELLATO
+//
+// Il prodotto temporaneo di /generate-mockup si cancella con un setTimeout a
+// dieci minuti: prima non si puo', perche' Printify serve le immagini del
+// mockup finche' il prodotto esiste e cancellarlo subito spegnerebbe
+// l'anteprima sotto gli occhi del cliente (vedi il blocco finally la' sopra).
+//
+// Ma un setTimeout vive quanto il processo, e questo gira sul piano gratuito
+// di Render, che addormenta il servizio dopo un quarto d'ora senza richieste.
+// Se il servizio si spegne -- o si riavvia per un deploy -- prima che il
+// timer scatti, quel prodotto resta su Printify per sempre. Verificato il 9
+// settembre: tre anteprime generate per la prova, tre prodotti rimasti.
+//
+// Da soli non fanno danno (nascono non pubblicati, nessun cliente li vede),
+// ma si accumulano a ogni anteprima che il servizio non sopravvive, sporcano
+// il catalogo e falsano il conteggio dell'audit. Quindi all'avvio si guarda
+// se ne sono rimasti indietro e si buttano.
+//
+// SOLO QUELLI VECCHI DI UN QUARTO D'ORA. Il titolo li identifica, ma un
+// prodotto appena creato potrebbe essere l'anteprima che un cliente sta
+// guardando in questo momento, su un'altra istanza o su un giro precedente
+// non ancora scaduto: cancellarla gli spegnerebbe la foto in faccia.
+
+async function spazzaAnteprimeRimaste() {
+  if (!PRINTIFY_API_KEY || !PRINTIFY_SHOP_ID) return;
+  try {
+    const r = await fetch('https://api.printify.com/v1/shops/' + PRINTIFY_SHOP_ID + '/products.json?limit=100', {
+      headers: { Authorization: 'Bearer ' + PRINTIFY_API_KEY },
+    });
+    if (!r.ok) return;
+    const scorie = scorieDaButtare((await r.json()).data, Date.now());
+    for (const p of scorie) {
+      await fetch('https://api.printify.com/v1/shops/' + PRINTIFY_SHOP_ID + '/products/' + p.id + '.json', {
+        method: 'DELETE', headers: { Authorization: 'Bearer ' + PRINTIFY_API_KEY },
+      });
+    }
+    if (scorie.length) {
+      console.log('Spazzate ' + scorie.length + ' anteprime temporanee rimaste indietro');
+    }
+  } catch (err) {
+    // una spazzata fallita non deve impedire al servizio di partire
+    console.error('Spazzata anteprime non riuscita:', err.message);
+  }
+}
+
 app.listen(PORT, function () {
   console.log('Servizio upload foto in ascolto sulla porta ' + PORT);
+  // NODE_ENV=test: tests/sicurezza-endpoint.test.js avvia il servizio vero
+  // con credenziali finte, e la sua promessa e' che nessuna chiamata esca
+  // verso Printify. La spazzata e' l'unica cosa che partirebbe da sola.
+  if (process.env.NODE_ENV !== 'test') spazzaAnteprimeRimaste();
 });
+
