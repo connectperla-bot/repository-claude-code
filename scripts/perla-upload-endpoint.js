@@ -808,14 +808,38 @@ app.use(function (err, req, res, next) {
 // guardando in questo momento, su un'altra istanza o su un giro precedente
 // non ancora scaduto: cancellarla gli spegnerebbe la foto in faccia.
 
+// IL LIMITE E' 50, E CHIEDERNE 100 NON DA' UN ELENCO PIU' LUNGO: DA' UN
+// ERRORE. La prima stesura chiedeva ?limit=100 e Printify rispondeva
+// {"status":"error"...} invece di {"data":[...]}: la spazzata leggeva un
+// elenco vuoto e non buttava mai niente, senza dirlo. Trovato guardando il
+// catalogo dopo il deploy -- le tre anteprime erano ancora li'.
+//
+// E il negozio ha 76 prodotti, cioe' due pagine: senza sfogliarle, una
+// scoria sulla seconda non verrebbe mai vista.
+const PRINTIFY_PER_PAGINA = 50;
+const PRINTIFY_PAGINE_MAX = 20;   // 1000 prodotti: un tetto, non un'attesa
+
+async function prodottiPrintify() {
+  const tutti = [];
+  for (let pagina = 1; pagina <= PRINTIFY_PAGINE_MAX; pagina++) {
+    const r = await fetch('https://api.printify.com/v1/shops/' + PRINTIFY_SHOP_ID +
+      '/products.json?limit=' + PRINTIFY_PER_PAGINA + '&page=' + pagina, {
+      headers: { Authorization: 'Bearer ' + PRINTIFY_API_KEY },
+    });
+    if (!r.ok) break;
+    const corpo = await r.json();
+    if (!Array.isArray(corpo.data)) break;
+    tutti.push(...corpo.data);
+    if (corpo.data.length < PRINTIFY_PER_PAGINA) break;
+    if (corpo.last_page && pagina >= corpo.last_page) break;
+  }
+  return tutti;
+}
+
 async function spazzaAnteprimeRimaste() {
   if (!PRINTIFY_API_KEY || !PRINTIFY_SHOP_ID) return;
   try {
-    const r = await fetch('https://api.printify.com/v1/shops/' + PRINTIFY_SHOP_ID + '/products.json?limit=100', {
-      headers: { Authorization: 'Bearer ' + PRINTIFY_API_KEY },
-    });
-    if (!r.ok) return;
-    const scorie = scorieDaButtare((await r.json()).data, Date.now());
+    const scorie = scorieDaButtare(await prodottiPrintify(), Date.now());
     for (const p of scorie) {
       await fetch('https://api.printify.com/v1/shops/' + PRINTIFY_SHOP_ID + '/products/' + p.id + '.json', {
         method: 'DELETE', headers: { Authorization: 'Bearer ' + PRINTIFY_API_KEY },
