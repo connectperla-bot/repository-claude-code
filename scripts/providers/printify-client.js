@@ -53,22 +53,48 @@ function buildPlaceholder(data, posizione) {
   };
 }
 
-async function createProduct(order, item, front, back, config, apiKey, shopId) {
+// PERCHE' IL PREZZO E' 100 E NON 0.
+//
+// Printify rifiuta la creazione con "variants.0.price: The variants.0.price
+// must be greater than 0" (codice 8150). Con price: 0 -- che c'e' stato dal
+// primo commit -- NESSUN ordine Printify e' mai partito: il cliente pagava su
+// Shopify, il servizio rispondeva 200 (di proposito: vedi il commento su
+// ROUND 33), e l'errore restava in un console.error sui log del piano gratuito
+// di Render, che non si conservano ne' si inoltrano. Nessuno poteva
+// accorgersene finche' non scriveva il cliente. Si e' visto contando: zero
+// ordini su Printify a fronte di un catalogo americano di 48 prodotti.
+//
+// Il prezzo qui NON e' quello che paga il cliente -- ha gia' pagato su
+// Shopify. E' il listino del prodotto interno usa-e-getta che creiamo per
+// l'ordine, che non viene pubblicato su nessun canale di vendita e non lo
+// vede nessuno. Basta che sia > 0. Cento centesimi e' lo stesso valore che
+// /generate-mockup usa da sempre in perla-upload-endpoint.js, dove infatti le
+// anteprime si generano.
+const PREZZO_PRODOTTO_INTERNO = 100;
+
+// Il corpo della richiesta sta in una funzione sua perche' e' l'unica parte
+// che si puo' provare senza parlare con Printify: vedi
+// tests/posizione-di-stampa.test.js.
+function corpoProdotto(order, item, front, back, config) {
   const placeholders = [];
   if (front && front.printify_image_id) placeholders.push(buildPlaceholder(front, posizioneFronte(front, config)));
   if (back && back.printify_image_id) placeholders.push(buildPlaceholder(back, posizioneRetro(back)));
 
+  return {
+    title: (item.title || 'Personalizzato') + ' - Ordine #' + order.order_number,
+    description: (item.title || 'Prodotto personalizzato') + ' — personalizzato dal cliente su ordine Shopify.',
+    blueprint_id: config.blueprintId,
+    print_provider_id: config.printProviderId,
+    variants: [{ id: config.variantId, price: PREZZO_PRODOTTO_INTERNO, is_enabled: true }],
+    print_areas: [{ variant_ids: [config.variantId], placeholders: placeholders }],
+  };
+}
+
+async function createProduct(order, item, front, back, config, apiKey, shopId) {
   const response = await fetch('https://api.printify.com/v1/shops/' + shopId + '/products.json', {
     method: 'POST',
     headers: { Authorization: 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      title: (item.title || 'Personalizzato') + ' - Ordine #' + order.order_number,
-      description: (item.title || 'Prodotto personalizzato') + ' — personalizzato dal cliente su ordine Shopify.',
-      blueprint_id: config.blueprintId,
-      print_provider_id: config.printProviderId,
-      variants: [{ id: config.variantId, price: 0, is_enabled: true }],
-      print_areas: [{ variant_ids: [config.variantId], placeholders: placeholders }],
-    }),
+    body: JSON.stringify(corpoProdotto(order, item, front, back, config)),
   });
 
   if (!response.ok) {
@@ -155,4 +181,4 @@ async function fulfillOrder(ctx) {
 // posizioneFronte/posizioneRetro escono di qui perche' sono la regola che
 // decide DOVE si stampa, ed e' l'unica di questo file che si puo' provare
 // senza parlare con Printify: vedi tests/posizione-di-stampa.test.js.
-module.exports = { fulfillOrder, posizioneFronte, posizioneRetro };
+module.exports = { fulfillOrder, posizioneFronte, posizioneRetro, corpoProdotto };

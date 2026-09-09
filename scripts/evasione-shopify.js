@@ -95,7 +95,32 @@ async function riferimentoPrintify(idOrdine, env, fetchImpl) {
       'spedizione ' + idOrdine + ' (' + res.status + ').');
   }
   const dati = await res.json();
-  return dati && dati.external_id ? String(dati.external_id) : null;
+  return riferimentoDaOrdinePrintify(dati);
+}
+
+// DOVE PRINTIFY TIENE DAVVERO IL NOSTRO RIFERIMENTO.
+//
+// Glielo mandiamo come `external_id` quando creiamo l'ordine, e per mesi si e'
+// dato per scontato che lo restituisse con lo stesso nome. Non lo fa: nella
+// risposta `external_id` torna SEMPRE null, e il valore che abbiamo mandato
+// ricompare sotto `metadata.shop_order_id`. Verificato su un ordine vero
+// creato apposta: mandato "999000764-1", risposta
+//   external_id: null,  metadata: { shop_order_id: "999000764-1", ... }
+//
+// Cercandolo solo in external_id, questa funzione tornava null per ogni
+// spedizione Printify: il collo partiva, il webhook arrivava, e il codice di
+// tracciamento non raggiungeva mai l'ordine Shopify -- quindi mai il cliente,
+// che restava senza notizie del suo pacco.
+//
+// Si guarda prima external_id, cosi' se un giorno lo popolassero davvero
+// diventa lui la fonte, e poi il posto dove il valore sta oggi.
+function riferimentoDaOrdinePrintify(ordine) {
+  if (!ordine) return null;
+  if (ordine.external_id) return String(ordine.external_id);
+  const meta = ordine.metadata || {};
+  if (meta.shop_order_id) return String(meta.shop_order_id);
+  if (meta.shop_order_label) return String(meta.shop_order_label);
+  return null;
 }
 
 /* -------------------------------------------------------------------------
@@ -362,6 +387,7 @@ module.exports = {
   daPrintful,
   daPrintify,
   riferimentoPrintify,
+  riferimentoDaOrdinePrintify,
   firmaPrintifyValida,
   segretoUrlValido,
   evadiRiga,

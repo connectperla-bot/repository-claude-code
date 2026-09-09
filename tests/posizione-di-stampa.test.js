@@ -23,7 +23,7 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const { posizioneFronte, posizioneRetro } = require('../scripts/providers/printify-client');
+const { posizioneFronte, posizioneRetro, corpoProdotto } = require('../scripts/providers/printify-client');
 
 let passati = 0;
 function prova(descrizione, fn) {
@@ -85,6 +85,53 @@ prova('senza niente si stampa davanti, come sempre', function () {
   assert.strictEqual(posizioneFronte(null, null), 'front');
   assert.strictEqual(posizioneFronte(undefined, {}), 'front');
   assert.strictEqual(posizioneRetro(null), 'back');
+});
+
+// ---------------------------------------------------------------------------
+// E CHE L'ORDINE PARTA, PRIMA ANCORA DI CHIEDERSI DOVE STAMPA
+//
+// Il prodotto interno che creiamo per ogni ordine nasceva con price: 0, e
+// Printify lo rifiuta: "variants.0.price: The variants.0.price must be greater
+// than 0" (codice 8150). C'era dal primo commit, quindi nessun ordine Printify
+// e' MAI arrivato allo stampatore -- il cliente pagava su Shopify, il servizio
+// rispondeva 200 come da progetto, e l'errore moriva nei log di Render.
+//
+// Trovato mandando un ordine di prova firmato al servizio vero: zero ordini su
+// Printify a fronte di 48 prodotti americani in vendita. Questa prova e' li'
+// perche' non torni: e' l'unica cosa che sta fra il cliente che paga e
+// nessuno che stampa.
+console.log('\nChe l\'ordine parta davvero');
+
+const ORDINE = { id: 1, order_number: '1001' };
+const RIGA = { title: 'Giacchetto Parka', variant_title: 'M / Khaki', quantity: 1 };
+
+prova('il prezzo del prodotto interno e\' maggiore di zero', function () {
+  const corpo = corpoProdotto(ORDINE, RIGA, comeScriveIlTema('giacchetto', 'front'), null,
+    { blueprintId: 10740, printProviderId: 72, variantId: 399937, position: 'back_dtf' });
+  assert.ok(corpo.variants.length > 0, 'senza varianti Printify non crea niente');
+  for (const v of corpo.variants) {
+    assert.ok(typeof v.price === 'number' && v.price > 0,
+      'price ' + v.price + ': Printify risponde 400 (codice 8150) e l\'ordine non parte');
+  }
+});
+
+prova('il corpo porta tutto quello che Printify pretende', function () {
+  const corpo = corpoProdotto(ORDINE, RIGA, comeScriveIlTema('bandana', 'front'), null,
+    { blueprintId: 562, printProviderId: 70, variantId: 101403 });
+  assert.ok(corpo.title, 'senza titolo Printify rifiuta');
+  assert.strictEqual(corpo.blueprint_id, 562);
+  assert.strictEqual(corpo.print_provider_id, 70);
+  assert.strictEqual(corpo.variants[0].id, 101403);
+  assert.deepStrictEqual(corpo.print_areas[0].variant_ids, [101403],
+    'l\'area deve riferirsi alla variante che il cliente ha pagato');
+  assert.strictEqual(corpo.print_areas[0].placeholders[0].position, 'front');
+});
+
+prova('e sul parka quel corpo stampa sul dorso', function () {
+  const corpo = corpoProdotto(ORDINE, RIGA, comeScriveIlTema('giacchetto', 'front'), null,
+    { blueprintId: 10740, printProviderId: 72, variantId: 399937, position: 'back_dtf' });
+  assert.strictEqual(corpo.print_areas[0].placeholders[0].position, 'back_dtf',
+    'la regola deve arrivare fino al corpo della richiesta, non fermarsi alla funzione');
 });
 
 console.log('\n' + passati + ' verifiche superate.' +

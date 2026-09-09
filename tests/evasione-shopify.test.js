@@ -329,6 +329,55 @@ provaAsync('il riferimento Printify si chiede indietro a loro', async function (
   assert.ok(/\/shops\/77\/orders\/printify-abc\.json$/.test(chiesto), chiesto);
 });
 
+// LA RISPOSTA VERA DI PRINTIFY, NON QUELLA CHE CI ASPETTAVAMO.
+//
+// La prova qui sopra finge una risposta con external_id valorizzato. Printify
+// NON risponde cosi': external_id torna sempre null, e il riferimento che
+// abbiamo mandato ricompare sotto metadata.shop_order_id. Verificato creando
+// un ordine vero apposta -- mandato "999000764-1", ricevuto:
+//   { "external_id": null,
+//     "metadata": { "order_type": "api",
+//                   "shop_order_id": "999000764-1",
+//                   "shop_order_label": "999000764-1" } }
+//
+// Finche' si guardava solo external_id, ogni spedizione Printify tornava senza
+// riferimento: il pacco partiva e il codice di tracciamento non arrivava mai
+// all'ordine Shopify, quindi mai al cliente.
+provaAsync('il riferimento si legge dove Printify lo mette davvero', async function () {
+  async function finto() {
+    return {
+      ok: true,
+      json: async function () {
+        return {
+          id: '6aa1c4307413bf7163086786',
+          external_id: null,
+          metadata: {
+            order_type: 'api',
+            shop_order_id: '999000764-1',
+            shop_order_label: '999000764-1',
+          },
+        };
+      },
+    };
+  }
+  const r = await ev.riferimentoPrintify('6aa1c4307413bf7163086786',
+    { PRINTIFY_SHOP_ID: '77', PRINTIFY_API_KEY: 'k' }, finto);
+  assert.strictEqual(r, '999000764-1',
+    'senza questo il cliente non riceve mai il tracciamento');
+});
+
+function testExternalIdVinceSeLoPopolassero() {
+  assert.strictEqual(
+    ev.riferimentoDaOrdinePrintify({ external_id: '111-1', metadata: { shop_order_id: '222-2' } }),
+    '111-1');
+}
+
+function testSenzaRiferimentoNonSiInventa() {
+  assert.strictEqual(ev.riferimentoDaOrdinePrintify({ metadata: { order_type: 'sample' } }), null);
+  assert.strictEqual(ev.riferimentoDaOrdinePrintify({}), null);
+  assert.strictEqual(ev.riferimentoDaOrdinePrintify(null), null);
+}
+
 // ---- esecuzione -----------------------------------------------------------
 
 console.log('\nRiferimento fra riga d\'ordine e stampatore');
@@ -337,6 +386,8 @@ prova('il riferimento si rilegge al ritorno', testRiferimentoSiRilegge);
 prova('un ordine non nostro viene ignorato', testRiferimentoAltruiVieneIgnorato);
 prova('senza id non si costruisce un riferimento finto', testRiferimentoSenzaIdSiFerma);
 prova('i client non mandano piu\' l\'id del solo ordine', testIClientNonMandanoPiuLIdDelSoloOrdine);
+prova('external_id vince se un giorno lo popolassero', testExternalIdVinceSeLoPopolassero);
+prova('un ordine senza riferimento non ne inventa uno', testSenzaRiferimentoNonSiInventa);
 
 console.log('\nI webhook dei due stampatori');
 prova('legge la spedizione Printful', testLeggeLaSpedizionePrintful);
