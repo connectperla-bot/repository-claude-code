@@ -107,7 +107,7 @@ TIPI = {
     "bandana":     (562, 70),
     "ciotola":     (570, 70),
     "medaglietta": (566, 70),
-    "tappetino":   (855, 70),
+    "tappetino":   (623, 10),
 }
 
 _MISURE = {}

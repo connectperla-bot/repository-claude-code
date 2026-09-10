@@ -82,9 +82,13 @@ const PRODUCT_TYPE_CONFIG = {
       printProviderId: Number(process.env.CUCCIA_PROVIDER_ID || 10),
       variantId: Number(process.env.CUCCIA_VARIANT_ID || 0),
     },
+    // Il ripiego e' 623/10 (MWW On Demand) e non piu' 855/70: vedi la nota in
+    // render.yaml. variantId qui e' l'osso piccolo, ma con tre varianti chi
+    // decide davvero e' varianti-fornitore.js, dal titolo che il cliente ha
+    // pagato.
     tappetino: {
-      blueprintId: Number(process.env.TAPPETINO_BLUEPRINT_ID || 855),
-      printProviderId: Number(process.env.TAPPETINO_PROVIDER_ID || 70),
+      blueprintId: Number(process.env.TAPPETINO_BLUEPRINT_ID || 623),
+      printProviderId: Number(process.env.TAPPETINO_PROVIDER_ID || 10),
       variantId: Number(process.env.TAPPETINO_VARIANT_ID || 0),
     },
     guinzaglio: {

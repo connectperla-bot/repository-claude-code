@@ -28,7 +28,7 @@ varianti che condividono la misura, e ogni gruppo combacia esatto.
 
 DA DOVE ARRIVANO LE MISURE
 Da printify-blueprints/<blueprint>_<provider>.json, gia' nel repository. Se il
-file non c'e' (ciotola 570, tappetino 855) e c'e' una chiave, si scarica e si
+file non c'e' e c'e' una chiave, si scarica e si
 salva li' -- cosi' la volta dopo funziona anche offline, e i test girano senza
 rete.
 """

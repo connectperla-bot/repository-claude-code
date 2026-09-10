@@ -64,7 +64,7 @@ def prova(descrizione, fn):
 def misure_reali():
     """Tutte le misure di stampa vere del repository, per tipo di prodotto."""
     tipi = {419: 'cuccia', 562: 'bandana', 566: 'medaglietta',
-            784: 'collare', 570: 'ciotola', 855: 'tappetino'}
+            784: 'collare', 570: 'ciotola', 623: 'tappetino'}
     fuori = []
     for percorso in sorted(glob.glob(os.path.join(QUI, '..', 'printify-blueprints', '*.json'))):
         base = os.path.basename(percorso)[:-5]

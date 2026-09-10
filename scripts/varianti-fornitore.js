@@ -134,6 +134,33 @@ const VARIANTI = {
     'Bone / Red / One size': 397024,
     'Bone / Pink / One size': 397025,
   },
+  // catalogo Printify 623/10 (Pet Feeding Mat, MWW On Demand)
+  //
+  // Tre varianti, due sagome, due misure -- e il tappetino e' l'unico tipo
+  // venduto con lo STESSO fornitore su tutti e due i mercati, quindi la mappa
+  // e' una sola e tappetino_eu ci punta sotto. La riga -eu esiste solo perche'
+  // il tema nasconde per tag (snippets/perla-region-hidden.liquid) e il
+  // prodotto europeo porta 'tappetino-eu': senza questa voce l'ordine europeo
+  // finirebbe nel ramo "variante unica" e partirebbe sempre come osso piccolo,
+  // che e' il difetto ROUND 42 daccapo.
+  //
+  // I titoli inglesi del fornitore restano come alias: se un giorno un
+  // prodotto viene ricreato importandolo da Printify invece che a mano, le
+  // opzioni arrivano in quella forma e l'ordine parte lo stesso. normalizza()
+  // pareggia le virgolette e il segno per, che nel catalogo sono scritti in
+  // due modi diversi sulla stessa riga.
+  tappetino: {
+    'Osso piccolo (48x36 cm)': 73844,
+    'Bone shape (19" x 14")': 73844,
+    'Bone shape (19" x 14") / White': 73844,
+    'Osso grande (76x46 cm)': 73845,
+    'Bone shape (30" x 18")': 73845,
+    'Bone shape (30" x 18") / White': 73845,
+    'Pesce (48x36 cm)': 73846,
+    'Fish shape (19" x 14")': 73846,
+    'Fish shape (19" x 14") / White': 73846,
+  },
+
   // printify-blueprints/10740_72.json (Pet Parka Jacket, Print Clever)
   giacchetto: {
     'XS / Khaki': 399940,
@@ -178,6 +205,10 @@ const VARIANTI = {
   // guinzaglio_eu resta fuori di proposito: Printful lo fa in una misura sola
   // (1,83 m), quindi non c'e' niente da scegliere e vale la configurazione.
 };
+
+// Il tappetino europeo e' lo stesso pezzo dallo stesso fornitore: la mappa non
+// si copia, si riusa. Copiarla vorrebbe dire tenerne allineate due.
+VARIANTI.tappetino_eu = VARIANTI.tappetino;
 
 // I titoli veri contengono il segno di moltiplicazione (U+00D7), le virgolette
 // tipografiche e spazi variabili a seconda di chi li ha scritti. Confrontarli

@@ -1,0 +1,89 @@
+{
+ "fetchedAt": "2026-09-10T14:40:37.443861Z",
+ "blueprint": {
+  "id": 623,
+  "title": "Pet Feeding Mats",
+  "description": "Minimize mess when it’s chow-time for your furry family. These personalized pet feeding mats come in a playful bone shape (available in 2x sizes) and a whimsical fish shape (available in 1x size). With a non-slip bottom design to keep it in place for even the most active of eaters and a foam-filled material that’s highly absorbent, these mats are bliss for any pet parent.<br/><br/>NB! Due to the thickness of the fabric, print colors may not soak all the way through and white background can show through when fibers are stroked.<div>.:Material: 100% polyester outer-layer, 100% polyurethane memory foam core</div><br /><div>.:Anti-slip backing</div><br /><div>.:One-sided print</div><br /><div>.:Pre-constructed item (size varies ±1\")</div>",
+  "brand": "Generic brand",
+  "model": "",
+  "images": [
+   "https://images.printify.com/66d6f64c22fa6f73e40c9a33",
+   "https://images.printify.com/66d6f64bac1d65b43f0f98e2",
+   "https://images.printify.com/615d9a9b7eda5d0c837b8183",
+   "https://images.printify.com/67ee8da2c49839bb58005d52",
+   "https://images.printify.com/67ee8da301e49c846e0752a2",
+   "https://images.printify.com/60eed6f3a56b6812ad61e08e",
+   "https://images.printify.com/60eed6fbbc0a3b2e6c4099e9"
+  ],
+  "tags": []
+ },
+ "providers": [
+  {
+   "id": 10,
+   "title": "MWW On Demand",
+   "decoration_methods": [
+    "dye-sublimation"
+   ]
+  }
+ ],
+ "printProviderDetail": null,
+ "variants": [
+  {
+   "id": 73844,
+   "title": "Bone shape (19\" x 14\") / White",
+   "options": {
+    "size": "Bone shape (19\" x 14\")",
+    "color": "White"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "dye-sublimation",
+     "width": 3150,
+     "height": 2400
+    }
+   ],
+   "decoration_methods": [
+    "dye-sublimation"
+   ]
+  },
+  {
+   "id": 73845,
+   "title": "Bone shape (30\" × 18\") / White",
+   "options": {
+    "size": "Bone shape (30\" × 18\")",
+    "color": "White"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "dye-sublimation",
+     "width": 4800,
+     "height": 3000
+    }
+   ],
+   "decoration_methods": [
+    "dye-sublimation"
+   ]
+  },
+  {
+   "id": 73846,
+   "title": "Fish shape (19\" × 14\") / White",
+   "options": {
+    "size": "Fish shape (19\" × 14\")",
+    "color": "White"
+   },
+   "placeholders": [
+    {
+     "position": "front",
+     "decoration_method": "dye-sublimation",
+     "width": 3150,
+     "height": 2400
+    }
+   ],
+   "decoration_methods": [
+    "dye-sublimation"
+   ]
+  }
+ ]
+}

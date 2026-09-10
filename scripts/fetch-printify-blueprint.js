@@ -142,7 +142,7 @@ async function main() {
 
   if (!args.blueprint) {
     console.error('Specifica --blueprint ID. Usa --list per vedere la lista.');
-    console.error('Esempi noti dal progetto: 784(collare), 562(bandana), 566(medaglietta), 570(ciotola), 419(cuccia), 855(tappetino), 2791(guinzaglio)');
+    console.error('Esempi noti dal progetto: 784(collare), 562(bandana), 566(medaglietta), 570(ciotola), 419(cuccia), 623(tappetino), 2791(guinzaglio)');
     process.exit(1);
   }
 

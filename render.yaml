@@ -74,16 +74,23 @@ services:
         value: "10"
       - key: CUCCIA_VARIANT_ID
         value: "61436"
-      # ROUND 47 -- tappetino e guinzaglio Printify non hanno nessun prodotto
-      # sul negozio (verificato con perla-verifica-prodotti.py). Si tengono
-      # per quando si creeranno; il guinzaglio EU e' un'altra cosa e lo fa
-      # Printful, vedi PRINTFUL_GUINZAGLIO_EU_VARIANT_ID sopra.
+      # ROUND 59 -- il tappetino cambia fornitore PRIMA di nascere. Era 855/70
+      # (Printed Mint): area di stampa 1,44, rettangolare, e spedizione in
+      # Italia fuori da qualunque margine. E' 623/10 (MWW On Demand), che ha
+      # l'Italia nella fascia europea a 7,79 dollari -- la piu' bassa di tutto
+      # il catalogo Printify -- e tre varianti con DUE sagome e DUE misure:
+      #   73844 osso   19x14 pollici  area 3150x2400
+      #   73845 osso   30x18 pollici  area 4800x3000
+      #   73846 pesce  19x14 pollici  area 3150x2400
+      # VARIANT_ID qui e' solo il ripiego: la variante vera la sceglie
+      # scripts/varianti-fornitore.js dal titolo che il cliente ha pagato,
+      # perche' con tre varianti un id fisso spedirebbe sempre la stessa.
       - key: TAPPETINO_BLUEPRINT_ID
-        value: "855"
+        value: "623"
       - key: TAPPETINO_PROVIDER_ID
-        value: "70"
+        value: "10"
       - key: TAPPETINO_VARIANT_ID
-        value: "76892"
+        value: "73844"
       - key: GUINZAGLIO_BLUEPRINT_ID
         value: "2791"
       - key: GUINZAGLIO_PROVIDER_ID
@@ -225,16 +232,23 @@ services:
         value: "10"
       - key: CUCCIA_VARIANT_ID
         value: "61436"
-      # ROUND 47 -- tappetino e guinzaglio Printify non hanno nessun prodotto
-      # sul negozio (verificato con perla-verifica-prodotti.py). Si tengono
-      # per quando si creeranno; il guinzaglio EU e' un'altra cosa e lo fa
-      # Printful, vedi PRINTFUL_GUINZAGLIO_EU_VARIANT_ID sopra.
+      # ROUND 59 -- il tappetino cambia fornitore PRIMA di nascere. Era 855/70
+      # (Printed Mint): area di stampa 1,44, rettangolare, e spedizione in
+      # Italia fuori da qualunque margine. E' 623/10 (MWW On Demand), che ha
+      # l'Italia nella fascia europea a 7,79 dollari -- la piu' bassa di tutto
+      # il catalogo Printify -- e tre varianti con DUE sagome e DUE misure:
+      #   73844 osso   19x14 pollici  area 3150x2400
+      #   73845 osso   30x18 pollici  area 4800x3000
+      #   73846 pesce  19x14 pollici  area 3150x2400
+      # VARIANT_ID qui e' solo il ripiego: la variante vera la sceglie
+      # scripts/varianti-fornitore.js dal titolo che il cliente ha pagato,
+      # perche' con tre varianti un id fisso spedirebbe sempre la stessa.
       - key: TAPPETINO_BLUEPRINT_ID
-        value: "855"
+        value: "623"
       - key: TAPPETINO_PROVIDER_ID
-        value: "70"
+        value: "10"
       - key: TAPPETINO_VARIANT_ID
-        value: "76892"
+        value: "73844"
       - key: GUINZAGLIO_BLUEPRINT_ID
         value: "2791"
       - key: GUINZAGLIO_PROVIDER_ID

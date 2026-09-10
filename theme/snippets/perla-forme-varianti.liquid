@@ -13,6 +13,8 @@
                            0,83      0,91      1,50   (tondo, cuore, osso)
       giacchetto         1181x1181 1535x1535 1535x2362 1654x2717 2126x2717
                            1,00      1,00      0,65      0,61      0,78
+      tappetino          3150x2400 4800x3000 3150x2400
+                           1,31      1,60      1,31   (osso, osso grande, pesce)
 
   La tela dell'editor deve avere le proporzioni dell'area di stampa, se no
   quello che il cliente scrive esce stampato deformato: sta scritto per esteso
@@ -44,9 +46,22 @@
   - "sagoma" e' la forma vera del pezzo (vedi snippets/perla-sagoma.liquid);
     vuoto = rettangolo.
 
+  IL TAPPETINO E' IL PRIMO CON DUE SAGOME DIVERSE (ROUND 59)
+  Fin qui una riga cambiava solo il rapporto, e la sagoma era una sola per
+  tipo. Il tappetino no: osso e pesce sono due pezzi diversi nello stesso
+  prodotto, e il grande non e' il piccolo ingrandito -- 30x18 pollici fa 1,60,
+  19x14 fa 1,31, quindi anche l'osso ha due tracciati. Sono tre righe e tre
+  sagome, ed e' esattamente il caso per cui questa tabella esiste.
+
+  E qui la finestra e' 0,0,100,100 per tutte e tre, misurata non supposta: la
+  scacchiera torna a pieno contrasto da bordo a bordo su tutti e tre i pezzi.
+  Attenzione a non confonderla con l'AREA: l'area dichiarata deborda dal
+  pezzo (il pezzo ne occupa il 92% x 84% sull'osso piccolo), ma quello e' un
+  fatto della sagoma, non della finestra, e sta in perla-sagoma.liquid.
+
   Chi la consuma: sections/main-product.liquid, che con la variante scelta
   sovrascrive photo_ratio e passa finestra e sagoma all'editor, e
   assets/perla-forma.js, che rifa' la sezione quando il cliente cambia
   variante e l'area cambia con lei.
 {%- endcomment -%}
-medaglietta_incisa|Circle|756|907|10.2,39,89.8,72.3|tondo#medaglietta_incisa|Heart|756|827|18.5,34.3,81.5,65.7|cuore#medaglietta_incisa|Bone|744|496|9.4,25.6,90.3,85.2|osso#collare_pelle|Small|1650|150|0,0,100,100|#collare_pelle|Medium|1795|189|0,0,100,100|#collare_pelle|Large|1950|195|0,0,100,100|#collare_pelle|Extra Large|1950|270|0,0,100,100|#giacchetto|XS|1181|1181|0,8,100,92|#giacchetto|S|1535|1535|0,8,100,92|#giacchetto|M|1535|2362|0,8,100,92|#giacchetto|L|1654|2717|0,8,100,92|#giacchetto|XL|2126|2717|0,8,100,92|#giacchetto|2XL|2126|2717|0,8,100,92|
+medaglietta_incisa|Circle|756|907|10.2,39,89.8,72.3|tondo#medaglietta_incisa|Heart|756|827|18.5,34.3,81.5,65.7|cuore#medaglietta_incisa|Bone|744|496|9.4,25.6,90.3,85.2|osso#collare_pelle|Small|1650|150|0,0,100,100|#collare_pelle|Medium|1795|189|0,0,100,100|#collare_pelle|Large|1950|195|0,0,100,100|#collare_pelle|Extra Large|1950|270|0,0,100,100|#giacchetto|XS|1181|1181|0,8,100,92|#giacchetto|S|1535|1535|0,8,100,92|#giacchetto|M|1535|2362|0,8,100,92|#giacchetto|L|1654|2717|0,8,100,92|#giacchetto|XL|2126|2717|0,8,100,92|#giacchetto|2XL|2126|2717|0,8,100,92|#tappetino|Osso piccolo (48x36 cm)|3150|2400|0,0,100,100|tappetino-osso#tappetino|Osso grande (76x46 cm)|4800|3000|0,0,100,100|tappetino-osso-grande#tappetino|Pesce (48x36 cm)|3150|2400|0,0,100,100|tappetino-pesce

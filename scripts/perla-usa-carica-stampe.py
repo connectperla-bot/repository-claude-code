@@ -72,7 +72,7 @@ costruttore = _modulo("perla_usa_file_stampa", os.path.join(QUI, "perla-usa-file
 LOGHI = marchio.LIVELLI_OBSOLETI
 
 TIPO_DI_BLUEPRINT = {419: "cuccia", 562: "bandana", 566: "medaglietta",
-                     784: "collare", 570: "ciotola", 855: "tappetino"}
+                     784: "collare", 570: "ciotola", 623: "tappetino"}
 
 # ROUND 52 -- I DUE PRODOTTI CHE NON SI POSSONO RICONOSCERE DAL FILE
 #

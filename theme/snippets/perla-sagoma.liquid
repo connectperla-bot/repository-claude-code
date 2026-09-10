@@ -21,6 +21,23 @@
      cade esattamente dove cade sul pezzo, qualunque sia la larghezza della
      colonna.
 
+     ROUND 59 — il metodo adesso e' uno script: scripts/perla-ricalca-sagoma.py.
+     E ricalcando i due TAPPETINI e' saltato fuori che quel "in millesimi
+     dell'area di stampa" per le tre medagliette e' vero per un motivo che non
+     vale sempre: la medaglietta RIEMPIE l'area di stampa, quindi il suo
+     riquadro e l'area coincidono e normalizzare sull'uno o sull'altra e' la
+     stessa cosa. Il tappetino no. L'area dichiarata deborda dal pezzo: il
+     pezzo ne occupa il 92% in larghezza e l'84% in altezza (osso), il 90% e
+     l'86% (pesce), e quello che resta fuori il fornitore lo taglia.
+     Normalizzando sul riquadro del pezzo la sagoma sarebbe uscita giusta di
+     forma e sbagliata di posto — sull'osso di quasi un decimo di tela.
+
+     Il debordo si misura con una SCACCHIERA di passo noto stampata sullo
+     stesso pezzo: le caselle si vedono anche dove il pezzo le taglia, e il
+     loro passo dice quanto e' grande sul mockup una casella dell'area di
+     stampa. Da li' l'area intera: passo per numero di caselle, centrata sul
+     pezzo. Il metodo per esteso sta nello script.
+
   2) la finestra. Sempre dal mockup: il fornitore rende a pieno contrasto
      solo una parte dell'area e sbiadisce il resto. Quella parte e' cio' che
      il laser incide (o, sul parka, cio' che la stampa lascia vedere). Fuori
@@ -45,6 +62,18 @@
     {%- when 'osso' -%}
       <svg class="fabric-studio__shape-guide-svg" viewBox="0 0 1000 1000" preserveAspectRatio="none">
         <path d="M485.8,-2.5 L519.2,0 L545.1,12.5 L565.9,31.3 L587.6,62.7 L599.3,89 L611,132.8 L614.4,162.9 L614.4,198 L611,226.8 L612.7,233.1 L620.2,240.6 L719.5,240.6 L747.9,191.7 L777.1,159.1 L811.4,137.8 L844.7,130.3 L877.3,134.1 L911.5,150.4 L942.4,179.2 L970.8,224.3 L986.6,266.9 L995,307 L998.3,344.6 L995.8,398.5 L987.5,441.1 L973.3,481.2 L945.7,527.6 L921.5,553.9 L919.9,573.9 L961.6,629.1 L978.3,664.2 L989.1,699.2 L995,729.3 L997.5,800.8 L990.8,847.1 L977.5,891 L957.4,931.1 L936.6,958.6 L907.3,983.7 L874,998.7 L837.2,1001.3 L811.4,995 L785.5,981.2 L755.4,953.6 L730.4,916 L712.9,872.2 L707,864.7 L288.8,864.7 L283.8,869.7 L261.3,919.8 L245.4,942.4 L226.2,962.4 L202.8,978.7 L179.5,988.7 L138.6,992.5 L106,983.7 L77.6,966.2 L52.6,941.1 L25,896 L13.4,865.9 L2.5,820.8 L-0.8,790.7 L1.7,720.6 L9.2,684.2 L24.2,641.6 L36.7,617.8 L54.3,592.7 L72.6,573.9 L76,563.9 L73.5,542.6 L45.1,510 L23.4,471.2 L10.9,436.1 L1.7,392.2 L-0.8,365.9 L1.7,300.8 L11.7,254.4 L27.5,213 L52.6,172.9 L89.3,139.1 L124.4,124.1 L154.4,121.6 L186.1,129.1 L224.5,154.1 L252.9,188 L278.8,236.8 L376.5,238.1 L383.1,228.1 L379.8,180.5 L383.1,136.6 L390.7,102.8 L403.2,70.2 L423.2,37.6 L439.9,20.1 L464.9,3.8 L485.8,-2.5 Z"></path>
+      </svg>
+    {%- when 'tappetino-osso' -%}
+      <svg class="fabric-studio__shape-guide-svg" viewBox="0 0 1000 1000" preserveAspectRatio="none">
+        <path d="M842.8,79.8 L871.5,79.8 L888.0,84.5 L916.6,105.4 L929.7,124.1 L942.7,155.6 L954.9,223.2 L955.7,304.8 L948.8,449.3 L948.8,554.2 L957.5,698.7 L957.5,774.5 L946.2,840.9 L934.0,871.2 L916.6,896.9 L888.0,916.7 L848.0,920.2 L814.1,910.9 L748.1,874.7 L703.8,857.3 L634.2,843.3 L519.6,830.4 L411.8,832.8 L344.0,843.3 L294.5,859.6 L205.0,903.9 L158.1,915.5 L131.1,913.2 L107.7,905.0 L83.4,886.4 L66.8,863.1 L50.3,822.3 L42.5,772.2 L46.9,627.6 L47.7,420.2 L41.6,225.5 L50.3,170.7 L65.1,136.9 L82.5,113.6 L119.8,88.0 L165.0,83.3 L204.1,95.0 L278.0,132.3 L344.9,156.7 L420.5,167.2 L516.9,168.4 L602.1,160.2 L695.9,142.7 L742.9,125.3 L814.1,88.0 Z"></path>
+      </svg>
+    {%- when 'tappetino-osso-grande' -%}
+      <svg class="fabric-studio__shape-guide-svg" viewBox="0 0 1000 1000" preserveAspectRatio="none">
+        <path d="M882.7,52.7 L910.8,56.9 L931.0,73.7 L955.6,122.9 L963.5,181.9 L958.2,566.7 L964.4,809.7 L960.9,850.4 L954.7,877.1 L943.3,906.6 L927.5,929.1 L907.3,941.7 L881.0,943.1 L855.5,930.5 L797.6,877.1 L766.9,860.3 L708.9,849.0 L615.0,842.0 L396.4,844.8 L258.6,854.6 L213.0,874.3 L141.9,936.1 L116.4,947.3 L92.7,944.5 L75.1,933.3 L61.1,915.0 L48.8,888.3 L39.1,850.4 L35.6,805.5 L46.2,534.4 L35.6,179.1 L40.9,136.9 L47.0,115.9 L57.6,92.0 L73.4,69.5 L96.2,55.5 L130.4,61.1 L151.5,75.1 L205.9,127.1 L262.1,148.2 L392.0,158.0 L567.6,156.6 L680.0,152.4 L757.2,139.7 L807.2,110.3 L856.4,63.9 Z"></path>
+      </svg>
+    {%- when 'tappetino-pesce' -%}
+      <svg class="fabric-studio__shape-guide-svg" viewBox="0 0 1000 1000" preserveAspectRatio="none">
+        <path d="M898.1,69.0 L919.5,71.2 L937.4,85.8 L946.0,108.2 L949.4,137.3 L947.7,186.5 L917.7,472.0 L917.7,517.9 L925.5,619.8 L948.6,820.2 L948.6,868.3 L945.1,892.9 L939.1,908.6 L928.9,920.9 L904.0,931.0 L874.9,928.8 L760.2,859.4 L722.6,844.8 L693.5,840.3 L629.3,849.3 L537.7,885.1 L478.6,899.7 L412.7,901.9 L364.7,891.8 L266.3,849.3 L225.2,823.5 L186.7,792.2 L125.9,723.9 L96.0,676.9 L74.5,633.2 L58.3,584.0 L50.6,529.1 L53.1,458.6 L72.0,375.7 L100.2,313.0 L145.6,245.9 L185.0,205.6 L236.3,165.3 L320.2,118.3 L368.2,101.5 L422.1,91.4 L459.8,91.4 L495.7,98.1 L644.7,150.7 L672.9,155.2 L709.7,154.1 L770.5,133.9 L857.8,81.3 Z"></path>
       </svg>
     {%- else -%}
       {%- if photo_type == 'bandana' -%}

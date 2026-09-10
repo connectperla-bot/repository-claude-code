@@ -67,30 +67,58 @@ def righe_forme():
     return fuori
 
 
-# I tre blueprint e la posizione di stampa da cui leggere l'area. Sono gli
-# stessi di scripts/perla-usa-prodotti-nuovi.py: se la' cambia il fornitore,
-# qui il file non si trova piu' e il test lo dice invece di passare a vuoto.
+# I blueprint e la posizione di stampa da cui leggere l'area. Sono gli stessi
+# di scripts/perla-usa-prodotti-nuovi.py: se la' cambia il fornitore, qui il
+# file non si trova piu' e il test lo dice invece di passare a vuoto.
+#
+# Il terzo campo, quando c'e', traduce il valore dell'opzione SU SHOPIFY nella
+# parola che usa il fornitore. Sui primi tre tipi non serve perche' combaciano
+# gia' ("Circle", "Small", "XS" si scrivono uguale in tutte e due le lingue).
+# Sul tappetino no: il cliente italiano legge "Osso grande (76x46 cm)", il
+# fornitore scrive 'Bone shape (30" x 18")', e obbligare la vetrina a parlare
+# inglese per far passare un test sarebbe la coda che muove il cane. La
+# traduzione sta qui, in chiaro, e resta comunque il fornitore a dire l'area.
 SORGENTE = {
-    "medaglietta_incisa": ("10674_228.json", "front"),
-    "collare_pelle": ("10700_217.json", "front"),
-    "giacchetto": ("10740_72.json", "back_dtf"),
+    "medaglietta_incisa": ("10674_228.json", "front", None),
+    "collare_pelle": ("10700_217.json", "front", None),
+    "giacchetto": ("10740_72.json", "back_dtf", None),
+    "tappetino": ("623_10.json", "front", {
+        "Osso piccolo (48x36 cm)": 'Bone shape (19" x 14")',
+        "Osso grande (76x46 cm)": 'Bone shape (30" x 18")',
+        "Pesce (48x36 cm)": 'Fish shape (19" x 14")',
+    }),
 }
+
+
+def _pareggia(testo):
+    """Il catalogo scrive il segno per in due modi nella stessa risposta:
+    'Bone shape (19" x 14")' con la ics e 'Fish shape (19" × 14")' con il segno
+    di moltiplicazione. E' la stessa normalizzazione di
+    scripts/varianti-fornitore.js, per lo stesso motivo."""
+    return testo.replace("\u00d7", "x").replace("\u2715", "x").strip()
 
 
 def aree_del_fornitore(tipo):
     """{valore dell'opzione: (larghezza, altezza)} dal blueprint versionato."""
-    nome, posizione = SORGENTE[tipo]
+    nome, posizione, traduzione = SORGENTE[tipo]
     dati = json.loads(leggi(os.path.join(BLUEPRINT, nome)))
     fuori = {}
     for v in dati["variants"]:
         # il titolo e' "Circle / Black / One size": la prima parola-chiave e'
         # la forma o la taglia, ed e' quella su cui la tabella fa combaciare
-        pezzi = [p.strip() for p in v["title"].split("/")]
+        pezzi = [_pareggia(p) for p in v["title"].split("/")]
         for ph in v.get("placeholders", []):
             if ph["position"] != posizione:
                 continue
             for pezzo in pezzi:
                 fuori.setdefault(pezzo, set()).add((ph["width"], ph["height"]))
+    if traduzione:
+        for nostro, loro in traduzione.items():
+            assert loro in fuori, (
+                "%s: %r non esiste sul blueprint. Il fornitore ha rinominato "
+                "la variante: aggiorna SORGENTE qui e VARIANTI in "
+                "scripts/varianti-fornitore.js." % (tipo, loro))
+            fuori[nostro] = fuori[loro]
     return fuori
 
 
@@ -108,13 +136,16 @@ def ogni_riga_ha_l_area_del_fornitore():
 def ogni_variante_del_fornitore_ha_la_sua_riga():
     """Nessuna variante deve restare senza area: resterebbe col rapporto
     mediano, cioe' col difetto che questa tabella e' nata per chiudere."""
-    for tipo, (nome, posizione) in SORGENTE.items():
-        coperte = set(c[1] for c in righe_forme() if c[0] == tipo)
+    for tipo, (nome, posizione, traduzione) in SORGENTE.items():
+        # Le righe si guardano con gli occhi del fornitore: se la tabella dice
+        # "Osso grande (76x46 cm)", qui conta la parola che il fornitore usa.
+        indietro = {n: l for n, l in (traduzione or {}).items()}
+        coperte = set(indietro.get(c[1], c[1]) for c in righe_forme() if c[0] == tipo)
         dati = json.loads(leggi(os.path.join(BLUEPRINT, nome)))
         for v in dati["variants"]:
             if not any(ph["position"] == posizione for ph in v.get("placeholders", [])):
                 continue
-            pezzi = [p.strip() for p in v["title"].split("/")]
+            pezzi = [_pareggia(p) for p in v["title"].split("/")]
             assert coperte & set(pezzi), (
                 "%s: la variante %r non trova nessuna riga" % (tipo, v["title"]))
 
@@ -146,7 +177,10 @@ def le_sagome_disegnate_sono_quelle_dichiarate():
     viceversa: un nome senza disegno lascia il rettangolo di prima senza
     dirlo."""
     testo = leggi(os.path.join(TEMA, "snippets", "perla-sagoma.liquid"))
-    disegnate = set(re.findall(r"\{%-?\s*when\s+'([a-z]+)'", testo))
+    # [a-z-]+ e non [a-z]+: da ROUND 59 i nomi hanno il trattino
+    # (tappetino-osso-grande), e con la vecchia classe il test non li vedeva e
+    # li dichiarava mancanti pur avendoli sotto gli occhi.
+    disegnate = set(re.findall(r"\{%-?\s*when\s+'([a-z-]+)'", testo))
     nominate = set(c[5] for c in righe_forme() if len(c) > 5 and c[5])
     assert nominate <= disegnate, "sagome senza tracciato: %s" % sorted(nominate - disegnate)
     assert disegnate <= nominate, "tracciati che nessuno usa: %s" % sorted(disegnate - nominate)
