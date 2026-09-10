@@ -691,8 +691,11 @@ html {
 
 /* Il titolo del riquadro prende il carattere dei titoli del negozio, come
  * ogni altra intestazione di sezione della scheda prodotto. */
+/* --font-heading e' Marcellus, non Playfair: letto dagli stili calcolati della
+ * pagina vera. Il ripiego conta solo se la variabile sparisse, ma deve dire il
+ * vero lo stesso. */
 #judgeme_product_reviews .jm-review-widget-minimal-header__title {
-  font-family: var(--font-heading, "Playfair Display", Georgia, serif) !important;
+  font-family: var(--font-heading, "Marcellus", Georgia, serif) !important;
   font-size: 1.5rem !important;
   font-weight: 500 !important;
   color: var(--color-ink, #132A4A) !important;

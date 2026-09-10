@@ -1,0 +1,270 @@
+{% comment %}
+  PERLA ITALIA — Conferma d'ordine
+  ================================
+  Dove si incolla: Shopify > Impostazioni > Notifiche > Conferma dell'ordine >
+  Modifica codice. Sostituisce TUTTO il contenuto (c'e' un pulsante "Ripristina
+  il modello predefinito" se vuoi tornare indietro: non si perde niente).
+
+  PERCHE' ESISTE
+  Il modello di serie e' grigio, in Helvetica, e non somiglia al negozio da cui
+  il cliente ha appena comprato. E' anche l'unica cosa di Perla che finisce
+  nella sua casella e che riguardera' piu' volte -- quando aspetta il pacco,
+  quando cerca il numero d'ordine, quando lo mostra a qualcuno.
+
+  COME E' FATTO, E PERCHE' COSI'
+  Tabelle e stili in linea: non e' pigrizia, e' l'unico modo che Outlook e
+  Gmail leggono allo stesso modo. I fogli di stile esterni e i caratteri web
+  nelle email non si possono usare -- Marcellus e Jost, che il sito usa, qui
+  non arriverebbero. Georgia al loro posto: e' un serif presente ovunque e
+  tiene lo stesso tono.
+
+  I COLORI sono quelli veri del tema (config/settings_data.json):
+      blu inchiostro  #132A4A      oro      #C8862B
+      fondo crema     #FCFAF6      pannello #F3E9DA
+      filetto         #E8DCC9      piede    #0F2240 su #EBDFC9
+
+  LA COSA CHE IL MODELLO DI SERIE NON DICE: sui prodotti personalizzati il
+  recesso non si applica (art. 59 Codice del Consumo), ma solo se il cliente
+  lo sa. Sta scritto nella scheda prodotto prima di pagare; ripeterlo qui,
+  con garbo e senza allarmismi, e' quello che rende l'esclusione opponibile.
+{% endcomment %}
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ shop.name }} — Ordine {{ order.name }}</title>
+</head>
+<body style="margin:0; padding:0; background:#FCFAF6; -webkit-font-smoothing:antialiased;">
+
+  <!-- riga di anteprima: quello che si legge nell'elenco della posta, prima di aprire -->
+  <div style="display:none; max-height:0; overflow:hidden; opacity:0;">
+    Grazie {{ customer.first_name }} — abbiamo ricevuto il tuo ordine {{ order.name }}.
+  </div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#FCFAF6;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px; max-width:100%; background:#FFFFFF; border:1px solid #E8DCC9;">
+
+          <!-- testata -->
+          <tr>
+            <td align="center" style="padding:34px 32px 26px; background:#132A4A;">
+              {% if shop.email_logo_url %}
+                <img src="{{ shop.email_logo_url }}" alt="{{ shop.name }}" width="132"
+                     style="display:block; border:0; width:132px; max-width:132px; height:auto;">
+              {% else %}
+                <div style="font-family:Georgia,'Times New Roman',serif; font-size:26px; letter-spacing:.16em; color:#FCFAF6;">PERLA</div>
+                <div style="font-family:Georgia,'Times New Roman',serif; font-size:11px; letter-spacing:.34em; color:#C8862B; margin-top:4px;">ITALIA</div>
+              {% endif %}
+            </td>
+          </tr>
+
+          <!-- filetto oro -->
+          <tr><td style="height:3px; background:#C8862B; font-size:0; line-height:0;">&nbsp;</td></tr>
+
+          <!-- saluto -->
+          <tr>
+            <td style="padding:36px 32px 8px;">
+              <p style="margin:0 0 6px; font-family:Georgia,'Times New Roman',serif; font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:#C8862B;">
+                Ordine {{ order.name }}
+              </p>
+              <h1 style="margin:0 0 14px; font-family:Georgia,'Times New Roman',serif; font-weight:normal; font-size:27px; line-height:1.25; color:#132A4A;">
+                Grazie{% if customer.first_name %}, {{ customer.first_name }}{% endif %}.
+              </h1>
+              <p style="margin:0; font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif; font-size:16px; line-height:1.62; color:#22324A;">
+                Abbiamo ricevuto il tuo ordine e ci mettiamo al lavoro.
+                {% assign personalizzati = 0 %}
+                {% for line in order.line_items %}
+                  {% for p in line.properties %}
+                    {% unless p.first == blank or p.last == blank %}
+                      {% assign primo = p.first | slice: 0 %}
+                      {% if primo != '_' %}{% assign personalizzati = personalizzati | plus: 1 %}{% endif %}
+                    {% endunless %}
+                  {% endfor %}
+                {% endfor %}
+                {% if personalizzati > 0 %}
+                  Ogni pezzo personalizzato viene preparato apposta per te, uno alla volta:
+                  per questo ci mettiamo qualche giorno in piu' di un prodotto già pronto.
+                {% endif %}
+              </p>
+            </td>
+          </tr>
+
+          <!-- bottone: seguire l'ordine -->
+          <tr>
+            <td style="padding:26px 32px 6px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="background:#132A4A; border-radius:2px;">
+                    <a href="{{ order.order_status_url }}"
+                       style="display:inline-block; padding:15px 30px; font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif; font-size:15px; letter-spacing:.05em; color:#F3E9DA; text-decoration:none;">
+                      Segui il tuo ordine
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- righe dell'ordine -->
+          <tr>
+            <td style="padding:30px 32px 0;">
+              <p style="margin:0 0 14px; font-family:Georgia,'Times New Roman',serif; font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:#C8862B;">
+                Cosa arriva
+              </p>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                {% for line in order.line_items %}
+                <tr>
+                  <td width="72" valign="top" style="padding:14px 14px 14px 0;">
+                    {% if line.image %}
+                      <img src="{{ line | img_url: 'compact_cropped' }}" alt="{{ line.title | escape }}" width="72"
+                           style="display:block; border:1px solid #E8DCC9; width:72px; height:auto;">
+                    {% endif %}
+                  </td>
+                  <td valign="top" style="padding:14px 0; font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;">
+                    <div style="font-size:16px; line-height:1.4; color:#132A4A;">{{ line.title }}</div>
+                    {% if line.variant.title != 'Default Title' %}
+                      <div style="font-size:13px; line-height:1.5; color:#6B7789; margin-top:3px;">{{ line.variant.title }}</div>
+                    {% endif %}
+
+                    {% comment %}
+                      Le proprietà che iniziano con "_" sono di servizio (il disegno
+                      composito, gli identificativi dello stampatore): non si mostrano.
+                      Quelle senza underscore le ha scritte il cliente -- il nome inciso,
+                      per esempio -- e sono proprio quello che vuole rivedere qui.
+                    {% endcomment %}
+                    {% for p in line.properties %}
+                      {% assign primo = p.first | slice: 0 %}
+                      {% if primo != '_' and p.last != blank %}
+                        <div style="font-size:13px; line-height:1.55; color:#22324A; margin-top:6px;">
+                          <span style="color:#8A6A32;">{{ p.first }}:</span> {{ p.last }}
+                        </div>
+                      {% endif %}
+                    {% endfor %}
+
+                    <div style="font-size:13px; line-height:1.5; color:#6B7789; margin-top:6px;">Quantità {{ line.quantity }}</div>
+                  </td>
+                  <td valign="top" align="right" style="padding:14px 0; font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif; font-size:15px; color:#132A4A; white-space:nowrap;">
+                    {{ line.final_line_price | money }}
+                  </td>
+                </tr>
+                <tr><td colspan="3" style="height:1px; background:#E8DCC9; font-size:0; line-height:0;">&nbsp;</td></tr>
+                {% endfor %}
+              </table>
+            </td>
+          </tr>
+
+          <!-- totali -->
+          <tr>
+            <td style="padding:18px 32px 0;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                     style="font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif; font-size:15px; color:#22324A;">
+                <tr>
+                  <td style="padding:5px 0;">Subtotale</td>
+                  <td align="right" style="padding:5px 0;">{{ subtotal_price | money }}</td>
+                </tr>
+                {% if shipping_price > 0 %}
+                <tr>
+                  <td style="padding:5px 0;">Spedizione</td>
+                  <td align="right" style="padding:5px 0;">{{ shipping_price | money }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                  <td style="padding:5px 0;">Spedizione</td>
+                  <td align="right" style="padding:5px 0; color:#8A6A32;">Offerta da noi</td>
+                </tr>
+                {% endif %}
+                {% if tax_price > 0 %}
+                <tr>
+                  <td style="padding:5px 0;">IVA</td>
+                  <td align="right" style="padding:5px 0;">{{ tax_price | money }}</td>
+                </tr>
+                {% endif %}
+                {% for discount in discounts %}
+                <tr>
+                  <td style="padding:5px 0; color:#8A6A32;">Sconto {{ discount.code }}</td>
+                  <td align="right" style="padding:5px 0; color:#8A6A32;">− {{ discount.savings | money }}</td>
+                </tr>
+                {% endfor %}
+                <tr><td colspan="2" style="height:1px; background:#E8DCC9; font-size:0; line-height:0;">&nbsp;</td></tr>
+                <tr>
+                  <td style="padding:12px 0; font-family:Georgia,'Times New Roman',serif; font-size:18px; color:#132A4A;">Totale</td>
+                  <td align="right" style="padding:12px 0; font-family:Georgia,'Times New Roman',serif; font-size:18px; color:#132A4A;">{{ total_price | money }}</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- spedizione a -->
+          {% if requires_shipping and shipping_address %}
+          <tr>
+            <td style="padding:22px 32px 0;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F3E9DA;">
+                <tr>
+                  <td style="padding:18px 20px; font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;">
+                    <div style="font-family:Georgia,'Times New Roman',serif; font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:#8A6A32; margin-bottom:8px;">Spediamo a</div>
+                    <div style="font-size:15px; line-height:1.6; color:#22324A;">
+                      {{ shipping_address.name }}<br>
+                      {{ shipping_address.street }}<br>
+                      {{ shipping_address.zip }} {{ shipping_address.city }}{% if shipping_address.province %} ({{ shipping_address.province_code }}){% endif %}<br>
+                      {{ shipping_address.country }}
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {% endif %}
+
+          <!-- tempi e recesso -->
+          <tr>
+            <td style="padding:24px 32px 4px; font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif; font-size:14px; line-height:1.68; color:#22324A;">
+              <p style="margin:0 0 10px;">
+                Ti scriviamo di nuovo appena il pacco parte, con il codice per seguirlo.
+              </p>
+              {% if personalizzati > 0 %}
+              <p style="margin:0; font-size:13px; line-height:1.65; color:#6B7789;">
+                I pezzi personalizzati sono fatti sulle tue indicazioni e non rientrano nel
+                diritto di recesso (art. 59 Codice del Consumo). Se pero' arriva qualcosa di
+                difettoso o diverso da quello che hai chiesto, lo rifacciamo noi: scrivici e basta.
+              </p>
+              {% else %}
+              <p style="margin:0; font-size:13px; line-height:1.65; color:#6B7789;">
+                Hai 30 giorni dalla consegna per cambiare idea sui prodotti non personalizzati.
+              </p>
+              {% endif %}
+            </td>
+          </tr>
+
+          <!-- firma -->
+          <tr>
+            <td style="padding:26px 32px 30px;">
+              <p style="margin:0; font-family:Georgia,'Times New Roman',serif; font-size:16px; line-height:1.6; color:#132A4A;">
+                A presto,<br>
+                <span style="color:#8A6A32;">Emanuele e Nicola</span>
+              </p>
+            </td>
+          </tr>
+
+          <!-- piede -->
+          <tr>
+            <td style="padding:24px 32px; background:#0F2240; font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;">
+              <p style="margin:0 0 8px; font-size:13px; line-height:1.6; color:#EBDFC9;">
+                Domande su questo ordine? Rispondi a questa email: leggiamo noi.
+              </p>
+              <p style="margin:0; font-size:12px; line-height:1.6; color:#9FB0C6;">
+                {{ shop.name }} · <a href="{{ shop.url }}" style="color:#C8862B; text-decoration:none;">{{ shop.url | remove: 'https://' }}</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
