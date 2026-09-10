@@ -96,7 +96,23 @@ NUCLEO = ["Barocco", "Damasco", "Floreale", "Geometrico", "Medaglioni", "Onda", 
 FORME = {
     "quadrato":  (1, 1),      # bandana, coperta
     "cuccia":    (151, 100),  # 1.51 - area reale 8850x5850 della variante 28"x18"
-    "tappetino": (36, 25),    # 1.44 - stesso valore della riga tappetino nel tema
+    # TAPPETINO -- due proporzioni, e il 1.44 di prima era di un altro prodotto.
+    #
+    # Fino a settembre qui c'era (36, 25) = 1.44, copiato dalla riga tappetino
+    # del tema, che a sua volta veniva dal blueprint 855 di Printed Mint: un
+    # tappetino che il negozio non ha mai venduto e che verso l'Italia costa
+    # 20,39 di spedizione. Quello che si vende e' il blueprint 623 di MWW On
+    # Demand (7,79 verso l'Italia), e le sue aree di stampa sono due:
+    #
+    #     osso e pesce 19"x14"   3150x2400   1.3125   -> 48x36 cm
+    #     osso        30"x18"    4800x3000   1.60     -> 76x46 cm
+    #
+    # Sono due numeri e non uno perche' il formato grande NON e' il piccolo
+    # ingrandito: cambia proprio il rapporto. Un file solo, adattato dal
+    # fornitore, uscirebbe schiacciato su una delle due misure -- lo stesso
+    # difetto della cuccia a 1.24 raccontato qui sopra.
+    "tappetino":       (3150, 2400),  # 1.3125 - osso e pesce 19"x14"
+    "tappetino_lungo": (4800, 3000),  # 1.60   - osso 30"x18"
     "fascia":    (8, 1),      # ciotola
     "nastro":    (40, 1),     # guinzaglio
 }

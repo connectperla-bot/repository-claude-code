@@ -62,6 +62,7 @@
     "name": "Schede prodotto",
     "settings": [
       { "type": "checkbox", "id": "card_hover_second_image", "label": "Mostra 2a immagine al passaggio", "default": true },
+      { "type": "checkbox", "id": "card_auto_swap", "label": "Le due foto si alternano da sole", "info": "Ogni due secondi, solo sulle schede visibili. Il passaggio del mouse ha sempre la precedenza, e chi ha chiesto meno animazioni non vede muoversi niente.", "default": true },
       { "type": "checkbox", "id": "card_quick_add", "label": "Aggiunta rapida al carrello", "default": true },
       { "type": "select", "id": "card_image_ratio", "label": "Formato immagine", "options": [ { "value": "portrait", "label": "Verticale (4:5)" }, { "value": "square", "label": "Quadrata (1:1)" } ], "default": "portrait" }
     ]

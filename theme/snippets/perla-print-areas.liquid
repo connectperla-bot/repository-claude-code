@@ -125,6 +125,29 @@
   calibrare uno strumento spento; se tornassero in uso, le foto vere ci sono
   gia' e vanno rifatti come in ROUND 47.
 
+  ROUND 57 -- il tappetino, e un rapporto che era di un altro prodotto.
+
+  La riga tappetino diceva 1.44 e non era mai stata verificata: veniva dal
+  blueprint 855 di Printed Mint, un tappetino che il negozio non ha mai messo
+  in vendita. Quello che si vende e' il 623 di MWW On Demand, e ha DUE aree:
+
+    osso e pesce 19"x14"   3150x2400   1.3125
+    osso        30"x18"    4800x3000   1.60
+
+  Qui va la mediana, come per i tre americani qui sopra: 1.31, cioe' il valore
+  esatto su due varianti su tre. Le tre righe per variante -- che sono quelle
+  che contano davvero, perche' le due sagome sono un OSSO e un PESCE e non due
+  rettangoli -- stanno in snippets/perla-forme-varianti.liquid.
+
+  L'ALIAS tappetino-eu NON E' UN DI PIU'. Il tappetino e' l'unico prodotto
+  venduto in tutti e due i cataloghi, e quello europeo porta il tag
+  tappetino-eu perche' snippets/perla-region-hidden.liquid mostra al visitatore
+  UE solo i prodotti con un tag *-eu. Senza l'alias qui, su quella scheda la
+  tela userebbe il rapporto predefinito e "Salva anteprima" manderebbe
+  product_type vuoto: e' il difetto ROUND 16e raccontato piu' sopra, che era
+  costato l'anteprima su cinque tipi su sei. La geometria e' la stessa perche'
+  il prodotto e' lo stesso: cambia solo il catalogo in cui si vede.
+
   Come sempre: non influisce sulla stampa, solo sull'anteprima a schermo.
 {%- endcomment -%}
-collare|tipo-collare,collar,collare|25.2|Collare|8|30|7|38|0#bandana|tipo-bandana,bandana|1.86|Bandana|8|37|8|44|0#medaglietta|tipo-medaglietta,tag,medaglietta|0.9|Medaglietta|20|27|20|63|50#ciotola|tipo-ciotola,bowl,ciotola|3.68|Ciotola|13|42|14|32|0#cuccia|tipo-cuccia,bed,cuccia|1.51|Cuccia|6|20|5|56|0#tappetino|tipo-tappetino,mat,tappetino|1.44|Tappetino|20|30|20|34|0#guinzaglio|tipo-guinzaglio,leash,guinzaglio|1.0|Guinzaglio|40|40|40|20|0#collare_eu|tipo-collare_eu,collare-eu|22.76|Collare EU|22|33|18|32|0#bandana_eu|tipo-bandana_eu,bandana-eu|1.0|Bandana EU|21|20|20|58|0#ciotola_eu|tipo-ciotola_eu,ciotola-eu|8.09|Ciotola EU|28|51|26|23|0#guinzaglio_eu|tipo-guinzaglio_eu,guinzaglio-eu|56.57|Guinzaglio EU|6|38|26|36|0#collare_pelle|tipo-collare_pelle,collare-pelle|9.75|Collare in Pelle|8|30|7|38|0#medaglietta_incisa|tipo-medaglietta_incisa,medaglietta-incisa|0.91|Medaglietta Incisa|20|27|20|63|50#giacchetto|tipo-giacchetto,giacchetto|0.78|Giacchetto|6|20|5|56|0
+collare|tipo-collare,collar,collare|25.2|Collare|8|30|7|38|0#bandana|tipo-bandana,bandana|1.86|Bandana|8|37|8|44|0#medaglietta|tipo-medaglietta,tag,medaglietta|0.9|Medaglietta|20|27|20|63|50#ciotola|tipo-ciotola,bowl,ciotola|3.68|Ciotola|13|42|14|32|0#cuccia|tipo-cuccia,bed,cuccia|1.51|Cuccia|6|20|5|56|0#tappetino|tipo-tappetino,mat,tappetino,tappetino-eu|1.31|Tappetino|20|30|20|34|0#guinzaglio|tipo-guinzaglio,leash,guinzaglio|1.0|Guinzaglio|40|40|40|20|0#collare_eu|tipo-collare_eu,collare-eu|22.76|Collare EU|22|33|18|32|0#bandana_eu|tipo-bandana_eu,bandana-eu|1.0|Bandana EU|21|20|20|58|0#ciotola_eu|tipo-ciotola_eu,ciotola-eu|8.09|Ciotola EU|28|51|26|23|0#guinzaglio_eu|tipo-guinzaglio_eu,guinzaglio-eu|56.57|Guinzaglio EU|6|38|26|36|0#collare_pelle|tipo-collare_pelle,collare-pelle|9.75|Collare in Pelle|8|30|7|38|0#medaglietta_incisa|tipo-medaglietta_incisa,medaglietta-incisa|0.91|Medaglietta Incisa|20|27|20|63|50#giacchetto|tipo-giacchetto,giacchetto|0.78|Giacchetto|6|20|5|56|0

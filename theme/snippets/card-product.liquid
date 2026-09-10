@@ -35,31 +35,36 @@
   if settings.card_hover_second_image and p.media.size > 1
     assign has_second = true
   endif
-  # ROUND 27 -- le medagliette hanno come seconda immagine il retro vuoto
-  # (tinta unita, nessun disegno: serve all'anteprima fronte/retro nello studio
-  # di personalizzazione, non come seconda foto prodotto). Mostrarla al
-  # passaggio del mouse faceva sembrare il prodotto rotto.
-  if p.tags contains 'medaglietta'
-    assign has_second = false
-  endif
-  # ROUND 53 -- QUI C'ERA UN DIVIETO PER TUTTI I PRODOTTI EUROPEI, E ADESSO
-  # SAREBBE IL CONTRARIO DI QUELLO CHE SERVE.
+  # ROUND 58 -- QUI C'ERA UN DIVIETO PER LE MEDAGLIETTE, E ADESSO E' RISOLTO
+  # ALLA RADICE.
   #
-  # Il divieto era giusto quando l'ho scritto: la seconda immagine dei
-  # prodotti europei ERA il file di stampa, 1200x53 px su un collare, che
-  # stirato in un riquadro quadrato dava proprio l'immagine "sgranata"
-  # segnalata dal cliente.
+  # Il divieto (ROUND 27) era giusto: la seconda immagine delle medagliette era
+  # il retro vuoto, tinta unita, che serve all'anteprima fronte/retro dello
+  # studio e non e' una foto prodotto. Al passaggio del mouse il pezzo sembrava
+  # rotto, quindi si spegneva la seconda immagine -- e la medaglietta restava
+  # l'unico tipo con una foto sola in griglia.
   #
-  # Da ROUND 34 in seconda posizione c'e' un'altra cosa: il primo piano del
-  # tessuto, quadrato, ritagliato a risoluzione nativa dal file che si stampa
-  # (perla-dettaglio-stampa.py). E' l'immagine PIU' nitida che quei prodotti
-  # abbiano -- il mockup Printful esce sempre 1000x1000 con la fettuccia alta
-  # ottanta pixel, il primo piano mostra il tessuto a grandezza naturale.
-  # Tenerla nascosta voleva dire nascondere la risposta al difetto.
+  # Misurato su tutte e quindici: quel retro ha il 3% di pixel non bianchi,
+  # contro il 18-19% delle ciotole e delle bandane. Adesso e' stato spostato in
+  # ULTIMA posizione sui prodotti, e in seconda c'e' la foto fronte-e-retro
+  # affiancati, che c'era gia' su tutte. Il difetto non e' piu' da nascondere:
+  # non c'e' piu'.
+  # SULLA SECONDA IMMAGINE DEI PRODOTTI EUROPEI, PER INTERO.
   #
-  # Non serve una regola nuova: basta togliere quella vecchia. La rete di
-  # sicurezza qui sotto scarta da sola qualunque seconda immagine dalle
-  # proporzioni da file tecnico, europea o no.
+  # ROUND 53 aveva tolto un divieto che li riguardava tutti, perche' in seconda
+  # posizione era arrivato il primo piano del tessuto (perla-dettaglio-stampa.py):
+  # nitidissimo, ritagliato a risoluzione nativa dal file che si stampa.
+  #
+  # ROUND 58: quel primo piano e' stato staccato dai prodotti. Nitido lo era, ma
+  # non era la fotografia di un prodotto -- sei strisce di tessuto impilate su
+  # una tela quadrata, che in griglia sembrano carta da parati. Adesso in seconda
+  # posizione c'e' il collare col NOME sopra (perla-eu-foto-col-nome.py): il
+  # pezzo vero, fotografato dallo stampatore, con scritto quello che il cliente
+  # ci farebbe scrivere. I primi piani restano su Cloudinary se un giorno li si
+  # rivuole come terza foto.
+  #
+  # La rete di sicurezza qui sotto resta: scarta da sola qualunque seconda
+  # immagine dalle proporzioni da file tecnico, europea o no.
   # Rete di sicurezza generale, valida anche per prodotti futuri: una seconda
   # immagine con proporzioni fuori scala non e' una foto, e' un file tecnico.
   if has_second

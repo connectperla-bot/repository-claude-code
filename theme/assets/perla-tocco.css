@@ -714,3 +714,32 @@ html {
   border: 1px solid var(--color-line, #E2D8C8);
   border-radius: 2px;
 }
+
+/* ===========================================================================
+ * ROUND 58 — le due foto si alternano da sole ogni due secondi
+ *
+ * PERCHE'
+ * La seconda foto esisteva gia' ma si vedeva solo passando il mouse: da
+ * telefono, dove non c'e' un mouse, meta' del catalogo restava invisibile.
+ *
+ * COME
+ * base.css tiene gia' img-primary e img-secondary sovrapposte e le dissolve
+ * in .6s: qui non si aggiunge nessuna animazione, si accende e si spegne la
+ * stessa opacita' che il passaggio del mouse accende gia'. Il ritmo lo da'
+ * perla-carosello-card.js, che mette e toglie .is-alterna.
+ *
+ * PERCHE' :not(:hover)
+ * perla-tocco.css si carica DOPO base.css, quindi a parita' di specificita'
+ * queste righe vincerebbero sul :hover. Con :not(:hover) il mouse torna a
+ * comandare lui: chi punta una card vede la seconda foto e la tiene, senza
+ * che il battito gliela porti via a meta'.
+ * =========================================================================== */
+.card.has-second.is-alterna:not(:hover) .img-primary { opacity: 0; }
+.card.has-second.is-alterna:not(:hover) .img-secondary { opacity: 1; }
+
+/* Chi ha chiesto meno animazioni non vede niente muoversi: il battito e' gia'
+ * spento nel JS, questa e' la rete di sicurezza se il file non si carica. */
+@media (prefers-reduced-motion: reduce) {
+  .card.has-second.is-alterna .img-primary { opacity: 1; }
+  .card.has-second.is-alterna .img-secondary { opacity: 0; }
+}

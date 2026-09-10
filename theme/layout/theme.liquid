@@ -261,7 +261,7 @@
     {{ content_for_header }}
   </head>
 
-  <body class="template-{{ request.page_type | handle }}{% if settings.enable_button_sheen %} sheen-on{% endif %}">
+  <body class="template-{{ request.page_type | handle }}{% if settings.enable_button_sheen %} sheen-on{% endif %}"{% if settings.card_auto_swap %} data-carosello-card{% endif %}>
     <a class="skip-to-content" href="#MainContent">{{ 'accessibility.skip_to_text' | t }}</a>
 
     {%- comment -%}
@@ -540,6 +540,24 @@
       il motivo per cui non se n'era accorto nessuno.
     {%- endcomment -%}
     <script src="{{ 'perla-fuoco.js' | asset_url }}" defer></script>
+    {%- comment -%}
+      ROUND 58 -- le due foto della card si alternano da sole ogni due secondi.
+
+      Ogni prodotto ha due foto, ma la seconda si vedeva solo passando il mouse:
+      da telefono, dove il mouse non c'e', meta' del catalogo restava invisibile
+      proprio a chi guarda le schede da telefono.
+
+      Non aggiunge nessuna animazione: mette e toglie .is-alterna, e sono due
+      righe in perla-tocco.css a scambiare le opacita' che base.css dissolve
+      gia'. Se il file non si carica, la card resta com'era.
+
+      Si aggancia a data-carosello-card sul <body>, che compare solo con
+      l'impostazione accesa: spenta, questo script non trova niente e non fa
+      niente.
+    {%- endcomment -%}
+    {%- if settings.card_auto_swap -%}
+      <script src="{{ 'perla-carosello-card.js' | asset_url }}" defer></script>
+    {%- endif -%}
     {%- if settings.enable_pearls -%}<script src="{{ 'pearls.js' | asset_url }}" defer></script>{%- endif -%}
     <script>document.addEventListener('DOMContentLoaded',function(){window.PerlaMotionInit&&window.PerlaMotionInit();window.PerlaPearlsInit&&window.PerlaPearlsInit();});</script>
 
