@@ -28,6 +28,13 @@ Thumbs.db
 # Cloudinary (URL permanenti) e su Shopify; qui resterebbero 8 MB di duplicati.
 out-foto/
 
+# Banco di prova: le sonde mandate ai fornitori per misurare un'area di stampa
+# (scacchiere numerate, tinte piatte) e i mockup che tornano indietro. Sono
+# pixel usa-e-getta -- il metodo per rifarli sta scritto per esteso in
+# snippets/perla-forme-varianti.liquid, e i numeri che se ne ricavano
+# (finestra, sagome) finiscono nel tema, che e' la copia che conta.
+scratchpad/
+
 # Area di transito di scripts/perla-eu-foto-col-nome.py: stesso ragionamento di
 # out-foto/. Le due foto che contano (collare e guinzaglio "Crea il Tuo Design"
 # col nome Luna) sono gia' su Cloudinary e agganciate a Shopify.
