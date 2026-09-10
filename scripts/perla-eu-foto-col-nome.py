@@ -54,6 +54,7 @@ dice cosa e' gia' fatto.
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -163,6 +164,46 @@ def su_bianco(sorgente, dest):
     return im.size
 
 
+# Il nome NON e' incluso nel prezzo: lo scrive il cliente nello studio, e la
+# scheda lo dice ("Personalizzabile con il nome del tuo cane"). Una foto che
+# mostra un collare gia' inciso dice il contrario, ed e' la segnalazione della
+# titolare: "perche' aggiungi il nome ai prodotti? non devi aggiungerlo, in
+# caso solo consigliarlo al cliente".
+#
+# La didascalia sta DENTRO l'immagine e non nella scheda di proposito: la foto
+# gira da sola su Google Immagini, su Pinterest, nella scheda del feed Google
+# Shopping, e in tutti quei posti il testo della scheda non la accompagna. Se
+# l'avviso sta nel testo, chi vede solo la foto non lo legge mai.
+DIDASCALIA = "esempio — il nome lo scegli tu"
+
+
+def didascalia(percorso, testo=DIDASCALIA):
+    """Stampa la didascalia nella fascia bianca sotto il prodotto.
+
+    DOVE. Il mockup Printful e' 1000x1000 col pezzo al centro: sotto restano
+    circa duecento pixel di fondo bianco vuoto. La riga va li', a un ventesimo
+    dal bordo, quindi non copre mai il prodotto -- non si sceglie una posizione
+    "che sembra libera", si usa quella che il fornitore lascia libera sempre.
+
+    COME. Un inchiostro solo, il blu del tema, e un corpo piccolo: deve
+    togliere l'equivoco, non gridare. Il font e' lo stesso dell'editor, cosi'
+    la riga sembra parte della fotografia e non un'etichetta appiccicata.
+
+    E' un'operazione che si puo' rifare quante volte si vuole sullo stesso
+    file? NO -- ristamperebbe la riga sopra a se stessa, un po' piu' scura. Chi
+    chiama questa funzione parte sempre dal mockup pulito.
+    """
+    im = Image.open(percorso).convert("RGB")
+    w, h = im.size
+    d = ImageDraw.Draw(im)
+    f = ImageFont.truetype(font(), max(14, int(h * 0.034)))
+    b = d.textbbox((0, 0), testo, font=f)
+    d.text(((w - (b[2] - b[0])) / 2 - b[0], h - int(h * 0.05) - (b[3] - b[1]) - b[1]),
+           testo, font=f, fill=SCURO)
+    im.save(percorso, "JPEG", quality=92)
+    return im.size
+
+
 def main():
     args = sys.argv[1:]
     massimo = 999
@@ -182,10 +223,49 @@ def main():
     solo = None
     if "--solo" in args:
         solo = [s for s in args[args.index("--solo") + 1].split(",") if s]
+    # La didascalia si puo' spegnere, ma e' accesa di default: se un domani si
+    # decide di toglierla, si toglie da qui e non riscrivendo la funzione.
+    senza_didascalia = "--senza-didascalia" in args
 
     os.makedirs(OUT, exist_ok=True)
     p_out = os.path.join(OUT, "ospitate.json")
     ospitate = json.load(open(p_out)) if os.path.exists(p_out) else {}
+
+    # --ridai-didascalia: rimette la didascalia sulle foto GIA' fatte, senza
+    # ripassare da Printful.
+    #
+    # Serve perche' le trentacinque foto erano gia' state generate, ospitate e
+    # attaccate quando e' arrivata la segnalazione sulla didascalia. Rifare il
+    # giro intero vorrebbe dire mezz'ora di chiamate al fornitore e i suoi
+    # fallimenti intermittenti (tre passate per arrivare a trentacinque su
+    # trentacinque), per riottenere esattamente gli stessi mockup che sono gia'
+    # sul disco.
+    #
+    # Il mockup pulito NON si tocca: la didascalia va su una COPIA
+    # (-mockup-didascalia.jpg). Cosi' rilanciare questo modo dieci volte da'
+    # dieci volte lo stesso risultato, invece di ristampare la riga sopra a se
+    # stessa sempre piu' scura.
+    if "--ridai-didascalia" in args:
+        rifatte = 0
+        for handle, voce in sorted(ospitate.items()):
+            pulito = os.path.join(OUT, handle[:60] + "-mockup.jpg")
+            if not os.path.exists(pulito):
+                print("%-46s manca il mockup su disco, saltata" % handle[:46])
+                continue
+            con_riga = os.path.join(OUT, handle[:60] + "-mockup-didascalia.jpg")
+            shutil.copy(pulito, con_riga)
+            didascalia(con_riga)
+            ospite = posta(UPLOAD, file=con_riga)
+            if not ospite.get("url"):
+                print("%-46s ospitare fallito: %s" % (handle[:46], str(ospite)[:60]))
+                continue
+            voce["url"] = ospite["url"]
+            voce["didascalia"] = DIDASCALIA
+            json.dump(ospitate, open(p_out, "w"), indent=1, ensure_ascii=False)
+            rifatte += 1
+            print("%-46s %s" % (handle[:46], ospite["url"][-28:]))
+        print("\n%d foto con la didascalia, riscritte in %s" % (rifatte, p_out))
+        return
     prodotti = json.load(open(os.path.join(QUI, "perla-eu-prodotti.json")))
 
     coda = [p for p in prodotti
@@ -239,6 +319,8 @@ def main():
             continue
         mis = su_bianco(grezzo, finito)
         os.remove(grezzo)
+        if not senza_didascalia:
+            didascalia(finito)
 
         ospite = posta(UPLOAD, file=finito)
         if not ospite.get("url"):
