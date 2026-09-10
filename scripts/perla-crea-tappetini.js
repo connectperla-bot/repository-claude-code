@@ -4,40 +4,61 @@
 /**
  * perla-crea-tappetini.js
  *
- * Crea su Printify i tappetini a motivo, in BOZZA. Non tocca nessun prodotto
+ * Crea su Printify i tappetini da pappa, in BOZZA. Non tocca nessun prodotto
  * esistente.
  *
  * PERCHE' UNO SCRIPT A PARTE
  * create-draft-designs.js ha i design scritti a mano dentro main(): va bene
- * per due o tre, non per diciannove. Qui le definizioni si costruiscono dai
- * file gia' prodotti da perla-file-stampa-motivi.py, quindi aggiungere un
+ * per due o tre, non per una collezione. Qui le definizioni si costruiscono
+ * dai file gia' prodotti da perla-tappetini-motivi.py, quindi aggiungere un
  * motivo domani significa rigenerare i file, non modificare questo file.
  *
- * Il metodo di chiamata (upload immagine + creazione prodotto) e' lo stesso di
- * create-draft-designs.js e perla-create-neutral-products.js.
+ * ROUND 59 -- TRE COSE CAMBIATE, E NESSUNA E' UN DETTAGLIO
+ *
+ * 1. IL FORNITORE. Era 855/70 (Printed Mint), scelto sulla carta e mai usato:
+ *    verso l'Italia costa 20,39 di spedizione, cioe' fuori da qualunque
+ *    margine. E' 623/10 (MWW On Demand), dove l'Italia sta nella fascia
+ *    europea a 7,79 dollari, la piu' bassa di tutto il catalogo Printify.
+ *
+ * 2. TRE VARIANTI, NON UNA. E due aree di stampa diverse:
+ *      73844 osso   19x14 pollici   3150x2400   1,31
+ *      73845 osso   30x18 pollici   4800x3000   1,60
+ *      73846 pesce  19x14 pollici   3150x2400   1,31
+ *    Il formato grande NON e' il piccolo ingrandito: cambia il rapporto.
+ *    Mandare un file solo e lasciare che il fornitore lo adatti vuol dire
+ *    stamparlo schiacciato su una delle due misure. Printify accetta piu'
+ *    voci in print_areas, ognuna coi suoi variant_ids: un gruppo per misura,
+ *    e ogni gruppo riceve il file fatto per lui.
+ *
+ * 3. DUE MERCATI. Il tappetino e' l'unico tipo con lo STESSO fornitore in
+ *    Europa e in America, ma resta una scheda per mercato: i prezzi sono in
+ *    due valute e i tempi sono diversi (10-30 giorni verso l'Italia contro
+ *    2-5 verso gli Stati Uniti, misurati sul catalogo del fornitore). La
+ *    scheda europea porta il tag 'tappetino-eu', che e' anche cio' che il
+ *    filtro geografico del tema guarda.
+ *
+ * IL TAG CHE NON SI PUO' SBAGLIARE
+ * Ogni prodotto esce con 'tappetino' o 'tappetino-eu'. Il tema li pretende:
+ * la riga "tappetino|tipo-tappetino,mat,tappetino,tappetino-eu|1.31|..." in
+ * snippets/perla-print-areas.liquid accetta solo questi alias. Senza uno di
+ * essi il canvas dello studio usa il rapporto predefinito e "Salva anteprima"
+ * manda product_type vuoto, che il server rifiuta con "Tipo prodotto non
+ * riconosciuto" -- e' il difetto ROUND 16e gia' documentato nel tema, che era
+ * costato l'anteprima su cinque tipi prodotto su sei.
  *
  * PRIMA DI LANCIARLO
- *   python3 scripts/perla-file-stampa-motivi.py --forma tappetino --tutti
- * che scrive generated-designs/motivi-stampa/tappetino-<motivo>.jpg
+ *   python3 scripts/perla-tappetini-motivi.py
+ * che scrive generated-designs/tappetini/tappetino-{piccolo,grande}-<motivo>.jpg
  *
  * LA BASE NEUTRA NON SI CREA QUI
  * "Tappetino Crea il Tuo Design" e' gia' previsto da
- * perla-create-neutral-products.js (chiave TAPPETINO, 34,99 euro): usare
- * quello, cosi' la base neutra resta identica a quella degli altri tipi.
- *
- * IL TAG CHE NON SI PUO' SBAGLIARE
- * Ogni prodotto esce con il tag 'tappetino'. Il tema lo pretende: la riga
- * "tappetino|tipo-tappetino,mat,tappetino|1.44|..." in
- * snippets/perla-print-areas.liquid accetta solo questi tre alias. Senza uno
- * di essi il canvas dello studio usa il rapporto predefinito e "Salva
- * anteprima" manda product_type vuoto, che il server rifiuta con "Tipo
- * prodotto non riconosciuto" -- e' il difetto ROUND 16e gia' documentato nel
- * tema, che era costato l'anteprima su cinque tipi prodotto su sei.
+ * perla-create-neutral-products.js: usare quello, cosi' la base neutra resta
+ * identica a quella degli altri tipi.
  *
  * Uso:
- *   node scripts/perla-crea-tappetini.js --prova      # non chiama l'API, mostra cosa farebbe
- *   node scripts/perla-crea-tappetini.js
- *   node scripts/perla-crea-tappetini.js --prezzo 3999
+ *   node scripts/perla-crea-tappetini.js --prova            # non chiama l'API
+ *   node scripts/perla-crea-tappetini.js --mercato eu
+ *   node scripts/perla-crea-tappetini.js --mercato usa
  */
 
 const fs = require('fs');
@@ -45,17 +66,39 @@ const path = require('path');
 const https = require('https');
 
 const ROOT = path.join(__dirname, '..');
-const FILE_STAMPA = path.join(ROOT, 'generated-designs', 'motivi-stampa');
+const FILE_STAMPA = path.join(ROOT, 'generated-designs', 'tappetini');
 const CONFIG_PATH = path.join(ROOT, 'config', 'printify.local.env');
 
-// Prezzo in centesimi. 34,99 e' lo stesso della base neutra tappetino in
-// perla-create-neutral-products.js: partire allineati e ritoccare dopo dal
-// pannello e' meglio che inventare qui un prezzo diverso senza motivo.
-const PREZZO_PREDEFINITO = 3499;
+// Le tre varianti del blueprint 623/10, raggruppate per AREA DI STAMPA. Il
+// gruppo, non la variante, e' l'unita' che conta: un file per area.
+const GRUPPI = [
+  { misura: 'piccolo', variantIds: [73844, 73846], area: '3150x2400' },
+  { misura: 'grande',  variantIds: [73845],        area: '4800x3000' },
+];
+
+// I due mercati. I prezzi sono quelli decisi dalla titolare, e i margini con
+// cui tornano stanno in scripts/perla-verifica-margini.py: 25,9% e 25,1% in
+// Europa con l'IVA al 22% pagata davvero, 26,7% e 26,0% negli Stati Uniti.
+const MERCATI = {
+  eu: {
+    tag: 'tappetino-eu',
+    prezzi: { 73844: 3490, 73846: 3490, 73845: 4990 },
+    consegna: 'Consegna in 2-4 settimane: il fornitore stampa e spedisce, e verso l\'Italia i tempi sono questi. Preferiamo scriverlo.',
+  },
+  usa: {
+    tag: 'tappetino',
+    prezzi: { 73844: 3290, 73846: 3290, 73845: 4990 },
+    consegna: 'Consegna in 1-2 settimane.',
+  },
+};
 
 // Printify fa fatica con raffiche di richieste: gli altri script del
 // repository non ne mandano mai piu' di una alla volta, e neanche questo.
 const PAUSA_MS = 900;
+
+// Printify rifiuta limit oltre 50 ("The limit may not be greater than 50"):
+// era 100 e passava, adesso no.
+const PER_PAGINA = 50;
 
 function leggiConfig() {
   if (!fs.existsSync(CONFIG_PATH)) {
@@ -78,9 +121,8 @@ function leggiConfig() {
     shopId,
     // stessi valori di render.yaml: il tappetino e' gia' configurato ovunque,
     // qui non si inventa niente di nuovo
-    blueprintId: Number(campo('TAPPETINO_BLUEPRINT_ID', '855')),
-    providerId: Number(campo('TAPPETINO_PROVIDER_ID', '70')),
-    variantId: Number(campo('TAPPETINO_VARIANT_ID', '76892')),
+    blueprintId: Number(campo('TAPPETINO_BLUEPRINT_ID', '623')),
+    providerId: Number(campo('TAPPETINO_PROVIDER_ID', '10')),
   };
 }
 
@@ -119,45 +161,52 @@ function chiamaPrintify(apiKey, metodo, percorso, corpo) {
   });
 }
 
-// Si legge il manifesto scritto dal generatore, non la cartella. E' li' che
-// vive il giudizio sulla risoluzione: un ritaglio marcato "scarso" (un motivo
-// senza sorgente quadrata rende 1204x803 invece di 4125x2865) stamperebbe
-// sgranato su un tappetino vero, e va escluso qui invece che a occhio.
+// I file veri sulla cartella, non un manifesto: perla-tappetini-motivi.py
+// scrive DUE file per motivo, uno per area di stampa, e li nomina in modo
+// prevedibile. Un motivo con un solo file non si carica: meta' tappetino
+// stampato bene e meta' adattato dal fornitore e' peggio di niente.
 function fileDaCaricare() {
-  const manifesto = path.join(FILE_STAMPA, 'files.json');
-  if (!fs.existsSync(manifesto)) {
+  if (!fs.existsSync(FILE_STAMPA)) {
     throw new Error(
-      'Manifesto non trovato: ' + manifesto + '\n' +
-      'Genera prima i file:  python3 scripts/perla-file-stampa-motivi.py --forma tappetino --tutti'
+      'Cartella non trovata: ' + FILE_STAMPA + '\n' +
+      'Genera prima i file:  python3 scripts/perla-tappetini-motivi.py'
     );
   }
-  const voci = JSON.parse(fs.readFileSync(manifesto, 'utf8'));
-  const elenco = [];
-  let scartati = 0;
-  voci.forEach(function (v) {
-    if (v.forma !== 'tappetino') return;
-    if (v.esito !== 'ok') {
-      console.warn('  (scartato "' + v.motivo + '": ritaglio ' + v.larghezza + 'x' + v.altezza +
-        ', troppo piccolo per la stampa)');
-      scartati++;
-      return;
-    }
-    const percorso = path.join(FILE_STAMPA, v.file);
-    if (!fs.existsSync(percorso)) {
-      console.warn('  (manca il file ' + v.file + ' citato dal manifesto)');
-      return;
-    }
-    elenco.push({
-      motivo: v.motivo,
-      file: percorso,
-      nomeFile: v.file,
-      dimensioni: v.larghezza + 'x' + v.altezza,
-    });
+  const perMotivo = {};
+  fs.readdirSync(FILE_STAMPA).forEach(function (f) {
+    const m = /^tappetino-(piccolo|grande)-(.+)\.jpg$/.exec(f);
+    if (!m) return;
+    perMotivo[m[2]] = perMotivo[m[2]] || {};
+    perMotivo[m[2]][m[1]] = { file: path.join(FILE_STAMPA, f), nomeFile: f };
   });
-  if (scartati) {
-    console.warn('  ' + scartati + ' motivi scartati: rigenerali ad alta risoluzione se li vuoi.\n');
-  }
-  return elenco.sort(function (a, b) { return a.motivo.localeCompare(b.motivo); });
+
+  const elenco = [];
+  Object.keys(perMotivo).sort().forEach(function (chiave) {
+    const coppia = perMotivo[chiave];
+    const mancanti = GRUPPI.filter(function (g) { return !coppia[g.misura]; })
+      .map(function (g) { return g.misura; });
+    if (mancanti.length) {
+      console.warn('  (saltato "' + chiave + '": manca il file ' + mancanti.join(' e '));
+      return;
+    }
+    elenco.push({ chiave: chiave, titolo: titoloDaChiave(chiave), file: coppia });
+  });
+  return elenco;
+}
+
+// 'ramo-dulivo' -> 'Ramo d\'Ulivo'. La tabella e' corta di proposito: solo i
+// nomi in cui la ricostruzione meccanica sbaglierebbe.
+const NOMI = {
+  // La chiave e' il nome del file, dove l'apostrofo e' diventato un trattino
+  // come ogni altro segno non alfanumerico: "Ramo d'Ulivo" -> ramo-d-ulivo.
+  'ramo-d-ulivo': "Ramo d'Ulivo",
+};
+
+function titoloDaChiave(chiave) {
+  if (NOMI[chiave]) return NOMI[chiave];
+  return chiave.split('-').map(function (p) {
+    return p.charAt(0).toUpperCase() + p.slice(1);
+  }).join(' ');
 }
 
 async function caricaImmagine(apiKey, percorso, nomeFile) {
@@ -173,69 +222,93 @@ async function caricaImmagine(apiKey, percorso, nomeFile) {
 // due volte lo script non deve produrre trentotto tappetini. Il confronto e'
 // sul titolo, che e' l'unica cosa stabile fra un giro e l'altro.
 async function titoliEsistenti(apiKey, shopId) {
-  const titoli = new Set();
+  // La chiave e' titolo + tag di mercato, non il titolo da solo: il tappetino
+  // e' venduto in due schede con lo STESSO titolo, e il tag e' l'unica cosa
+  // che le distingue. Con la sola chiave del titolo, lanciare --mercato usa
+  // dopo --mercato eu non avrebbe creato niente.
+  const chiavi = new Set();
   let pagina = 1;
   for (;;) {
-    const res = await chiamaPrintify(apiKey, 'GET', '/shops/' + shopId + '/products.json?page=' + pagina + '&limit=100');
+    const res = await chiamaPrintify(apiKey, 'GET', '/shops/' + shopId + '/products.json?page=' + pagina + '&limit=' + PER_PAGINA);
     const elenco = (res && res.data) || [];
-    elenco.forEach(function (p) { titoli.add((p.title || '').trim()); });
-    if (elenco.length < 100) break;
+    elenco.forEach(function (p) {
+      const titolo = (p.title || '').trim();
+      (p.tags || []).forEach(function (t) { chiavi.add(titolo + '|' + t); });
+    });
+    // Il campo `total` della risposta resta indietro dopo una cancellazione:
+    // si contano le pagine, non ci si fida del totale.
+    if (elenco.length < PER_PAGINA) break;
     pagina++;
     await attendi(PAUSA_MS);
   }
-  return titoli;
+  return chiavi;
 }
 
-function corpoProdotto(cfg, motivo, imageId, prezzo) {
+function corpoProdotto(cfg, voce, immagini, mercato) {
+  const m = MERCATI[mercato];
+  const varianti = [];
+  const aree = [];
+  GRUPPI.forEach(function (g) {
+    g.variantIds.forEach(function (id) {
+      varianti.push({ id: id, price: m.prezzi[id], is_enabled: true });
+    });
+    aree.push({
+      variant_ids: g.variantIds,
+      placeholders: [{
+        position: 'front',
+        // Il file e' gia' del rapporto esatto della SUA area (1,31 o 1,60,
+        // vedi perla-scala-stampa.py): centrato a scala 1.0 la riempie tutta,
+        // senza bordi bianchi e senza deformare. E' per questo che ce ne sono
+        // due e non uno.
+        images: [{ id: immagini[g.misura], x: 0.5, y: 0.5, scale: 1.0, angle: 0 }],
+      }],
+    });
+  });
+
   return {
-    title: 'Tappetino "' + motivo + '"',
+    title: 'Tappetino "' + voce.titolo + '"',
     description:
-      'Il motivo ' + motivo + ' sul tappetino da pappa, in tinta con la cuccia e con il resto della collezione. ' +
+      'Il motivo ' + voce.titolo + ' sul tappetino da pappa, in tinta con la bandana e con il ' +
+      'resto della collezione: e\' lo stesso disegno, alla stessa scala.\n\n' +
+      'Due forme e due misure: osso 48x36 cm, osso grande 76x46 cm, pesce 48x36 cm. ' +
       'Superficie morbida e base che resta ferma, per tenere in ordine la zona dei pasti.\n\n' +
       'Disegnato in Italia. Stampato dopo l\'ordine, quindi non ci sono rimanenze.\n\n' +
-      'Lavabile. Spedizione tracciata.',
+      'Lavabile. Spedizione tracciata. ' + m.consegna,
     blueprint_id: cfg.blueprintId,
     print_provider_id: cfg.providerId,
-    variants: [{ id: cfg.variantId, price: prezzo, is_enabled: true }],
-    print_areas: [
-      {
-        variant_ids: [cfg.variantId],
-        placeholders: [
-          {
-            position: 'front',
-            // Il file e' gia' ritagliato al rapporto dell'area di stampa
-            // (1.44, vedi perla-file-stampa-motivi.py): centrato a scala 1.0
-            // la riempie esattamente, senza bordi bianchi e senza deformare.
-            images: [{ id: imageId, x: 0.5, y: 0.5, scale: 1.0, angle: 0 }],
-          },
-        ],
-      },
-    ],
-    // 'tappetino' e' obbligatorio, vedi il commento in testa al file.
-    tags: ['perla-italy', 'pet', 'tappetino', 'personalizzabile'],
+    variants: varianti,
+    print_areas: aree,
+    // Il tag del mercato e' obbligatorio, vedi il commento in testa al file.
+    // Niente 'personalizzabile': questi hanno un disegno gia' fatto, e quel
+    // tag accende l'editor. La base neutra e' un altro prodotto.
+    tags: ['perla-italy', 'pet', m.tag, 'tipo-tappetino'],
   };
 }
 
 function argomenti() {
   const a = process.argv.slice(2);
-  const out = { prova: false, prezzo: PREZZO_PREDEFINITO };
+  const out = { prova: false, mercato: null };
   for (let i = 0; i < a.length; i++) {
     if (a[i] === '--prova' || a[i] === '-n') out.prova = true;
-    else if (a[i] === '--prezzo') out.prezzo = Number(a[++i]);
+    else if (a[i] === '--mercato') out.mercato = String(a[++i] || '').toLowerCase();
     else if (a[i] === '--help' || a[i] === '-h') {
       console.log(`
 Crea su Printify i tappetini a motivo, in bozza.
 
+  --mercato eu|usa   obbligatorio: decide tag, prezzi e tempi di consegna
   --prova, -n        mostra cosa farebbe senza chiamare l'API
-  --prezzo <cent>    prezzo in centesimi (predefinito ${PREZZO_PREDEFINITO} = ${(PREZZO_PREDEFINITO / 100).toFixed(2)} euro)
 
-Prima serve:  python3 scripts/perla-file-stampa-motivi.py --forma tappetino --tutti
+Prima serve:  python3 scripts/perla-tappetini-motivi.py
 `);
       process.exit(0);
     }
   }
-  if (!Number.isFinite(out.prezzo) || out.prezzo <= 0) {
-    throw new Error('--prezzo vuole un numero di centesimi, es. 3499');
+  // Il mercato non ha un predefinito di proposito: sbagliarlo vuol dire
+  // pubblicare la scheda europea coi prezzi americani, o peggio col tag
+  // sbagliato, e allora il filtro geografico la mostra a chi non deve.
+  if (!out.mercato || !MERCATI[out.mercato]) {
+    throw new Error('--mercato vuole eu oppure usa (nessun predefinito, e' +
+      ' apposta: vedi il commento).');
   }
   return out;
 }
@@ -243,26 +316,32 @@ Prima serve:  python3 scripts/perla-file-stampa-motivi.py --forma tappetino --tu
 async function main() {
   const args = argomenti();
   const daFare = fileDaCaricare();
+  const m = MERCATI[args.mercato];
 
   if (!daFare.length) {
     console.error('Nessun file tappetino-*.jpg in ' + path.relative(ROOT, FILE_STAMPA) + '.');
     console.error('Genera prima i file di stampa:');
-    console.error('  python3 scripts/perla-file-stampa-motivi.py --forma tappetino --tutti');
+    console.error('  python3 scripts/perla-tappetini-motivi.py');
     return 1;
   }
 
-  console.log('\n=== Tappetini a motivo, ' + daFare.length + ' file trovati ===\n');
+  console.log('\n=== Tappetini a motivo, mercato ' + args.mercato +
+    ', ' + daFare.length + ' motivi ===\n');
 
   if (args.prova) {
     const cfgProva = fs.existsSync(CONFIG_PATH) ? leggiConfig() : null;
     daFare.forEach(function (d) {
-      const kb = Math.round(fs.statSync(d.file).size / 1024);
-      console.log('  Tappetino "' + d.motivo + '"  <- ' + d.nomeFile + ' (' + kb + ' KB)');
+      const misure = GRUPPI.map(function (g) {
+        return g.misura + ' ' + Math.round(fs.statSync(d.file[g.misura].file).size / 1024) + ' KB';
+      }).join(', ');
+      console.log('  Tappetino "' + d.titolo + '"  <- ' + misure);
     });
-    console.log('\n  prezzo: ' + (args.prezzo / 100).toFixed(2) + ' euro');
+    console.log('\n  prezzi: ' + GRUPPI.map(function (g) {
+      return g.misura + ' ' + (m.prezzi[g.variantIds[0]] / 100).toFixed(2);
+    }).join(', '));
+    console.log('  tag: ' + m.tag);
     if (cfgProva) {
-      console.log('  blueprint ' + cfgProva.blueprintId + ', provider ' + cfgProva.providerId +
-        ', variante ' + cfgProva.variantId);
+      console.log('  blueprint ' + cfgProva.blueprintId + ', provider ' + cfgProva.providerId);
     }
     console.log('\n  Prova: nessuna chiamata all\'API. Togli --prova per creare davvero.');
     return 0;
@@ -270,31 +349,40 @@ async function main() {
 
   const cfg = leggiConfig();
   console.log('  Negozio Printify ' + cfg.shopId + ', blueprint ' + cfg.blueprintId +
-    ', provider ' + cfg.providerId + ', variante ' + cfg.variantId + '\n');
+    ', provider ' + cfg.providerId + '\n');
 
-  console.log('  Leggo i prodotti gia' + '\' esistenti, per non crearne di doppi...');
+  console.log('  Leggo i prodotti gia\' esistenti, per non crearne di doppi...');
   const esistenti = await titoliEsistenti(cfg.apiKey, cfg.shopId);
   console.log('  ' + esistenti.size + ' prodotti gia\' nel negozio.\n');
 
   const creati = [];
   let saltati = 0;
   for (const d of daFare) {
-    const titolo = 'Tappetino "' + d.motivo + '"';
-    if (esistenti.has(titolo)) {
-      console.log('  = ' + titolo + ' esiste gia\', saltato');
+    // Il titolo e' lo stesso sui due mercati, com'e' gia' per bandane e
+    // ciotole: a distinguerli e' il tag, e nessun cliente ne vede due.
+    // Quindi il controllo dei doppi guarda titolo E tag.
+    const titolo = 'Tappetino "' + d.titolo + '"';
+    const chiaveDoppio = titolo + '|' + m.tag;
+    if (esistenti.has(chiaveDoppio)) {
+      console.log('  = ' + titolo + ' (' + m.tag + ') esiste gia\', saltato');
       saltati++;
       continue;
     }
     try {
-      const imageId = await caricaImmagine(cfg.apiKey, d.file, d.nomeFile);
-      await attendi(PAUSA_MS);
-      const prodotto = await chiamaPrintify(cfg.apiKey, 'POST', '/shops/' + cfg.shopId + '/products.json',
-        corpoProdotto(cfg, d.motivo, imageId, args.prezzo));
+      const immagini = {};
+      for (const g of GRUPPI) {
+        immagini[g.misura] = await caricaImmagine(
+          cfg.apiKey, d.file[g.misura].file, d.file[g.misura].nomeFile);
+        await attendi(PAUSA_MS);
+      }
+      const prodotto = await chiamaPrintify(cfg.apiKey, 'POST',
+        '/shops/' + cfg.shopId + '/products.json',
+        corpoProdotto(cfg, d, immagini, args.mercato));
       console.log('  + ' + titolo + '  -> printify_product_id = ' + prodotto.id);
       creati.push(prodotto.id);
     } catch (err) {
-      // Una riga che fallisce non deve fermare le altre diciotto: stesso
-      // isolamento degli errori usato dal sync ordini.
+      // Una riga che fallisce non deve fermare le altre: stesso isolamento
+      // degli errori usato dal sync ordini.
       console.error('  ! ' + titolo + ' NON creato: ' + err.message);
     }
     await attendi(PAUSA_MS);
