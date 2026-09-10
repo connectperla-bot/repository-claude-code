@@ -113,9 +113,19 @@
 
     // Le collezioni caricano altre card scorrendo (filtri, paginazione
     // infinita): senza questo le nuove resterebbero ferme sulla prima foto.
+    //
+    // Solo childList, e non attributes: il battito cambia una CLASSE su ogni
+    // card visibile due volte al secondo, e osservare gli attributi vorrebbe
+    // dire richiamare registra() a ogni battito su ogni card. E comunque si
+    // aspetta il fotogramma successivo, cosi' venti nodi aggiunti in fila
+    // valgono una passata sola invece di venti.
     if ('MutationObserver' in window) {
-      new MutationObserver(function () { registra(); })
-        .observe(document.body, { childList: true, subtree: true });
+      var inCoda = false;
+      new MutationObserver(function () {
+        if (inCoda) return;
+        inCoda = true;
+        requestAnimationFrame(function () { inCoda = false; registra(); });
+      }).observe(document.body, { childList: true, subtree: true });
     }
   }
 

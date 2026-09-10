@@ -21,6 +21,19 @@ vede un cliente. Quindi controlla lo stato REALE del negozio, non quello che
 l'Admin crede -- ed e' proprio quella la differenza che conta, visto che i
 cataloghi di mercato mostrano linee diverse a paesi diversi.
 
+COSA QUESTO CONTROLLO NON PUO' VEDERE, E VA GUARDATO A MANO
+/products.json NON espone i campi SEO (seo.title, seo.description): li' dentro
+non ci sono, e da qui non si raggiungono senza un token Admin che il progetto
+non ha. Quindi un difetto come questo passa inosservato:
+
+    productUpdate(product: { id: ..., seo: { title: "..." } })
+
+SEOInput SOSTITUISCE l'oggetto intero, non aggiorna un campo. Mandare il solo
+titolo per correggerlo AZZERA la descrizione -- e' successo davvero il 10
+settembre su diciassette prodotti, ed e' stata la proprietaria a intuirlo
+guardando il negozio, non questo script. Chi tocca il SEO mandi sempre TITOLO
+E DESCRIZIONE INSIEME, e poi li rilegga.
+
 USO
     python3 scripts/perla-controlla-catalogo.py
     python3 scripts/perla-controlla-catalogo.py --negozio https://altro.com
