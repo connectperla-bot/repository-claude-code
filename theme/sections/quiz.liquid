@@ -46,21 +46,34 @@
   vecchio handle diceva il contrario di quello che il prodotto era davvero
   ('bandana-eu-ulivo-verde-salvia' era la Damasco Bordeaux), e chi ha scritto
   la tabella si e' fidato del nome. Le due sono state scambiate.
+
+  LA COLONNA GLOBALE HA UN BUCO, ed e' vecchio. Otto righe su sedici -- i
+  quattro 'collare' e i quattro 'guinzaglio' -- puntavano a collari ARCHIVIATI
+  (Portofino, Roma, Toscana, Assisi, Venezia, Sorrento, Firenze, Mantova):
+  fuori vendita da quando i diciotto collari sono stati archiviati, e nessuno
+  ha ripassato di qui. I quattro 'collare' adesso mandano al collare di pelle
+  inciso, che e' il collare della linea globale (oggi in bozza: appena viene
+  pubblicato il consiglio comincia a funzionare da solo).
+
+  I quattro 'guinzaglio' restano scoperti perche' un guinzaglio nella linea
+  globale non esiste: nessun prodotto da consigliare. Con la guardia qui sotto
+  non esce una scheda vuota, esce la frase di consiglio e basta. Se un giorno
+  ci sara' un guinzaglio globale, e' qui che va scritto.
 {%- endcomment -%}
 {%- capture perla_combo_raw -%}
-citta|collare|collare-minimal|monogrammed-noir-dog-collar-elegant-black-gold-pattern-with-initials,
+citta|collare|collare-minimal|collare-in-pelle-crea-il-tuo-design,
 citta|guinzaglio|guinzaglio-geometrico|classic-black-dog-collar-durable-everyday-adjustable-collar-for-dogs,
 citta|bandana|bandana-rombi-oro|perla-italia-bandana-geometric-silver,
 citta|ciotola|ciotola-geometrico|perla-italy-ciotola-neutro-personalizza-il-tuo-design,
-campagna|collare|collare-foglia-di-salvia|olive-leaf-dog-collar-botanical-green-pattern-pet-collar,
+campagna|collare|collare-foglia-di-salvia|collare-in-pelle-crea-il-tuo-design,
 campagna|guinzaglio|guinzaglio-smeraldo|sage-floral-dog-collar-personalized-laurel-leaf-pet-collar,
 campagna|bandana|bandana-ramo-dulivo|perla-italia-bandana-botanical-sage,
 campagna|ciotola|ciotola-smeraldo|perla-italy-ciotola-neutro-personalizza-il-tuo-design,
-mare|collare|collare-onda|perla-italia-collare-modern-wave-navy-gold,
+mare|collare|collare-onda|collare-in-pelle-crea-il-tuo-design,
 mare|guinzaglio|guinzaglio-onda|perla-italia-collare-modern-herringbone-teal,
 mare|bandana|bandana-marinara|perla-italia-bandana-wave-teal,
 mare|ciotola|ciotola-petrolio|perla-italy-ciotola-neutro-personalizza-il-tuo-design,
-casa|collare|collare-damasco|perla-italia-collare-damask-burgundy-gold,
+casa|collare|collare-damasco|collare-in-pelle-crea-il-tuo-design,
 casa|guinzaglio|guinzaglio-damasco|maroon-damask-dog-collar-elegant-floral-pattern-pet-collar,
 casa|bandana|bandana-damasco-bordeaux|vintage-damask-pet-bandana-burgundy-gold-classic-collar-scarf-for-dogs-cats,
 casa|ciotola|ciotola-damasco|perla-italy-ciotola-neutro-personalizza-il-tuo-design
@@ -170,7 +183,17 @@ casa|ciotola|ciotola-damasco|perla-italy-ciotola-neutro-personalizza-il-tuo-desi
                   {%- assign handle_scelto = campi[3] -%}
                 {%- endif -%}
                 {%- assign prodotto = all_products[handle_scelto] -%}
-                {%- if prodotto.id -%}
+                {%- comment -%}
+                  Serve ANCHE la URL, non solo l'id. Un prodotto che esiste nel
+                  negozio ma non nel catalogo di mercato di chi guarda torna con
+                  l'id valorizzato e tutto il resto vuoto: la scheda usciva
+                  lo stesso, senza nome, senza prezzo e con href="", e
+                  image_url scriveva "Liquid error: invalid url input" dentro
+                  l'attributo. Misurato sulla home vera. Meglio nessuna scheda
+                  che una scheda vuota: la frase di consiglio e il bottone
+                  restano, e il cliente non ci sbatte contro.
+                {%- endcomment -%}
+                {%- if prodotto.id and prodotto.url != blank -%}
                   <a class="quiz__pick" data-combo="{{ campi[0] }}|{{ campi[1] }}" href="{{ prodotto.url }}" hidden>
                     {%- comment -%}
                       Niente src qui, e niente loading="lazy": la foto si
