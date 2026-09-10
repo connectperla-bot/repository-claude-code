@@ -1,0 +1,112 @@
+{%- comment -%}
+  FILTRO GEOGRAFICO — unica fonte.
+
+  I prodotti esistono in due famiglie: Printify (spedizione globale, tag es.
+  "collare") e Printful/EU (fabbriche europee, tag es. "collare-eu"). La lista
+  paesi qui sotto e' la stessa che scripts/provider-router.js usa per
+  instradare gli ordini: se un giorno cambia, cambia in due posti soltanto.
+
+  Regola:
+     visitatore UE      -> vede SOLO prodotti con un tag *-eu
+     visitatore non UE  -> vede SOLO prodotti senza
+
+  Stampa "1" se il prodotto va nascosto, niente altrimenti. Chi lo usa deve
+  catturare l'output, perche' un render non puo' restituire una variabile:
+
+    {%- capture region_hidden -%}{% render 'perla-region-hidden', product: p %}{%- endcapture -%}
+    {%- unless region_hidden contains '1' -%} ... {%- endunless -%}
+
+  Attenzione: agisce sulle CARD, non sull'URL diretto del prodotto. Nascondere
+  davvero un prodotto per mercato si fa con Shopify Markets, non nel tema.
+
+  ROUND 24 — stesso filtro, ma per una VOCE DI MENU:
+
+    {%- capture nascosta -%}{% render 'perla-region-hidden', link_url: link.url %}{%- endcapture -%}
+
+  Due categorie non hanno un solo prodotto EU, e le regole delle raccolte lo
+  dicono nero su bianco: "Medagliette Personalizzate" seleziona i tag
+  medaglietta/tipo-medaglietta/tag, "Cucce & Letti" i tag bed/cuccia -- nessuno
+  dei quattro tag EU compare. Per un cliente italiano quelle due voci portavano
+  a una pagina vuota. Le altre invece l'EU ce l'hanno gia' dentro
+  (collari-guinzagli ha collare-eu e guinzaglio-eu, ciotole-alimentazione ha
+  ciotola-eu, abbigliamento-bandane ha bandana-eu, e "Personalizzati con il
+  Nome" filtra su personalizzabile, che i prodotti EU portano): restano.
+
+  Se un domani si aggiungono medagliette o cucce europee, basta togliere il
+  loro handle dalla lista qui sotto. ATTENZIONE, non basta solo quello: il
+  loro tag va aggiunto anche alla riga has_eu_tag piu' sotto, che elenca i
+  quattro tag EU a mano. Senza, un prodotto europeo nuovo verrebbe letto come
+  non-EU e finirebbe nascosto proprio ai clienti a cui serve.
+
+  ROUND 38 — SCAPPATOIA PER CHI GESTISCE IL NEGOZIO.
+
+  Il filtro faceva il suo lavoro fin troppo bene: la titolare e' in Italia,
+  quindi Shopify le assegna il mercato UE e lei vedeva solo la linea europea,
+  senza nessun modo di controllare l'altra sul sito vero. Il selettore
+  nell'header (snippets/language-selector.liquid) e' solo di lingua, non di
+  paese, quindi dalla vetrina non c'era via d'uscita.
+
+  Due scappatoie, nessuna visibile ai clienti:
+
+    request.design_mode              nell'editor tema si vede il catalogo intero
+    customer.tags contains 'staff'   da loggati con un account cliente taggato
+
+  Per usare la seconda: crearsi un account cliente sul negozio e assegnargli
+  il tag 'staff' dall'admin Shopify (Clienti -> apri il cliente -> Tag).
+
+  NON si e' aggiunto un selettore di paese in vetrina, che pure Shopify
+  permette con localization.available_countries: cambierebbe la famiglia
+  visibile a TUTTI, e un cliente italiano potrebbe passare a "Stati Uniti" e
+  comprare la linea Printify a 39 euro che gli arriva con la dogana. E'
+  esattamente cio' che questo filtro esiste per impedire.
+
+  ROUND 59 — IL TAPPETINO, E IL QUINTO TAG.
+
+  Il tappetino entra in catalogo su tutti e due i mercati con lo STESSO
+  fornitore (Printify 623/10, MWW On Demand): l'Italia sta nella sua fascia
+  di prezzo europea, e non c'e' nessun gemello Printful da tenere separato.
+  Resta comunque una scheda per mercato, com'e' stato deciso, perche' i prezzi
+  sono in due valute e i tempi di consegna sono diversi -- 10-30 giorni verso
+  l'Italia contro 2-5 verso gli Stati Uniti, ed e' scritto nelle due schede.
+
+  Quindi il tag 'tappetino-eu' va aggiunto qui sotto, dove i tag EU sono
+  elencati a mano: e' esattamente l'avvertimento di ROUND 24 tre paragrafi piu'
+  su. Senza, il tappetino europeo sarebbe letto come non-EU e verrebbe nascosto
+  proprio ai clienti italiani per cui e' stato scelto quel fornitore.
+{%- endcomment -%}
+{%- liquid
+  assign perla_eu_countries = 'IT,AT,BE,BG,HR,CY,CZ,DE,DK,EE,FI,FR,GR,HU,IE,LV,LT,LU,MT,NL,PL,PT,RO,SK,SI,ES,SE,GB,ME,MC,SM,UA,RU' | split: ','
+  assign is_eu_visitor = false
+  if localization.country.iso_code and perla_eu_countries contains localization.country.iso_code
+    assign is_eu_visitor = true
+  endif
+  assign perla_no_eu_collections = 'medagliette-personalizzate,cucce-letti' | split: ','
+
+  assign perla_bypass = false
+  if request.design_mode
+    assign perla_bypass = true
+  elsif customer.tags contains 'staff'
+    assign perla_bypass = true
+  endif
+
+  unless perla_bypass
+    if link_url
+      if is_eu_visitor
+        for handle in perla_no_eu_collections
+          if link_url contains handle
+            echo '1'
+            break
+          endif
+        endfor
+      endif
+    else
+      assign has_eu_tag = false
+      if product.tags contains 'collare-eu' or product.tags contains 'bandana-eu' or product.tags contains 'ciotola-eu' or product.tags contains 'guinzaglio-eu' or product.tags contains 'tappetino-eu'
+        assign has_eu_tag = true
+      endif
+      if is_eu_visitor != has_eu_tag
+        echo '1'
+      endif
+    endif
+  endunless
+-%}
