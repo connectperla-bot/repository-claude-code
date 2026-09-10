@@ -263,11 +263,25 @@
 
   // Si sostituisce una volta sola per radice: `originale` resta nella chiusura,
   // e la sostituta la richiama sempre, quindi il percorso del tema non cambia.
+  // ROUND 59 -- LE DUE VOLTE IN CUI QUESTA GUARDIA NON SI APPLICAVA, IN SILENZIO.
+  //
+  // 1. QUI SOTTO C'ERA UN'USCITA. "Se __perlaEnsureComposed non e' ancora una
+  //    funzione non c'e' niente da avvolgere" -- vero, ma la conclusione era
+  //    sbagliata: si rinunciava per sempre. E il momento in cui quella
+  //    funzione non c'e' ancora e' esattamente il caso lento, cioe' quello per
+  //    cui la guardia e' stata scritta. Adesso si RIPROVA: il tema legge
+  //    pr.__perlaEnsureComposed solo quando parte lui, quindi c'e' tempo.
+  //
+  // 2. LA FINESTRA ERA LARGA UN MACROTASK. `setTimeout(..., 0)` presume che il
+  //    gestore del tema chiami __perlaEnsureComposed in modo sincrono. Oggi lo
+  //    fa. Il giorno che global.js mettesse un await prima, limite e
+  //    ricontrollo salterebbero senza dire niente -- e global.js e' minificato
+  //    e fuori dal repository, quindi quel giorno non lo vedremmo arrivare.
+  //    Adesso la finestra si chiude quando il bottone torna a riposo, oppure
+  //    dopo FINESTRA_MASSIMA: un limite di sicurezza, non un'ipotesi.
   function avvolgiComposizione(form, radice) {
     if (radice.__perlaLimiteMesso) return;
     var originale = radice.__perlaEnsureComposed;
-    // L'editor si accende dopo Fabric.js: se non e' ancora pronto non c'e'
-    // niente da avvolgere, e nemmeno niente da aspettare.
     if (typeof originale !== 'function') return;
     radice.__perlaLimiteMesso = true;
     radice.__perlaEnsureComposed = function () {
@@ -286,13 +300,48 @@
     };
   }
 
+  // Quanto si insiste ad avvolgere, e ogni quanto. Fabric.js a freddo ci mette
+  // qualche secondo: venti tentativi ogni 250 ms fanno cinque secondi, che e'
+  // piu' di quanto serva e comunque meno del limite di composizione.
+  var TENTATIVI_AVVOLGI = 20;
+  var PAUSA_AVVOLGI = 250;
+
+  // LA FINESTRA RESTA LARGA UN MACROTASK, ED E' UNA SCELTA.
+  //
+  // Sembra fragile: presume che il gestore del tema chiami
+  // __perlaEnsureComposed in modo sincrono. Oggi lo fa; se domani ci mettesse
+  // un await davanti, limite e ricontrollo salterebbero senza dirlo.
+  //
+  // Ho provato ad allargarla -- a tempo, e poi legandola a is-loading sul
+  // pulsante -- e tutte e due le volte ho rotto una garanzia piu' importante:
+  // l'anteprima "mockup reale" chiama la STESSA funzione, e con la finestra
+  // aperta si prendeva il limite del carrello e un messaggio d'errore che con
+  // lei non c'entra niente. C'e' una prova che lo dice a voce, in
+  // tests/guardia-carrello.test.js: "l'anteprima mockup non eredita ne' limite
+  // ne' ricontrollo".
+  //
+  // Fra un difetto ipotetico (il tema che diventa asincrono) e un difetto
+  // reale (l'anteprima che rifiuta a sproposito) si tiene stretto il secondo.
+  // Se un giorno global.js diventa asincrono, il segnale giusto non e' il
+  // tempo ne' is-loading: e' che il tema stesso dica quando sta comprando.
+
   function proteggiComposizione(form) {
     var radici = form.querySelectorAll('[data-photo-customizer]');
     if (!radici.length) return;
-    for (var i = 0; i < radici.length; i++) avvolgiComposizione(form, radici[i]);
+
+    // Non piu' un tentativo solo: se Fabric.js non ha ancora acceso l'editor,
+    // si riprova. Vedi la nota su avvolgiComposizione.
+    var rimasti = TENTATIVI_AVVOLGI;
+    (function riprova() {
+      var mancanti = 0;
+      for (var i = 0; i < radici.length; i++) {
+        avvolgiComposizione(form, radici[i]);
+        if (!radici[i].__perlaLimiteMesso) mancanti++;
+      }
+      if (mancanti && --rimasti > 0) setTimeout(riprova, PAUSA_AVVOLGI);
+    })();
+
     dentroAlCarrello = true;
-    // Il gestore del tema parte in questo stesso invio ed e' sincrono fino alla
-    // chiamata: basta il primo turno successivo per richiudere la finestra.
     setTimeout(function () { dentroAlCarrello = false; }, 0);
   }
 

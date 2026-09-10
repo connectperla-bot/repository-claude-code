@@ -525,6 +525,28 @@
       il file alla stampa resta identico.
     {%- endcomment -%}
     <script src="{{ 'perla-studio-ui.js' | asset_url }}" defer></script>
+    {%- comment -%}
+      ROUND 59 -- LA GUARDIA DEL CARRELLO E LA SVEGLIA DELL'EDITOR SI CARICANO
+      DA QUI.
+
+      Stavano in snippets/newsletter-popup.liquid, e la ragione era buona: era
+      il file piu' piccolo gia' reso su ogni pagina, quindi aggiungerle li'
+      costava una riga invece di riscrivere venticinque kB di layout.
+
+      Ma il posto era sbagliato, e si vede appena si prova a dirlo a voce: la
+      protezione che impedisce a un ordine di partire senza disegno dipende
+      dalla presenza del popup della newsletter. Il giorno che qualcuno lo
+      toglie, lo rende condizionale, o lo spegne da un'impostazione, sparisce
+      con lui tutta la guardia -- e sparisce in silenzio, perche' un carrello
+      che accetta un ordine vuoto ha esattamente lo stesso aspetto di uno che
+      funziona.
+
+      La guardia protegge il modulo prodotto, quindi vive dove vive il resto
+      del tema. Il costo e' due righe qui; il beneficio e' che nessuna scelta
+      di marketing puo' piu' disattivare un controllo di produzione.
+    {%- endcomment -%}
+    <script src="{{ 'perla-guardia-carrello.js' | asset_url }}" defer></script>
+    <script src="{{ 'perla-editor-sveglia.js' | asset_url }}" defer></script>
     <script src="{{ 'motion.js' | asset_url }}" defer></script>
     {%- comment -%}
       ROUND 55 — dopo motion.js, e non e' un dettaglio d'ordine: legge

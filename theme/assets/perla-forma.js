@@ -89,7 +89,30 @@
     // [data-layer-panel] perde l'attributo hidden appena c'e' il primo
     // livello: e' il segnale che global.js emette per quello stato, gia'
     // usato da perla-studio-ui.js per lo stesso scopo.
-    return !!sez.querySelector('[data-layer-panel]:not([hidden])');
+    if (sez.querySelector('[data-layer-panel]:not([hidden])')) return true;
+
+    // ROUND 59 -- ANCHE IL SOLO NOME SCRITTO E' LAVORO DA NON BUTTARE.
+    //
+    // Il pannello dei livelli da solo non basta. Cambiare taglia ricarica la
+    // pagina, e la ricarica azzera l'editor: chi aveva SCRITTO UN NOME senza
+    // che il pannello si fosse aperto se lo vedeva cancellare senza che
+    // nessuno glielo chiedesse. E' il caso piu' comune di tutti -- sul collare
+    // il nome E' la personalizzazione -- ed era anche il piu' silenzioso.
+    //
+    // [data-photo-prop-name-text] e' lo specchio vivo di collectNameText():
+    // writePropData lo riscrive a ogni giro, quindi se c'e' scritto qualcosa
+    // li' dentro, il cliente ha scritto qualcosa.
+    var campi = sez.querySelectorAll('[data-photo-prop-name-text]');
+    for (var i = 0; i < campi.length; i++) {
+      if ((campi[i].value || '').trim()) return true;
+    }
+    // E il campo del design pieno vuol dire che una composizione e' gia'
+    // riuscita: buttarla senza chiedere sarebbe buttare anche l'attesa.
+    var dati = sez.querySelectorAll('[data-photo-prop-data]');
+    for (var j = 0; j < dati.length; j++) {
+      if ((dati[j].value || '').trim()) return true;
+    }
+    return false;
   }
 
   function ricarica(url, id) {

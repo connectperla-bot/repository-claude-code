@@ -471,6 +471,66 @@ function laComposizioneFallisce(f) {
     scatta(0);
   });
 
+  console.log('\nROUND 59 — l\'editor che non e\' ancora acceso');
+
+  // La falla: avvolgiComposizione() usciva subito se __perlaEnsureComposed non
+  // era ancora una funzione, e non ci tornava piu'. Ma il momento in cui quella
+  // funzione non c'e' ancora e' Fabric.js che sta ancora caricando -- cioe' il
+  // caso lento, cioe' proprio quello per cui la guardia esiste. Chi cliccava
+  // "Aggiungi al carrello" in quella finestra restava senza limite e senza
+  // ricontrollo, in silenzio.
+  await provaAsync('se Fabric non e\' ancora pronto, si riprova invece di rinunciare', async function () {
+    const f = formConEditor(undefined);       // radice senza la funzione
+    assert.strictEqual(typeof f._radici[0].__perlaEnsureComposed, 'undefined',
+      'la prova parte da un editor non ancora acceso');
+    invia(f);
+    assert.strictEqual(f._radici[0].__perlaLimiteMesso, undefined,
+      'niente da avvolgere al primo giro: giusto cosi\'');
+
+    // Fabric arriva mezzo secondo dopo, come su una connessione lenta.
+    f._radici[0].__perlaEnsureComposed = function () { return new Promise(function () {}); };
+    scatta(250);
+    scatta(250);
+    assert.strictEqual(f._radici[0].__perlaLimiteMesso, true,
+      'il tentativo successivo doveva avvolgere la funzione appena comparsa');
+    scatta(0);
+  });
+
+  await provaAsync('se l\'editor non si accende mai, si smette di riprovare', async function () {
+    const f = formConEditor(undefined);
+    invia(f);
+    // Venti tentativi ogni 250 ms: dopo si deve fermare, se no resterebbe un
+    // timer acceso su ogni pagina prodotto per sempre.
+    let giri = 0;
+    for (let i = 0; i < 40; i++) giri += scatta(250);
+    assert.ok(giri <= 20, 'i tentativi devono essere limitati, invece: ' + giri);
+    scatta(0);
+  });
+
+  console.log('\nROUND 59 — dove viene caricata');
+
+  // La guardia stava in snippets/newsletter-popup.liquid, dove era finita
+  // perche' era il file piu' piccolo gia' reso su ogni pagina. Il risparmio era
+  // vero, la dipendenza no: legava la protezione che impedisce a un ordine di
+  // partire senza disegno alla presenza del popup della newsletter. Togliere
+  // il popup -- una decisione di marketing -- avrebbe spento un controllo di
+  // produzione, e in silenzio.
+  //
+  // Questa prova legge il tema com'e' sul disco: se qualcuno riporta il tag
+  // dentro il popup, o lo toglie dal layout, lo dice.
+  prova('la guardia si carica dal layout, non dal popup della newsletter', function () {
+    const fs = require('fs');
+    const tema = path.join(__dirname, '..', 'theme');
+    const layout = fs.readFileSync(path.join(tema, 'layout', 'theme.liquid'), 'utf8');
+    const popup = fs.readFileSync(path.join(tema, 'snippets', 'newsletter-popup.liquid'), 'utf8');
+    assert.ok(/<script[^>]+perla-guardia-carrello\.js/.test(layout),
+      'layout/theme.liquid deve caricare la guardia: senza, non la carica piu\' nessuno');
+    assert.ok(!/<script[^>]+perla-guardia-carrello\.js/.test(popup),
+      'la guardia non deve dipendere dal popup della newsletter');
+    assert.ok(/<script[^>]+perla-editor-sveglia\.js/.test(layout),
+      'stessa ragione per la sveglia dell\'editor');
+  });
+
   await turno();
   console.log('\n' + fatte + ' verifiche superate.' +
     (process.exitCode ? ' CI SONO FALLIMENTI.' : ''));

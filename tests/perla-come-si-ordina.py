@@ -116,6 +116,21 @@ def clic(p, sel):
             return False
 
 
+def conta_carrello(p):
+    """Quanti pezzi ci sono nel carrello, chiesto al negozio dal browser.
+
+    Dal browser e non con una richiesta nostra: il carrello vive in un cookie,
+    e un carrello letto con un cookie diverso e' quello di qualcun altro --
+    cioe' sempre vuoto, cioe' un falso allarme.
+    """
+    try:
+        return int(p.evaluate(
+            "async () => (await (await fetch('/cart.js', "
+            "{headers:{Accept:'application/json'}})).json()).item_count"))
+    except Exception:
+        return -1
+
+
 def sullo_stesso_posto(p):
     """Vero se siamo ancora sulla scheda prodotto.
 
@@ -206,11 +221,29 @@ def passeggiata(p):
         if clic(p, sel):
             break
     p.wait_for_timeout(800)
-    for sel in ("[data-add-to-cart]", "button[name='add']", ".product__add"):
-        if clic(p, sel):
+    # I selettori qui sotto erano [data-add-to-cart], button[name='add'] e
+    # .product__add: NESSUNO DEI TRE ESISTE nel markup, che usa [data-add-btn]
+    # e .product__atc (sections/main-product.liquid, il pulsante di invio del
+    # modulo). Quindi questo passo non ha mai cliccato niente, e la foto
+    # "nel-carrello" era la scheda prodotto immobile -- lo stesso genere di
+    # difetto silenzioso del passo 3, dove un "text=" agganciava un link.
+    #
+    # Adesso oltre a cliccare si CONTROLLA: se il carrello resta vuoto, il
+    # passo lo dice invece di consegnare una foto che non prova niente.
+    prima = conta_carrello(p)
+    if not clic(p, "[data-add-btn]"):
+        clic(p, ".product__atc")
+    # L'aggiunta non e' immediata: il clic fa partire la composizione del
+    # disegno, e la guardia del tema aspetta fino a venti secondi.
+    for _ in range(25):
+        p.wait_for_timeout(1000)
+        if conta_carrello(p) > prima:
             break
-    p.wait_for_timeout(1600)
     fatti.append(scatta(p, 7, "nel-carrello"))
+    if conta_carrello(p) <= prima:
+        raise SystemExit("Il carrello e' rimasto vuoto dopo il clic su "
+                         "«Aggiungi al carrello»: o il selettore non aggancia "
+                         "piu' il pulsante, o l'aggiunta e' rotta davvero.")
     return fatti
 
 
