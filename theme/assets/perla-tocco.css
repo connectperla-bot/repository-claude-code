@@ -595,3 +595,122 @@ html {
       rgba(var(--color-ink-rgb), 0.18) 45%,
       rgba(var(--color-ink-rgb), 0.55));
 }
+
+/* ==========================================================================
+   ROUND 56 — JUDGE.ME: LE STELLE ACCESE, E IL VUOTO CHE INVITA
+   ==========================================================================
+
+   1. LE STELLE ERANO SPENTE OVUNQUE.
+   Judge.me inietta dalle sue impostazioni tre righe che nascondono il
+   distintivo con la media voti su scheda prodotto, collezione e home:
+
+       .jdgm-preview-badge[data-template="product"]   {display:none!important}
+       .jdgm-preview-badge[data-template="collection"]{display:none!important}
+       .jdgm-preview-badge[data-template="index"]     {display:none!important}
+
+   Ha senso oggi, che di recensioni non ce n'e' nessuna: una fila di stelle
+   vuote sotto ogni prezzo fa piu' danno che niente. Ma resterebbe spenta
+   anche DOPO, e nessuno andrebbe a ricordarsene: la prova sociale non
+   comparirebbe mai, e non lo direbbe nessuno.
+
+   Non serve scegliere fra le due cose, perche' due guardie esistono gia':
+   Judge.me ha `hide_badge_preview_if_no_reviews: true` nelle sue
+   impostazioni, e piu' sotto in questo stesso foglio c'e'
+   `.jdgm-prev-badge[data-average-rating='0.00']{display:none!important}`.
+   Cioe' il distintivo si nasconde DA SOLO finche' la media e' zero.
+
+   Quindi si riaccende qui: adesso non cambia niente a schermo, e il giorno
+   della prima recensione le stelle compaiono da sole, dove servono.
+
+   Il posto pulito sarebbe il pannello dell'app (Judge.me > Settings > Widget
+   appearance), e se un giorno le riaccendi li' queste righe diventano
+   innocue. Ma li' dipende da un'impostazione che nessuno di noi versiona,
+   e questo foglio invece sta nel repository. */
+.jdgm-preview-badge[data-template="product"],
+.jdgm-preview-badge[data-template="collection"],
+.jdgm-preview-badge[data-template="index"] {
+  display: block !important;
+}
+
+/* La guardia che rende sicura la riga qui sopra. C'e' gia' piu' su, ma la si
+   ripete DOPO perche' a parita' di peso vince chi arriva dopo: senza, il
+   `display:block` appena messo scoprirebbe le stelle vuote. */
+.jdgm-prev-badge[data-average-rating='0.00'],
+.jdgm-preview-badge[data-average-rating='0.00'] {
+  display: none !important;
+}
+
+
+/* 2. IL WIDGET NUOVO DI JUDGE.ME PARLA ANCORA VERDE-ACQUA.
+ *
+ * ROUND 49 aveva gia' vestito Judge.me coi colori del negozio, ridefinendo le
+ * sue variabili --jdgm-*. Quelle righe restano giuste e servono ancora, ma NON
+ * bastano piu': l'app ha un widget nuovo, riscritto -- si riconosce dalla
+ * classe `jdgm-widget-revamp` sul contenitore -- che non legge nessuna di
+ * quelle variabili. Usa un suo insieme di classi `jm-*` e i colori se li
+ * scrive dentro.
+ *
+ * Aperto il negozio con un browser vero e misurati gli stili calcolati, non
+ * dedotti dal CSS:
+ *
+ *     button.jm-button--primary       bianco su rgb(16,132,116) = #108474
+ *     p.jm-review-widget-minimal-header__title   nero pieno, Jost 20px
+ *     p.jm-no-reviews-state__text                nero pieno, Jost 16px
+ *
+ * Cioe' sulla scheda prodotto, sotto a un negozio tutto blu notte e oro, c'e'
+ * un bottone verde acqua. Ed e' il bottone piu' importante che ci sia in quel
+ * riquadro: e' l'unica cosa da fare li' dentro finche' le recensioni sono
+ * zero.
+ *
+ * Il nero pieno e' l'altro dettaglio fuori posto: il negozio non usa mai
+ * #000, usa il blu d'inchiostro. Due titoli neri in mezzo a una pagina blu si
+ * vedono, anche se nessuno saprebbe dire perche'.
+ *
+ * I selettori qui sotto esistono tutti: sono stati letti dal DOM vero a
+ * JavaScript eseguito, non immaginati. Il posto pulito resterebbe il pannello
+ * dell'app (Judge.me > Settings > Widget appearance), e se un giorno lo
+ * imposti li' queste righe diventano innocue -- ma quel pannello non e' nel
+ * repository e questo foglio si'. */
+#judgeme_product_reviews .jm-button--primary,
+.jdgm-widget .jm-button.jm-button--primary {
+  background: var(--color-ink, #132A4A) !important;
+  color: var(--color-cream, #F6EFE5) !important;
+  border-color: var(--color-ink, #132A4A) !important;
+  border-radius: 2px;
+  min-height: 44px;
+  padding: 0 1.4rem;
+  font-family: var(--font-body, "Jost", sans-serif);
+  letter-spacing: .04em;
+}
+
+#judgeme_product_reviews .jm-button--primary:hover,
+.jdgm-widget .jm-button.jm-button--primary:hover {
+  background: var(--color-gold-deep, #A9701F) !important;
+  border-color: var(--color-gold-deep, #A9701F) !important;
+}
+
+/* Il titolo del riquadro prende il carattere dei titoli del negozio, come
+ * ogni altra intestazione di sezione della scheda prodotto. */
+/* --font-heading e' Marcellus, non Playfair: letto dagli stili calcolati della
+ * pagina vera. Il ripiego conta solo se la variabile sparisse, ma deve dire il
+ * vero lo stesso. */
+#judgeme_product_reviews .jm-review-widget-minimal-header__title {
+  font-family: var(--font-heading, "Marcellus", Georgia, serif) !important;
+  font-size: 1.5rem !important;
+  font-weight: 500 !important;
+  color: var(--color-ink, #132A4A) !important;
+  letter-spacing: normal;
+}
+
+/* Via il nero pieno: l'invito e' un testo di servizio, non un titolo. */
+#judgeme_product_reviews .jm-no-reviews-state__text {
+  color: color-mix(in srgb, var(--color-text, #132A4A) 78%, transparent) !important;
+}
+
+/* Il riquadro respira come le altre sezioni della scheda, invece di
+ * galleggiare senza bordi in fondo alla pagina. */
+#judgeme_product_reviews {
+  padding: 1.6rem 1.4rem;
+  border: 1px solid var(--color-line, #E2D8C8);
+  border-radius: 2px;
+}

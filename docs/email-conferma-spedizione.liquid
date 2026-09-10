@@ -1,0 +1,205 @@
+{% comment %}
+  PERLA ITALIA — Conferma di spedizione
+  =====================================
+  Dove si incolla: Shopify > Impostazioni > Notifiche > Conferma di spedizione >
+  Modifica codice. Sostituisce TUTTO il contenuto.
+
+  PERCHE' QUESTA CONTA PIU' DELL'ALTRA
+  La conferma d'ordine si legge una volta. Questa si riapre: ogni volta che il
+  cliente vuole sapere dov'e' il pacco torna qui a cercare il link. Quindi il
+  numero di tracciamento deve essere la cosa piu' grande della pagina, e il
+  bottone deve funzionare anche col pollice, su un telefono, in metropolitana.
+
+  UN ORDINE PUO' ARRIVARE IN PIU' COLLI. Le bandane partono dagli Stati Uniti
+  (Printify) e i collari dalla Spagna (Printful): un ordine con tutti e due
+  genera DUE spedizioni, quindi due email come questa, ognuna con le sue righe.
+  Per questo si scorre `fulfillment.fulfillment_line_items` e non
+  `order.line_items`: qui dentro va scritto solo cio' che sta in QUESTO pacco,
+  se no il cliente cerca nella scatola una cosa che arriva la settimana dopo.
+
+  Stessi colori e stesse scelte tecniche della conferma d'ordine: vedi il
+  commento in cima a docs/email-conferma-ordine.liquid.
+{% endcomment %}
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ shop.name }} — Il tuo ordine è partito</title>
+</head>
+<body style="margin:0; padding:0; background:#FCFAF6; -webkit-font-smoothing:antialiased;">
+
+  <div style="display:none; max-height:0; overflow:hidden; opacity:0;">
+    {{ order.name }} è partito{% if fulfillment.tracking_number %} — {{ fulfillment.tracking_number }}{% endif %}
+  </div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#FCFAF6;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px; max-width:100%; background:#FFFFFF; border:1px solid #E8DCC9;">
+
+          <tr>
+            <td align="center" style="padding:34px 32px 26px; background:#132A4A;">
+              {% if shop.email_logo_url %}
+                <img src="{{ shop.email_logo_url }}" alt="{{ shop.name }}" width="132"
+                     style="display:block; border:0; width:132px; max-width:132px; height:auto;">
+              {% else %}
+                <div style="font-family:Georgia,'Times New Roman',serif; font-size:26px; letter-spacing:.16em; color:#FCFAF6;">PERLA</div>
+                <div style="font-family:Georgia,'Times New Roman',serif; font-size:11px; letter-spacing:.34em; color:#C8862B; margin-top:4px;">ITALIA</div>
+              {% endif %}
+            </td>
+          </tr>
+
+          <tr><td style="height:3px; background:#C8862B; font-size:0; line-height:0;">&nbsp;</td></tr>
+
+          <tr>
+            <td style="padding:36px 32px 6px;">
+              <p style="margin:0 0 6px; font-family:Georgia,'Times New Roman',serif; font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:#C8862B;">
+                Ordine {{ order.name }}
+              </p>
+              <h1 style="margin:0 0 14px; font-family:Georgia,'Times New Roman',serif; font-weight:normal; font-size:27px; line-height:1.25; color:#132A4A;">
+                {% if fulfillment.item_count == order.line_items.size %}
+                  È partito.
+                {% else %}
+                  Una parte del tuo ordine è partita.
+                {% endif %}
+              </h1>
+              <p style="margin:0; font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif; font-size:16px; line-height:1.62; color:#22324A;">
+                {% if fulfillment.item_count == order.line_items.size %}
+                  {{ customer.first_name }}, il tuo pacco è in viaggio.
+                {% else %}
+                  {{ customer.first_name }}, questo pacco contiene una parte dell'ordine —
+                  il resto parte da un altro laboratorio e ti avvisiamo appena si muove.
+                {% endif %}
+              </p>
+            </td>
+          </tr>
+
+          <!-- il tracciamento: la cosa piu' grande della pagina -->
+          {% if fulfillment.tracking_number %}
+          <tr>
+            <td style="padding:26px 32px 0;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F3E9DA;">
+                <tr>
+                  <td align="center" style="padding:24px 20px; font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;">
+                    <div style="font-family:Georgia,'Times New Roman',serif; font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:#8A6A32;">
+                      {% if fulfillment.tracking_company %}{{ fulfillment.tracking_company }}{% else %}Codice di tracciamento{% endif %}
+                    </div>
+                    <div style="font-size:20px; line-height:1.4; letter-spacing:.04em; color:#132A4A; margin:8px 0 16px; word-break:break-all;">
+                      {{ fulfillment.tracking_number }}
+                    </div>
+                    {% if fulfillment.tracking_url %}
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center">
+                      <tr>
+                        <td style="background:#132A4A; border-radius:2px;">
+                          <a href="{{ fulfillment.tracking_url }}"
+                             style="display:inline-block; padding:15px 30px; font-size:15px; letter-spacing:.05em; color:#F3E9DA; text-decoration:none;">
+                            Dov'è il mio pacco
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                    {% endif %}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td style="padding:26px 32px 0;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F3E9DA;">
+                <tr>
+                  <td style="padding:18px 20px; font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif; font-size:14px; line-height:1.6; color:#22324A;">
+                    Questa spedizione non ha un codice di tracciamento. Puoi seguire lo stato
+                    dell'ordine dalla pagina qui sotto.
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {% endif %}
+
+          <!-- cosa c'e' in QUESTO pacco -->
+          <tr>
+            <td style="padding:30px 32px 0;">
+              <p style="margin:0 0 14px; font-family:Georgia,'Times New Roman',serif; font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:#C8862B;">
+                In questo pacco
+              </p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                {% for line in fulfillment.fulfillment_line_items %}
+                <tr>
+                  <td width="64" valign="top" style="padding:12px 14px 12px 0;">
+                    {% if line.line_item.image %}
+                      <img src="{{ line.line_item | img_url: 'compact_cropped' }}" alt="{{ line.line_item.title | escape }}" width="64"
+                           style="display:block; border:1px solid #E8DCC9; width:64px; height:auto;">
+                    {% endif %}
+                  </td>
+                  <td valign="top" style="padding:12px 0; font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;">
+                    <div style="font-size:16px; line-height:1.4; color:#132A4A;">{{ line.line_item.title }}</div>
+                    {% if line.line_item.variant.title != 'Default Title' %}
+                      <div style="font-size:13px; line-height:1.5; color:#6B7789; margin-top:3px;">{{ line.line_item.variant.title }}</div>
+                    {% endif %}
+                    {% for p in line.line_item.properties %}
+                      {% assign primo = p.first | slice: 0 %}
+                      {% if primo != '_' and p.last != blank %}
+                        <div style="font-size:13px; line-height:1.55; color:#22324A; margin-top:6px;">
+                          <span style="color:#8A6A32;">{{ p.first }}:</span> {{ p.last }}
+                        </div>
+                      {% endif %}
+                    {% endfor %}
+                    <div style="font-size:13px; line-height:1.5; color:#6B7789; margin-top:6px;">Quantità {{ line.quantity }}</div>
+                  </td>
+                </tr>
+                <tr><td colspan="2" style="height:1px; background:#E8DCC9; font-size:0; line-height:0;">&nbsp;</td></tr>
+                {% endfor %}
+              </table>
+            </td>
+          </tr>
+
+          {% if requires_shipping and shipping_address %}
+          <tr>
+            <td style="padding:22px 32px 0; font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;">
+              <div style="font-family:Georgia,'Times New Roman',serif; font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:#8A6A32; margin-bottom:8px;">Indirizzo di consegna</div>
+              <div style="font-size:15px; line-height:1.6; color:#22324A;">
+                {{ shipping_address.name }}<br>
+                {{ shipping_address.street }}<br>
+                {{ shipping_address.zip }} {{ shipping_address.city }}{% if shipping_address.province %} ({{ shipping_address.province_code }}){% endif %}<br>
+                {{ shipping_address.country }}
+              </div>
+            </td>
+          </tr>
+          {% endif %}
+
+          <tr>
+            <td style="padding:26px 32px 30px;">
+              <p style="margin:0 0 14px; font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif; font-size:14px; line-height:1.68; color:#22324A;">
+                Se il corriere non aggiorna subito il tracciamento è normale: qualche ora dopo
+                la partenza compaiono i primi passaggi.
+              </p>
+              <p style="margin:0; font-family:Georgia,'Times New Roman',serif; font-size:16px; line-height:1.6; color:#132A4A;">
+                Buona passeggiata,<br>
+                <span style="color:#8A6A32;">Emanuele e Nicola</span>
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:24px 32px; background:#0F2240; font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;">
+              <p style="margin:0 0 8px; font-size:13px; line-height:1.6; color:#EBDFC9;">
+                Qualcosa non torna col pacco? Rispondi a questa email: leggiamo noi.
+              </p>
+              <p style="margin:0; font-size:12px; line-height:1.6; color:#9FB0C6;">
+                {{ shop.name }} · <a href="{{ shop.url }}" style="color:#C8862B; text-decoration:none;">{{ shop.url | remove: 'https://' }}</a>
+                · <a href="{{ order.order_status_url }}" style="color:#C8862B; text-decoration:none;">stato dell'ordine</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

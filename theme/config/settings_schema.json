@@ -134,11 +134,9 @@
     ]
   },
   {
-    "name": "Recensioni con foto",
+    "name": "Recensioni",
     "settings": [
-      { "type": "paragraph", "content": "Recensioni native con foto, senza app esterne. Vuota finché i clienti non inviano recensioni reali (nessuna recensione finta pre-caricata)." },
-      { "type": "checkbox", "id": "reviews_enabled", "label": "Mostra recensioni sulla scheda prodotto", "default": true },
-      { "type": "url", "id": "reviews_submit_endpoint", "label": "Indirizzo servizio invio recensioni (opzionale)", "info": "Incolla qui l'indirizzo del servizio scripts/perla-reviews-endpoint.js una volta pubblicato online. Se vuoto, il modulo di invio recensioni resta nascosto." }
+      { "type": "paragraph", "content": "Le recensioni le gestisce Judge.me, non il tema: aspetto e testi si cambiano nell'app (Judge.me > Settings > Widget appearance), la posizione nella scheda prodotto si sposta da qui col trascinamento della sezione «Recensioni». Qui non c'è niente da impostare, ed è voluto: prima c'erano una spunta e un indirizzo per un sistema di recensioni interno che non è mai stato costruito — nessuna sezione del tema li leggeva, quindi non comandavano niente." }
     ]
   },
   {
