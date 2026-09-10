@@ -71,7 +71,28 @@ PRINTFUL = {
 # incisa e giacchetto parka, scelti dalla proprietaria dal catalogo Printify.
 PRINTIFY = {419: "cuccia", 562: "bandana", 566: "medaglietta", 570: "ciotola",
             10700: "collare-pelle", 10674: "medaglietta-incisa",
-            10740: "giacchetto"}
+            10740: "giacchetto", 623: "tappetino"}
+
+# IL TAPPETINO E' L'UNICO TIPO VENDUTO NELLO STESSO BLUEPRINT SU DUE MERCATI
+#
+# 623/10 (MWW On Demand) stampa e spedisce sia la scheda americana sia quella
+# europea, e questo rompe due cose che fin qui erano costanti:
+#
+#   la SPEDIZIONE. Fin qui bastava leggere il profilo degli Stati Uniti,
+#   perche' tutto il Printify andava li'. Il tappetino europeo va in Italia,
+#   dove lo stesso pezzo costa 7,79 invece di 6,09 (e 7,79 invece di 7,29
+#   sulla misura grande). Leggere il profilo sbagliato vuol dire misurare il
+#   margine su una spedizione che nessuno paga.
+#
+#   l'IMPOSTA. Sul resto della linea Printify e' una RISERVA del 5% per la
+#   sales tax americana, e non e' IVA italiana perche' quella merce in Europa
+#   non entra mai. Il tappetino europeo invece in Europa ci entra: li' l'IVA
+#   e' quella vera al 22%, la stessa che Printful dichiara nei preventivi.
+#
+# Da qui le due tabelle. La chiave e' il tipo, non il blueprint, perche' il
+# blueprint e' lo stesso per tutti e due.
+DESTINAZIONE = {"tappetino-eu": "IT"}      # il resto e' "US"
+IMPOSTA_REALE = {"tappetino-eu": 0.22}     # il resto usa la riserva americana
 
 # DUE TIPI DIVERSI CHE COMINCIANO CON LA STESSA PAROLA
 #
@@ -170,6 +191,32 @@ def cambio_usd_eur():
     return tasso, d.get("time_last_update_utc", "?")
 
 
+def _printful_composto(testa, vid):
+    """Il costo sbarcato ricomposto, quando il preventivo non si puo' chiedere.
+
+    Prodotto dal listino v2, spedizione dalle tariffe vere verso l'indirizzo
+    italiano, IVA al 22% su prodotto + spedizione. Non e' una stima: sulle tre
+    varianti in cui il preventivo RISPONDE, l'IVA che dichiara Printful e'
+    esattamente il 22% di (subtotal + shipping) -- collare 4,44 su 20,14,
+    ciotola 7,44 su 33,80. La stessa aritmetica applicata dove il preventivo
+    non risponde da' lo stesso numero che darebbe lui.
+    """
+    prezzo = None
+    d = chiedi("https://api.printful.com/v2/catalog-variants/%d/prices?currency=EUR" % vid, testa)
+    for t in (d.get("data", {}).get("variant", {}) or {}).get("techniques", []):
+        prezzo = float(t.get("discounted_price") or t.get("price") or 0)
+        break
+    if not prezzo:
+        raise RuntimeError("listino v2 senza prezzo per la variante %d" % vid)
+    r = chiedi("https://api.printful.com/shipping/rates", testa,
+               {"recipient": INDIRIZZO, "items": [{"variant_id": vid, "quantity": 1}],
+                "currency": "EUR"})
+    sped = min(float(t["rate"]) for t in r["result"])
+    iva = round((prezzo + sped) * 0.22, 2)
+    return {"prodotto": prezzo, "spedizione": sped, "imposta": iva,
+            "totale": round(prezzo + sped + iva, 2), "composto": True}
+
+
 def costi_printful():
     """Le PARTI del costo sbarcato, in euro, per ogni variante EU.
 
@@ -177,27 +224,54 @@ def costi_printful():
     Prima tornava il solo totale, e bastava per dire se il margine reggeva.
     Non basta per il foglio dei margini che la proprietaria usa per decidere i
     prezzi: li' serve vedere QUANTO pesa la spedizione e quanto l'IVA, se no
-    non si sa su cosa si puo' agire. Il preventivo Printful le tiene gia'
-    separate (costs.subtotal, costs.shipping, costs.tax): si buttavano via."""
+    non si sa su cosa si puo' agire.
+
+    DUE DIFETTI TROVATI MISURANDO, NON LEGGENDO (ROUND 59)
+
+    1. L'IVA STAVA NEL CAMPO SBAGLIATO. Il preventivo tiene separati `tax` e
+       `vat`, e su un ordine italiano `tax` e' 0,00 mentre l'IVA vera sta in
+       `vat` -- 4,44 euro su un collare. Si leggeva solo `tax`, quindi la
+       colonna IVA del foglio diceva zero su tutta la linea europea. Il
+       margine invece era giusto: quello si calcola su `total`, che l'IVA la
+       comprende.
+
+    2. `options` FA CADERE IL PREVENTIVO. Mandare la chiave `options`, anche
+       vuota, fa rispondere 500 su collare, guinzaglio e bandana; senza,
+       rispondono. Provato tre volte per combinazione, e' una regola, non un
+       capriccio. Ma la bandana SENZA options risponde 400 e chiede
+       stitch_color: con options 500 e senza 400, per lei il preventivo non e'
+       ottenibile in nessun modo, e li' si ricompone il costo (vedi
+       _printful_composto).
+    """
     k = os.environ["PRINTFUL_API_KEY"]
     store = os.environ["PRINTFUL_STORE_ID"]
     testa = {"Authorization": "Bearer " + k, "X-PF-Store-Id": store}
     fuori = {}
     for tipo, varianti in PRINTFUL.items():
         for etichetta, vid, opzioni in varianti:
-            corpo = {"recipient": INDIRIZZO,
-                     "items": [{"variant_id": vid, "quantity": 1, "options": opzioni}]}
+            voce = {"variant_id": vid, "quantity": 1}
+            if opzioni:
+                voce["options"] = opzioni
+            corpo = {"recipient": INDIRIZZO, "items": [voce]}
             try:
                 r = chiedi("https://api.printful.com/orders/estimate-costs", testa, corpo)
                 c = r["result"]["costs"]
                 fuori[(tipo, etichetta)] = {
                     "prodotto": float(c.get("subtotal") or 0),
                     "spedizione": float(c.get("shipping") or 0),
-                    "imposta": float(c.get("tax") or 0),
+                    # tax E vat: su un ordine italiano la prima e' zero e la
+                    # seconda no, altrove puo' essere il contrario.
+                    "imposta": float(c.get("tax") or 0) + float(c.get("vat") or 0),
                     "totale": float(c["total"]),
                 }
             except Exception as e:
-                print("  Printful non quota %s %s: %s" % (tipo, etichetta, e), file=sys.stderr)
+                try:
+                    fuori[(tipo, etichetta)] = _printful_composto(testa, vid)
+                    print("  Printful non quota %s %s (%s): costo ricomposto dal listino"
+                          % (tipo, etichetta, e), file=sys.stderr)
+                except Exception as e2:
+                    print("  Printful non quota %s %s: %s / %s"
+                          % (tipo, etichetta, e, e2), file=sys.stderr)
     return fuori
 
 
@@ -263,11 +337,16 @@ def costi_printify(tasso):
             print("  spedizione Printify non leggibile per il blueprint %d: %s" % (bp, e),
                   file=sys.stderr)
             continue
+        # Un profilo per PAESE di destinazione, non piu' solo gli Stati Uniti:
+        # lo stesso blueprint puo' servire due mercati (il tappetino), e li'
+        # il costo cambia. La chiave porta il paese, e chi la legge sceglie.
         for prof in d.get("profiles", []):
-            if "US" not in prof.get("countries", []):
-                continue
-            for vid in prof.get("variant_ids", []):
-                spedizione[(bp, vid)] = prof["first_item"]["cost"] / 100.0
+            paesi = prof.get("countries", [])
+            for paese in ("US", "IT"):
+                if paese not in paesi:
+                    continue
+                for vid in prof.get("variant_ids", []):
+                    spedizione[(bp, vid, paese)] = prof["first_item"]["cost"] / 100.0
 
     # id variante -> titolo, per accostare spedizione e costo
     titolo_di = {}
@@ -283,30 +362,36 @@ def costi_printify(tasso):
         pagina += 1
 
     sped_per_titolo = {}
-    for (bp, vid), c in spedizione.items():
+    for (bp, vid, paese), c in spedizione.items():
         t = titolo_di.get((bp, vid))
         if t is not None:
-            sped_per_titolo[(bp, t)] = c
+            sped_per_titolo[(bp, t, paese)] = c
 
     fuori = {}
     for (bp, titolo), c in costo.items():
         tipo = PRINTIFY.get(bp)
         if tipo is None:
             continue
-        s = sped_per_titolo.get((bp, titolo))
-        if s is None:
-            print("  nessuna spedizione verso l'Italia per %s %s" % (tipo, titolo), file=sys.stderr)
-            continue
-        fuori[(tipo, titolo)] = {
-            "prodotto": c * tasso,
-            "spedizione": s * tasso,
-            # L'imposta NON si sa qui: dipende da dove va il pacco, e su
-            # Printify quel numero e' una riserva scelta dalla proprietaria,
-            # non un importo letto. La aggiunge main(), che sa se la riga e'
-            # americana o europea.
-            "imposta": 0.0,
-            "totale": (c + s) * tasso,
-        }
+        # Un tipo puo' avere un gemello su un altro mercato: stesso blueprint,
+        # stesso costo di produzione, spedizione diversa. Si emette una voce
+        # per ognuno, ognuna con la spedizione verso il SUO paese.
+        for t2 in [tipo] + [x for x, y in DESTINAZIONE.items() if x != tipo and x.startswith(tipo)]:
+            paese = DESTINAZIONE.get(t2, "US")
+            s = sped_per_titolo.get((bp, titolo, paese))
+            if s is None:
+                print("  nessuna spedizione verso %s per %s %s" % (paese, t2, titolo),
+                      file=sys.stderr)
+                continue
+            fuori[(t2, titolo)] = {
+                "prodotto": c * tasso,
+                "spedizione": s * tasso,
+                # L'imposta NON si sa qui: dipende da dove va il pacco, e su
+                # Printify quel numero e' una riserva scelta dalla proprietaria,
+                # non un importo letto. La aggiunge main(), che sa se la riga e'
+                # americana o europea.
+                "imposta": 0.0,
+                "totale": (c + s) * tasso,
+            }
     return fuori
 
 
@@ -366,6 +451,11 @@ def tipo_di(prodotto):
     for prefisso, t in PRINTIFY_HANDLE.items():
         if h.startswith(prefisso):
             return t
+    # Il tappetino europeo e quello globale hanno lo STESSO titolo e lo stesso
+    # blueprint: a distinguerli c'e' solo il tag, e distinguerli serve perche'
+    # cambiano spedizione e imposta.
+    if "tappetino-eu" in etichette(prodotto):
+        return "tappetino-eu"
     return prodotto["title"].split()[0].lower().strip(u"“\"")
 
 
@@ -406,8 +496,14 @@ def main():
             # Printful la da' gia' il preventivo (ed e' un importo LETTO), su
             # Printify si aggiunge qui ed e' la riserva scelta dalla
             # proprietaria. La paga il negozio e non la recupera: e' costo.
-            printify = t in PRINTIFY.values()
-            imposta = c["totale"] * iva_pf if printify else c["imposta"]
+            printify = t in PRINTIFY.values() or t in DESTINAZIONE
+            if t in IMPOSTA_REALE:
+                # Merce che entra davvero in Europa: IVA vera, non riserva.
+                imposta = (c["prodotto"] + c["spedizione"]) * IMPOSTA_REALE[t]
+            elif printify:
+                imposta = c["totale"] * iva_pf
+            else:
+                imposta = c["imposta"]
             sbarcato = c["prodotto"] + c["spedizione"] + imposta
             righe.append({"prodotto": p["title"], "taglia": v["title"], "prezzo": prezzo,
                           "fornitore": "Printify" if printify else "Printful",

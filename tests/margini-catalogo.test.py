@@ -102,11 +102,12 @@ prova("il guinzaglio EU ha una misura sola, e l'id combacia", guinzaglio_a_parte
 def blueprint_giusti():
     # Elencati per nome uno per uno, e non contati: un elenco dice quale
     # manca, un conteggio dice solo che qualcosa non torna. I primi quattro
-    # sono la linea americana di sempre; gli ultimi tre li ha scelti la
-    # proprietaria dal catalogo Printify il 4 settembre.
+    # sono la linea americana di sempre; i tre di mezzo li ha scelti la
+    # proprietaria dal catalogo Printify il 4 settembre; il tappetino e' di
+    # settembre e sta su tutti e due i mercati con lo stesso blueprint.
     atteso = {419: "cuccia", 562: "bandana", 566: "medaglietta", 570: "ciotola",
               10700: "collare-pelle", 10674: "medaglietta-incisa",
-              10740: "giacchetto"}
+              10740: "giacchetto", 623: "tappetino"}
     assert m.PRINTIFY == atteso, (
         "i blueprint quotati non sono quelli in vendita.\n  attesi:  %s\n  "
         "trovati: %s" % (sorted(atteso.items()), sorted(m.PRINTIFY.items())))

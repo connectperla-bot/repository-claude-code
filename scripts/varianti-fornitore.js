@@ -149,6 +149,10 @@ const VARIANTI = {
   // opzioni arrivano in quella forma e l'ordine parte lo stesso. normalizza()
   // pareggia le virgolette e il segno per, che nel catalogo sono scritti in
   // due modi diversi sulla stessa riga.
+  // I titoli qui sono quelli VERI su Shopify: l'opzione si chiama "Forma e
+  // misura" e ha tre valori italiani, e il "Color / White" del fornitore --
+  // un'opzione con un valore solo -- e' stato tolto dalla scheda. Quindi il
+  // titolo della variante e' il valore da solo, senza " / Bianco" in coda.
   tappetino: {
     'Osso piccolo (48x36 cm)': 73844,
     'Bone shape (19" x 14")': 73844,
