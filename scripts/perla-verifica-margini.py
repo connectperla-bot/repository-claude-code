@@ -313,7 +313,30 @@ def iva_da_un_ordine_printify():
     return None
 
 
+def etichette(prodotto):
+    """I tag del prodotto, sia che arrivino in lista sia in una stringa.
+
+    /products.json li da' in lista, l'API Admin in una stringa separata da
+    virgole: senza questo si leggerebbero le lettere una per una."""
+    grezzi = prodotto.get("tags") or []
+    if isinstance(grezzi, str):
+        grezzi = grezzi.split(",")
+    return [str(x).strip() for x in grezzi]
+
+
 def tipo_di(prodotto):
+    """Il tipo su cui e' quotato il costo: prima il TAG, poi l'handle.
+
+    Gli europei si riconoscevano dall'handle, che cominciava per "collare-eu-".
+    Da settembre gli handle sono corti (collare-barocco) e quel prefisso non
+    c'e' piu': cercandolo ancora, tutti e 66 gli europei finirebbero senza
+    costo e il controllo sul margine smetterebbe di guardare mezza vetrina
+    senza dirlo. Il tag "collare-eu" invece e' rimasto, ed e' lo stesso nome
+    che fa da chiave in PRINTFUL. L'handle resta come ripiego per le
+    istantanee vecchie salvate su disco."""
+    for e in etichette(prodotto):
+        if e in PRINTFUL:
+            return e
     h = prodotto["handle"]
     for t in PRINTFUL:
         if h.startswith(t):

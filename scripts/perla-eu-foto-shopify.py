@@ -37,8 +37,15 @@ dei media: quelli creati in un giro sono tutti piu' alti di quelli che
 c'erano prima, quindi un prodotto che ha ancora un id vecchio e' un prodotto
 rimasto indietro.
 
-    query { products(first: 70, query: "handle:*fornitore-europeo*") {
-      nodes { handle media(first: 12) { nodes { ... on MediaImage { id } } } } } }
+    query { products(first: 250) {
+      nodes { handle tags media(first: 12) {
+        nodes { ... on MediaImage { id } } } } } }
+
+I 66 europei si riconoscono dal tag ("collare-eu", "bandana-eu", ...), non
+dall'handle: gli handle erano lunghi e finivano in "-fornitore-europeo", da
+settembre sono corti (collare-barocco). Il filtro "query:" di Shopify sugli
+handle con l'asterisco non filtra davvero -- provato, torna tutto -- quindi si
+scaricano tutti e si scremano qui.
 
 Serve davvero: Printful risponde "Impossibile generare l'anteprima" su una
 parte dei prodotti a ogni giro -- diciassette su sessantasei la prima volta,

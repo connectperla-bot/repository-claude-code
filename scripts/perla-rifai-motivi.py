@@ -100,6 +100,14 @@ def _originali_per(famiglia, cartella):
     return sorted(fuori, key=lambda x: -len(x[0]))
 
 
+# NOTA SUGLI HANDLE VECCHI.
+# Da settembre gli handle europei su Shopify sono corti (collare-barocco); qui
+# restano quelli lunghi con "-eu-" e "-fornitore-europeo", ed e' voluto: questo
+# script lavora sull'istantanea perla-eu-prodotti.json e nomina i file di uscita
+# con l'handle. Gli stessi nomi sono gia' su Cloudinary e dentro
+# generated-designs/eu-motivi-corretti/_indice.json e out-foto/ospitate.json.
+# Rinominarli qui staccherebbe i motivi gia' caricati dal loro indice senza
+# guadagnare niente: i prodotti su Shopify sono agganciati per id, non per nome.
 def famiglia(handle):
     for tipo in scala.AREE:
         radice = tipo.split("-")[0]

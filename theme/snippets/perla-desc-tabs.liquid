@@ -1,0 +1,165 @@
+{%- comment -%}
+  PERLA — tendine della scheda prodotto
+  ---------------------------------------------------------------------------
+  Parametri:  product  (obbligatorio)
+              s        (section.settings di main-product)
+
+  PERCHE' ESISTE
+  Prima di questo snippet la scheda mostrava la descrizione DUE volte: le prime
+  32 parole sopra il pulsante di acquisto, e poi tutta intera dentro un'unica
+  tendina "Descrizione". Dentro quella tendina stavano appiccicati Dettagli,
+  Taglie, Cura e Personalizzazione, mentre a pochi centimetri c'erano tendine
+  con lo stesso nome alimentate dalle impostazioni della sezione — e "Guida
+  taglie" diceva al cliente che le misure erano "nella descrizione", cioe' in
+  un'altra tendina.
+
+  COME FUNZIONA
+  Le descrizioni del catalogo hanno una struttura regolare, in due varianti:
+
+    EU        <p>intro</p>
+              <p><strong>Dettagli</strong></p><ul>...</ul>
+              <p><strong>Cura</strong><br>testo</p>
+    Printify  <p>intro</p>
+              <p><strong>Dettagli</strong></p><ul>...</ul>
+              <p><strong>Taglie</strong></p><ul>...</ul>
+
+  Entrambe si dividono su '<p><strong>'. Ogni pezzo viene riconosciuto dal suo
+  titoletto e mandato nella tendina giusta. Cosi' non c'e' stato bisogno di
+  riscrivere le descrizioni di 113 prodotti.
+
+  RIPIEGO
+  Se la descrizione non contiene nessun '<p><strong>' non si prova a indovinare:
+  torna la tendina unica "Descrizione" di prima. Un prodotto scritto in un altro
+  modo non puo' rompere la pagina.
+{%- endcomment -%}
+
+{%- liquid
+  assign chunks = product.description | split: '<p><strong>'
+  assign d_dettagli = ''
+  assign d_taglie = ''
+  assign d_cura = ''
+  assign d_custom = ''
+  assign d_spediz = ''
+  assign parsed = false
+
+  for chunk in chunks offset: 1
+    assign parts = chunk | split: '</strong>'
+    if parts.size < 2
+      continue
+    endif
+    assign titolo = parts[0]
+    assign head = titolo | strip_html | downcase
+    assign body = chunk | remove_first: titolo | remove_first: '</strong>' | strip
+
+    comment
+      Il titoletto e il suo corpo possono stare nello stesso <p> (variante EU,
+      separati da <br>) oppure in due blocchi distinti (variante Printify). Nel
+      primo caso il paragrafo va riaperto, nel secondo va chiuso quello rimasto
+      orfano: in tutti e due i casi il risultato e' HTML bilanciato.
+    endcomment
+    assign lead = body | slice: 0, 4
+    if lead == '<br>'
+      assign body = body | remove_first: '<br>' | prepend: '<p>'
+    elsif lead == '</p>'
+      assign body = body | remove_first: '</p>'
+    endif
+
+    assign parsed = true
+    if head contains 'taglie' or head contains 'misur'
+      assign d_taglie = d_taglie | append: body
+    elsif head contains 'cura' or head contains 'lavagg'
+      assign d_cura = d_cura | append: body
+    elsif head contains 'personalizz'
+      comment
+        Va provato PRIMA di 'spediz': le descrizioni vecchie hanno un unico
+        titoletto "Personalizzazione e spedizione", e con l'ordine inverso
+        finirebbe tutto nella tendina della spedizione.
+      endcomment
+      assign d_custom = d_custom | append: body
+    elsif head contains 'spediz' or head contains 'consegna'
+      assign d_spediz = d_spediz | append: body
+    elsif head contains 'dettagl' or head contains 'material'
+      assign d_dettagli = d_dettagli | append: body
+    else
+      comment
+        Titoletto non previsto: finisce in Dettagli MA conservando la sua
+        intestazione, altrimenti si perderebbe il senso di quello che dice.
+      endcomment
+      assign d_dettagli = d_dettagli | append: '<p><strong>' | append: titolo | append: '</strong></p>' | append: body
+    endif
+  endfor
+
+  comment
+    custom.materiali (per singolo prodotto) e s.details_text (per tutto il
+    catalogo) restano validi: si aggiungono a quello che dice gia' la
+    descrizione invece di sostituirlo.
+  endcomment
+  assign extra_dettagli = product.metafields.custom.materiali | default: s.details_text
+  if extra_dettagli != blank
+    assign d_dettagli = d_dettagli | append: extra_dettagli
+  endif
+  assign d_taglie = d_taglie | append: s.size_guide
+
+  comment
+    La spedizione del singolo prodotto (per gli EU: fornitore europeo, niente
+    dogana) va PRIMA della politica generale del negozio, che vale per tutti.
+  endcomment
+  assign d_spediz = d_spediz | append: s.shipping_returns
+-%}
+
+{%- comment -%}
+  ORDINE DELLE TENDINE
+  Dettagli → Personalizzazione → Taglie → Cura → Spedizione.
+
+  Personalizzazione sta in seconda posizione, non in quarta: e' la ragione per
+  cui uno compra qui invece che altrove (il pezzo porta il nome del suo cane).
+  Prima stava dopo le istruzioni di lavaggio, cioe' dove non la si legge.
+  L'ordine lo decide questo blocco, non l'ordine dei titoletti dentro la
+  descrizione del prodotto: cambiarlo qui lo cambia su tutto il catalogo.
+{%- endcomment -%}
+
+<div class="accordion">
+  {%- unless parsed -%}
+    {%- if product.description != blank -%}
+      <div class="accordion__item">
+        <button class="accordion__trigger" aria-expanded="false">{{ 'sections.product.tab_description' | t }} <span class="pm"></span></button>
+        <div class="accordion__panel"><div class="accordion__panel-inner rte">{{ product.description }}</div></div>
+      </div>
+    {%- endif -%}
+  {%- endunless -%}
+
+  {%- if d_dettagli != blank -%}
+    <div class="accordion__item">
+      <button class="accordion__trigger" aria-expanded="false">{{ 'sections.product.tab_details' | t }} <span class="pm"></span></button>
+      <div class="accordion__panel"><div class="accordion__panel-inner rte">{{ d_dettagli }}</div></div>
+    </div>
+  {%- endif -%}
+
+  {%- if d_custom != blank -%}
+    <div class="accordion__item">
+      <button class="accordion__trigger" aria-expanded="false">{{ 'sections.product.tab_custom' | t }} <span class="pm"></span></button>
+      <div class="accordion__panel"><div class="accordion__panel-inner rte">{{ d_custom }}</div></div>
+    </div>
+  {%- endif -%}
+
+  {%- if d_taglie != blank -%}
+    <div class="accordion__item">
+      <button class="accordion__trigger" aria-expanded="false">{{ 'sections.product.tab_size' | t }} <span class="pm"></span></button>
+      <div class="accordion__panel"><div class="accordion__panel-inner rte">{{ d_taglie }}</div></div>
+    </div>
+  {%- endif -%}
+
+  {%- if d_cura != blank -%}
+    <div class="accordion__item">
+      <button class="accordion__trigger" aria-expanded="false">{{ 'sections.product.tab_care' | t }} <span class="pm"></span></button>
+      <div class="accordion__panel"><div class="accordion__panel-inner rte">{{ d_cura }}</div></div>
+    </div>
+  {%- endif -%}
+
+  {%- if d_spediz != blank -%}
+    <div class="accordion__item">
+      <button class="accordion__trigger" aria-expanded="false">{{ 'sections.product.tab_shipping' | t }} <span class="pm"></span></button>
+      <div class="accordion__panel"><div class="accordion__panel-inner rte">{{ d_spediz }}</div></div>
+    </div>
+  {%- endif -%}
+</div>

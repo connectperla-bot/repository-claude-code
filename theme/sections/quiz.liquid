@@ -35,24 +35,35 @@
 
 {%- comment -%}
   palette|tipo|handle UE|handle globale
+
+  Gli handle UE sono cambiati (erano lunghi e finivano tutti in
+  '-fornitore-europeo'): qui vanno i nuovi, perche' Liquid cerca il prodotto
+  per handle e un 301 non lo aiuta — con un handle vecchio all_products[...]
+  torna vuoto e il consiglio finale sparisce.
+
+  Nel rinominare sono venute fuori due combinazioni sbagliate: 'campagna'
+  consigliava la bandana Damasco Bordeaux e 'casa' quella Ramo d'Ulivo. Il
+  vecchio handle diceva il contrario di quello che il prodotto era davvero
+  ('bandana-eu-ulivo-verde-salvia' era la Damasco Bordeaux), e chi ha scritto
+  la tabella si e' fidato del nome. Le due sono state scambiate.
 {%- endcomment -%}
 {%- capture perla_combo_raw -%}
-citta|collare|collare-eu-minimal-antracite-argento-fornitore-europeo|monogrammed-noir-dog-collar-elegant-black-gold-pattern-with-initials,
-citta|guinzaglio|guinzaglio-eu-geometrico-fornitore-europeo|classic-black-dog-collar-durable-everyday-adjustable-collar-for-dogs,
-citta|bandana|bandana-eu-diamanti-nero-argento-fornitore-europeo|perla-italia-bandana-geometric-silver,
-citta|ciotola|ciotola-eu-geometrico-fornitore-europeo|perla-italy-ciotola-neutro-personalizza-il-tuo-design,
-campagna|collare|collare-eu-foglia-di-salvia-verde-salvia-oro-fornitore-europeo|olive-leaf-dog-collar-botanical-green-pattern-pet-collar,
-campagna|guinzaglio|guinzaglio-eu-smeraldo-fornitore-europeo|sage-floral-dog-collar-personalized-laurel-leaf-pet-collar,
-campagna|bandana|bandana-eu-ulivo-verde-salvia-fornitore-europeo|perla-italia-bandana-botanical-sage,
-campagna|ciotola|ciotola-eu-smeraldo-fornitore-europeo|perla-italy-ciotola-neutro-personalizza-il-tuo-design,
-mare|collare|collare-eu-onda-navy-oro-fornitore-europeo|perla-italia-collare-modern-wave-navy-gold,
-mare|guinzaglio|guinzaglio-eu-onda-fornitore-europeo|perla-italia-collare-modern-herringbone-teal,
-mare|bandana|bandana-eu-marinara-fornitore-europeo|perla-italia-bandana-wave-teal,
-mare|ciotola|ciotola-eu-petrolio-fornitore-europeo|perla-italy-ciotola-neutro-personalizza-il-tuo-design,
-casa|collare|collare-eu-damasco-bordeaux-oro-fornitore-europeo|perla-italia-collare-damask-burgundy-gold,
-casa|guinzaglio|guinzaglio-eu-damasco-bordeaux-oro-fornitore-europeo|maroon-damask-dog-collar-elegant-floral-pattern-pet-collar,
-casa|bandana|bandana-eu-damasco-reale-bordeaux-oro-fornitore-europeo|vintage-damask-pet-bandana-burgundy-gold-classic-collar-scarf-for-dogs-cats,
-casa|ciotola|ciotola-eu-damasco-bordeaux-oro-fornitore-europeo|perla-italy-ciotola-neutro-personalizza-il-tuo-design
+citta|collare|collare-minimal|monogrammed-noir-dog-collar-elegant-black-gold-pattern-with-initials,
+citta|guinzaglio|guinzaglio-geometrico|classic-black-dog-collar-durable-everyday-adjustable-collar-for-dogs,
+citta|bandana|bandana-rombi-oro|perla-italia-bandana-geometric-silver,
+citta|ciotola|ciotola-geometrico|perla-italy-ciotola-neutro-personalizza-il-tuo-design,
+campagna|collare|collare-foglia-di-salvia|olive-leaf-dog-collar-botanical-green-pattern-pet-collar,
+campagna|guinzaglio|guinzaglio-smeraldo|sage-floral-dog-collar-personalized-laurel-leaf-pet-collar,
+campagna|bandana|bandana-ramo-dulivo|perla-italia-bandana-botanical-sage,
+campagna|ciotola|ciotola-smeraldo|perla-italy-ciotola-neutro-personalizza-il-tuo-design,
+mare|collare|collare-onda|perla-italia-collare-modern-wave-navy-gold,
+mare|guinzaglio|guinzaglio-onda|perla-italia-collare-modern-herringbone-teal,
+mare|bandana|bandana-marinara|perla-italia-bandana-wave-teal,
+mare|ciotola|ciotola-petrolio|perla-italy-ciotola-neutro-personalizza-il-tuo-design,
+casa|collare|collare-damasco|perla-italia-collare-damask-burgundy-gold,
+casa|guinzaglio|guinzaglio-damasco|maroon-damask-dog-collar-elegant-floral-pattern-pet-collar,
+casa|bandana|bandana-damasco-bordeaux|vintage-damask-pet-bandana-burgundy-gold-classic-collar-scarf-for-dogs-cats,
+casa|ciotola|ciotola-damasco|perla-italy-ciotola-neutro-personalizza-il-tuo-design
 {%- endcapture -%}
 {%- assign perla_combos = perla_combo_raw | strip_newlines | split: ',' -%}
 

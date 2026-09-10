@@ -38,9 +38,15 @@ NEGOZIO = "https://perlaitaly.com"
 # I valori attesi. Sono la decisione presa, non un'opinione: la marca e' una
 # sola, il tipo di prodotto e' in italiano e specifico (serve a Google Shopping
 # e ai filtri del tema), le virgolette sono quelle tipografiche.
-MARCA = "PERLA ITALIA"
+# La marca si scrive "Perla Italia", non "PERLA ITALIA": il maiuscolo e' del
+# cartiglio stampato sul tessuto, non del campo che il cliente legge sotto al
+# titolo e che finisce nel feed di Google. Qui c'era il maiuscolo, e faceva
+# suonare l'allarme su tutti e 114 i prodotti -- compresi i 70 giusti. Un
+# controllo che si sa gia' che fallisce smette di essere guardato, ed e' proprio
+# quello che aveva nascosto i 44 che davvero dicevano "Printify".
+MARCA = "Perla Italia"
 TIPI = {"Collare", "Bandana", "Ciotola", "Guinzaglio", "Medaglietta",
-        "Cuccia", "Tappetino"}
+        "Cuccia", "Tappetino", "Giacchetto"}
 
 
 def scarica(negozio):
@@ -68,7 +74,19 @@ def linea_eu(p):
     Le due linee vivono in cataloghi di mercato separati: chi naviga
     dall'Europa vede solo la prima, chi naviga dagli Stati Uniti solo la
     seconda. Diverse regole valgono per l'una e per l'altra, e confonderle
-    riempie il controllo di falsi allarmi."""
+    riempie il controllo di falsi allarmi.
+
+    Il segno e' il TAG, non l'handle. Fino a settembre gli handle europei
+    finivano tutti in "-fornitore-europeo" e si riconoscevano da li'; poi sono
+    stati accorciati (collare-barocco) e quel segno e' sparito. Un indirizzo si
+    puo' cambiare per mille motivi buoni, un tag no: "collare-eu" e compagni
+    stanno sui 66 europei e su nessun altro (contati sul catalogo vero).
+    L'handle resta come ripiego per i dati vecchi salvati su disco."""
+    grezzi = p.get("tags") or []
+    if isinstance(grezzi, str):
+        grezzi = grezzi.split(",")
+    if any(str(t).strip().endswith("-eu") for t in grezzi):
+        return True
     h = p["handle"]
     return "fornitore-europeo" in h or bool(
         re.match(r"^(collare|bandana|ciotola|guinzaglio|medaglietta|cuccia)-eu-", h))

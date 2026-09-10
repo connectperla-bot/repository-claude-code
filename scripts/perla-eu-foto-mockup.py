@@ -81,6 +81,10 @@ ID_FINTO = "solo-url"
 QUI = os.path.dirname(os.path.abspath(__file__))
 
 
+# Gli handle qui dentro sono quelli lunghi con "-eu-": arrivano
+# dall'istantanea perla-eu-prodotti.json, non dal negozio, dove da
+# settembre sono corti (collare-barocco). Non vanno allineati: i file
+# gia' su Cloudinary portano questi nomi.
 def tipo_di(handle):
     for t in ("collare-eu", "bandana-eu", "ciotola-eu", "guinzaglio-eu"):
         if handle.startswith(t):

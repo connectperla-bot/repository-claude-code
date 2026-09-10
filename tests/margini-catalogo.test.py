@@ -171,6 +171,44 @@ def tipo_eu_dall_handle():
 prova("sulla linea EU il tipo si legge dall'handle", tipo_eu_dall_handle)
 
 
+def tipo_eu_dal_tag():
+    """Gli handle EU sono stati accorciati: il tipo deve reggere lo stesso.
+
+    Prima erano "collare-eu-tartan-fornitore-europeo", adesso sono
+    "collare-tartan". Se il tipo si cercasse solo nell'handle, tutti e 66 gli
+    europei resterebbero senza costo quotato e il controllo sul margine
+    smetterebbe di guardarli -- senza dire niente, perche' un prodotto senza
+    costo finisce nell'elenco "senza" e non fa fallire nessuna soglia. Il tag
+    e' il segno che e' rimasto, ed e' quello vero: dice chi stampa."""
+    casi = [
+        ({"handle": "collare-tartan", "title": u"Collare \u201cTartan\u201d",
+          "tags": ["collare regolabile", "collare-eu", "eu shipping"]}, "collare-eu"),
+        ({"handle": "ciotola-toile-rubino", "title": u"Ciotola \u201cToile Rubino\u201d",
+          "tags": "ciotola-eu, personalizzabile"}, "ciotola-eu"),
+        ({"handle": "guinzaglio-onda", "title": u"Guinzaglio \u201cOnda\u201d",
+          "tags": ["guinzaglio-eu"]}, "guinzaglio-eu"),
+        ({"handle": "bandana-notte", "title": u"Bandana \u201cNotte\u201d",
+          "tags": ["bandana-eu"]}, "bandana-eu"),
+    ]
+    for prodotto, atteso in casi:
+        avuto = m.tipo_di(prodotto)
+        assert avuto == atteso, (
+            "%s ha il tag %s: doveva dare %s, ha dato %s"
+            % (prodotto["handle"], atteso, atteso, avuto))
+    # e un Printify non deve essere scambiato per europeo solo perche' il tipo
+    # nel titolo si assomiglia
+    fuori = m.tipo_di({"handle": "perla-italia-collare-damask-burgundy-gold",
+                       "title": u"Collare \u201cDamasco\u201d",
+                       "tags": ["dog collar", "printify"]})
+    assert fuori != "collare-eu", (
+        "un prodotto senza tag europeo non puo' finire sui costi Printful. "
+        "Ottenuto: %s" % fuori)
+
+
+prova("sulla linea EU il tipo si legge dal tag anche con l'handle corto",
+      tipo_eu_dal_tag)
+
+
 def tipo_printify_dal_titolo():
     a = m.tipo_di({"handle": "perla-italia-cuccia-medallion-purple",
                    "title": u"Cuccia “Nobile”"})

@@ -106,6 +106,10 @@ def attesa_429(d):
     return int(m.group(1)) + 5 if m else 65
 
 
+# Gli handle qui dentro sono quelli lunghi con "-eu-": arrivano
+# dall'istantanea perla-eu-prodotti.json, non dal negozio, dove da
+# settembre sono corti (collare-barocco). Non vanno allineati: i file
+# gia' su Cloudinary portano questi nomi.
 def tipo_di(handle):
     if handle.startswith("collare-eu"):
         return "collare_eu"
