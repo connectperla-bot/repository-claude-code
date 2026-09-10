@@ -28,6 +28,12 @@ Thumbs.db
 # Cloudinary (URL permanenti) e su Shopify; qui resterebbero 8 MB di duplicati.
 out-foto/
 
+# Il foglio dei margini e i suoi dati grezzi: una fotografia dei costi in un
+# dato momento, che si rifa' con due comandi (stanno in cima a
+# scripts/perla-foglio-margini.py). In git ci va lo script, non il foglio --
+# se no fra un mese ci sono dodici versioni e nessuno sa quale vale.
+out-listino/
+
 # Banco di prova: le sonde mandate ai fornitori per misurare un'area di stampa
 # (scacchiere numerate, tinte piatte) e i mockup che tornano indietro. Sono
 # pixel usa-e-getta -- il metodo per rifarli sta scritto per esteso in

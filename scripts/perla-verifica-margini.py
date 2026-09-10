@@ -171,7 +171,14 @@ def cambio_usd_eur():
 
 
 def costi_printful():
-    """Costo sbarcato in euro per ogni variante EU, spedizione e IVA comprese."""
+    """Le PARTI del costo sbarcato, in euro, per ogni variante EU.
+
+    Torna un dizionario per variante: prodotto, spedizione, imposta, totale.
+    Prima tornava il solo totale, e bastava per dire se il margine reggeva.
+    Non basta per il foglio dei margini che la proprietaria usa per decidere i
+    prezzi: li' serve vedere QUANTO pesa la spedizione e quanto l'IVA, se no
+    non si sa su cosa si puo' agire. Il preventivo Printful le tiene gia'
+    separate (costs.subtotal, costs.shipping, costs.tax): si buttavano via."""
     k = os.environ["PRINTFUL_API_KEY"]
     store = os.environ["PRINTFUL_STORE_ID"]
     testa = {"Authorization": "Bearer " + k, "X-PF-Store-Id": store}
@@ -182,7 +189,13 @@ def costi_printful():
                      "items": [{"variant_id": vid, "quantity": 1, "options": opzioni}]}
             try:
                 r = chiedi("https://api.printful.com/orders/estimate-costs", testa, corpo)
-                fuori[(tipo, etichetta)] = float(r["result"]["costs"]["total"])
+                c = r["result"]["costs"]
+                fuori[(tipo, etichetta)] = {
+                    "prodotto": float(c.get("subtotal") or 0),
+                    "spedizione": float(c.get("shipping") or 0),
+                    "imposta": float(c.get("tax") or 0),
+                    "totale": float(c["total"]),
+                }
             except Exception as e:
                 print("  Printful non quota %s %s: %s" % (tipo, etichetta, e), file=sys.stderr)
     return fuori
@@ -284,7 +297,16 @@ def costi_printify(tasso):
         if s is None:
             print("  nessuna spedizione verso l'Italia per %s %s" % (tipo, titolo), file=sys.stderr)
             continue
-        fuori[(tipo, titolo)] = (c + s) * tasso
+        fuori[(tipo, titolo)] = {
+            "prodotto": c * tasso,
+            "spedizione": s * tasso,
+            # L'imposta NON si sa qui: dipende da dove va il pacco, e su
+            # Printify quel numero e' una riserva scelta dalla proprietaria,
+            # non un importo letto. La aggiunge main(), che sa se la riga e'
+            # americana o europea.
+            "imposta": 0.0,
+            "totale": (c + s) * tasso,
+        }
     return fuori
 
 
@@ -375,23 +397,31 @@ def main():
             if c is None and t in PRINTFUL:
                 # le taglie EU costano uguale: si accetta una etichetta qualunque
                 candidati = [x for (tt, _), x in costo.items() if tt == t]
-                c = max(candidati) if candidati else None
+                c = max(candidati, key=lambda x: x["totale"]) if candidati else None
             if c is None:
                 senza.append((p["title"], v["title"]))
                 continue
             prezzo = float(v["price"])
             # L'IVA e' dentro tutti e due i costi, per strade diverse: su
-            # Printful la da' gia' il preventivo, su Printify si aggiunge qui.
-            # La paga il negozio e non la recupera, quindi e' costo.
+            # Printful la da' gia' il preventivo (ed e' un importo LETTO), su
+            # Printify si aggiunge qui ed e' la riserva scelta dalla
+            # proprietaria. La paga il negozio e non la recupera: e' costo.
             printify = t in PRINTIFY.values()
-            c_iva = c * (1 + iva_pf) if printify else c
+            imposta = c["totale"] * iva_pf if printify else c["imposta"]
+            sbarcato = c["prodotto"] + c["spedizione"] + imposta
             righe.append({"prodotto": p["title"], "taglia": v["title"], "prezzo": prezzo,
                           "fornitore": "Printify" if printify else "Printful",
                           "tipo": t,
                           "deroga": DEROGHE.get((t, v["title"])),
-                          "costo_senza_iva": round(c, 2),
-                          "costo": round(c_iva, 2),
-                          "margine": round(100 * (prezzo - c_iva) / prezzo, 1)})
+                          # Le tre parti separate: servono al foglio dei
+                          # margini per dire su cosa si puo' agire.
+                          "costo_prodotto": round(c["prodotto"], 2),
+                          "spedizione": round(c["spedizione"], 2),
+                          "imposta": round(imposta, 2),
+                          "costo_senza_iva": round(c["prodotto"] + c["spedizione"], 2),
+                          "costo": round(sbarcato, 2),
+                          "guadagno": round(prezzo - sbarcato, 2),
+                          "margine": round(100 * (prezzo - sbarcato) / prezzo, 1)})
 
     righe.sort(key=lambda r: r["margine"])
     print("%-28s %-15s %-9s %8s %8s %8s" % (
