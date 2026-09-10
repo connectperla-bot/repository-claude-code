@@ -105,6 +105,21 @@ AREE = {
     "medaglietta-usa": Area(
         810, 900, 5.08, 5.64,
         'tondo da 2" del blueprint; l\'altezza include il ponticello'),
+
+    # --- il tappetino, su tutti e due i mercati ---------------------------
+    # Stesso pezzo e stesso fornitore (Printify 623/10, MWW On Demand) in
+    # Europa e in America, quindi una voce sola per misura invece di due
+    # uguali. I centimetri qui non sono dedotti da una densita': il fornitore
+    # dichiara i pollici nel titolo della variante, e sono quelli.
+    #
+    # Le due misure hanno rapporti diversi (1,31 e 1,60), quindi il motivo va
+    # disegnato due volte: non e' lo stesso file ingrandito.
+    "tappetino-piccolo": Area(
+        3150, 2400, 48.3, 35.6,
+        'variante 19" x 14" del blueprint 623 (osso piccolo e pesce)'),
+    "tappetino-grande": Area(
+        4800, 3000, 76.2, 45.7,
+        'variante 30" x 18" del blueprint 623 (osso grande)'),
 }
 
 
