@@ -43,6 +43,7 @@ USO
     python3 scripts/perla-eu-foto-col-nome.py                    # tutti e 35
     python3 scripts/perla-eu-foto-col-nome.py --max 1            # prova
     python3 scripts/perla-eu-foto-col-nome.py --tipi guinzaglio_eu
+    python3 scripts/perla-eu-foto-col-nome.py --solo crea-il-tuo-design
     python3 scripts/perla-eu-foto-col-nome.py --nome Milo --posizione 0.17
 
 Scrive out-foto-nome/ospitate.json (handle -> URL ospitata), che va poi
@@ -176,6 +177,11 @@ def main():
         nome = args[args.index("--nome") + 1]
     if "--posizione" in args:
         posizione = float(args[args.index("--posizione") + 1])
+    # --solo restringe a handle precisi, come negli altri script di foto: serve
+    # per rifare le poche rimaste indietro senza rimettere in coda tutte e 35.
+    solo = None
+    if "--solo" in args:
+        solo = [s for s in args[args.index("--solo") + 1].split(",") if s]
 
     os.makedirs(OUT, exist_ok=True)
     p_out = os.path.join(OUT, "ospitate.json")
@@ -183,7 +189,8 @@ def main():
     prodotti = json.load(open(os.path.join(QUI, "perla-eu-prodotti.json")))
 
     coda = [p for p in prodotti
-            if tipo_di(p["handle"]) in tipi and p["handle"] not in ospitate][:massimo]
+            if tipo_di(p["handle"]) in tipi and p["handle"] not in ospitate
+            and (not solo or any(s in p["handle"] for s in solo))][:massimo]
     print("%d da fare (%d gia' fatte). Nome '%s' al %d%% della striscia.\n"
           % (len(coda), len(ospitate), nome, round(posizione * 100)))
 

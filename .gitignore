@@ -28,6 +28,11 @@ Thumbs.db
 # Cloudinary (URL permanenti) e su Shopify; qui resterebbero 8 MB di duplicati.
 out-foto/
 
+# Area di transito di scripts/perla-eu-foto-col-nome.py: stesso ragionamento di
+# out-foto/. Le due foto che contano (collare e guinzaglio "Crea il Tuo Design"
+# col nome Luna) sono gia' su Cloudinary e agganciate a Shopify.
+out-foto-nome/
+
 # Uscita di scripts/perla-file-stampa-motivi.py: ~290 MB fra originali
 # scaricati da Cloudinary e ritagli a piena risoluzione. Tutto rigenerabile con
 # un comando, e gli URL degli originali sono gia' versionati in
