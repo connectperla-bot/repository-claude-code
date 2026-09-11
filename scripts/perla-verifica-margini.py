@@ -434,6 +434,42 @@ def costi_printify(tasso):
     return fuori
 
 
+def costo_sbarcato(tipo, c, iva_pf):
+    """Quanto ci costa davvero una variante: prodotto + spedizione + imposta.
+
+    UNA FONTE SOLA, E QUI PRIMA CE N'ERANO DUE.
+
+    Questo conto lo fanno due programmi: il controllo dei margini, che chiede
+    «c'e' qualcosa sotto il venti per cento?», e perla-prezzi-margine.py, che
+    propone i prezzi. Finche' il costo era un numero solo le due copie si
+    somigliavano abbastanza da non dare fastidio. Quando il costo e' diventato
+    un dizionario con le parti separate -- per il foglio dei margini -- qui e'
+    stato aggiornato e li' no: il listino e' rimasto ROTTO per giorni, con un
+    TypeError al primo prodotto Printify, e nessuno se n'e' accorto perche'
+    nel frattempo nessuno ha rifatto i prezzi.
+
+    Un programma che si pianta almeno lo dice. La copia silenziosamente
+    sfasata sarebbe stata peggio: avrebbe proposto prezzi calcolati su
+    un'imposta diversa da quella del controllo, e i due si sarebbero
+    contraddetti senza che nessuno capisse quale credere.
+
+    Le tre strade dell'imposta, che sono tre cose diverse e vanno tenute
+    distinte:
+      IMPOSTA_REALE  merce che entra davvero in Europa: IVA vera sul valore.
+      Printify       riserva scelta dalla proprietaria per la sales tax
+                     americana. E' una stima, non un importo letto.
+      Printful       importo LETTO dal preventivo del fornitore.
+    """
+    printify = tipo in PRINTIFY.values() or tipo in DESTINAZIONE
+    if tipo in IMPOSTA_REALE:
+        imposta = (c["prodotto"] + c["spedizione"]) * IMPOSTA_REALE[tipo]
+    elif printify:
+        imposta = c["totale"] * iva_pf
+    else:
+        imposta = c["imposta"]
+    return c["prodotto"] + c["spedizione"] + imposta, imposta, printify
+
+
 def iva_da_un_ordine_printify():
     """L'IVA vera, se un ordine Printify l'ha mai pagata. Altrimenti None.
 
@@ -531,19 +567,10 @@ def main():
                 senza.append((p["title"], v["title"]))
                 continue
             prezzo = float(v["price"])
-            # L'IVA e' dentro tutti e due i costi, per strade diverse: su
-            # Printful la da' gia' il preventivo (ed e' un importo LETTO), su
-            # Printify si aggiunge qui ed e' la riserva scelta dalla
-            # proprietaria. La paga il negozio e non la recupera: e' costo.
-            printify = t in PRINTIFY.values() or t in DESTINAZIONE
-            if t in IMPOSTA_REALE:
-                # Merce che entra davvero in Europa: IVA vera, non riserva.
-                imposta = (c["prodotto"] + c["spedizione"]) * IMPOSTA_REALE[t]
-            elif printify:
-                imposta = c["totale"] * iva_pf
-            else:
-                imposta = c["imposta"]
-            sbarcato = c["prodotto"] + c["spedizione"] + imposta
+            # L'IVA e' dentro tutti e due i costi, per strade diverse: vedi
+            # costo_sbarcato(), che questo conto lo fa per tutti e due i
+            # programmi che ne hanno bisogno.
+            sbarcato, imposta, printify = costo_sbarcato(t, c, iva_pf)
             righe.append({"prodotto": p["title"], "taglia": v["title"], "prezzo": prezzo,
                           "fornitore": "Printify" if printify else "Printful",
                           "tipo": t,

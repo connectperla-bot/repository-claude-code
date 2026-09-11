@@ -94,12 +94,31 @@ MARGINE = 0.20
 # riproporrebbe di abbassarli a ogni giro, e prima o poi qualcuno lo farebbe
 # credendo di correggere un errore. Quattro righe coprono 54 varianti: il
 # listino ragiona per (tipo, taglia), non per singolo prodotto.
+# LA MEDAGLIETTA INCISA STA CON LE ALTRE, DECISO L'11 SETTEMBRE
+#
+# La regola del 20% le aveva dato 16,90, ed era il prezzo MINIMO, non il
+# prezzo giusto: incidere l'alluminio ci costa meno che stampare la
+# medaglietta vecchia, quindi il minimo veniva piu' basso. Ma le altre
+# quindici medagliette in catalogo stanno tutte a 22,90, e un cliente le vede
+# vicine nella stessa raccolta: la piu' bella costava meno, il che e' un modo
+# di dire al cliente che quella cara non vale il suo prezzo.
+#
+# A 22,90 il margine passa dal 22,9% al 43,1% -- il piu' alto della linea.
+#
+# LA CHIAVE E' PER TIPO, NON PER TAGLIA. Le altre quattro righe qui sotto
+# hanno una taglia perche' quei tipi hanno una variante sola o due. La
+# medaglietta incisa ne ha QUINDICI (tre forme per cinque colori) che costano
+# tutte uguali: elencarle una per una sarebbe scrivere quindici volte la
+# stessa decisione, e alla sedicesima variante qualcuno se ne dimenticherebbe
+# una. Quando la taglia e' None vale per tutto il tipo -- vedi il ripiego in
+# listino(), poco piu' sotto.
 PREZZO_DECISO = {
     ("ciotola-eu", "530 ml"): 49.90,
     ("bandana", '20" × 10"'): 26.90,
     ("bandana", '27" × 13"'): 29.90,
     ("ciotola", "16oz"): 52.90,
     ("medaglietta", '1"'): 22.90,
+    ("medaglietta-incisa", None): 22.90,
 }
 
 
@@ -137,18 +156,24 @@ def listino(margine):
             if c is None and t in margini.PRINTFUL:
                 # le taglie EU costano uguale: si accetta un'etichetta qualunque
                 candidati = [x for (tt, _), x in costo.items() if tt == t]
-                c = max(candidati) if candidati else None
+                c = max(candidati, key=lambda x: x["totale"]) if candidati else None
             if c is None:
                 senza.append((p["title"], v["title"]))
                 continue
-            printify = t in margini.PRINTIFY.values()
-            c_iva = c * (1 + iva_pf) if printify else c
+            # Lo stesso conto del controllo dei margini, chiamato e non
+            # ricopiato: due copie di questa formula si erano gia' separate una
+            # volta. Vedi costo_sbarcato() in perla-verifica-margini.py.
+            c_iva, _, printify = margini.costo_sbarcato(t, c, iva_pf)
             prezzo = float(v["price"])
             # Il prezzo deciso a mano vince sulla regola: e' l'unico modo per
             # non riproporre 51,90 sulla ciotola a ogni listino. Vedi DEROGHE e
             # PREZZO_DECISO -- le due tabelle raccontano la stessa decisione,
             # una per il controllo e una per il calcolo.
+            # Prima la taglia esatta, poi il tipo intero: la chiave con None
+            # copre i tipi dove tutte le varianti costano e valgono uguale.
             deciso = PREZZO_DECISO.get((t, v["title"]))
+            if deciso is None:
+                deciso = PREZZO_DECISO.get((t, None))
             nuovo = deciso if deciso is not None else al_90(c_iva / (1 - margine))
             righe.append({
                 "prodotto": p["title"], "taglia": v["title"],
