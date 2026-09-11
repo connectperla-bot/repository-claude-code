@@ -281,6 +281,27 @@
 
     var mine = false; // distingue le scritture di questo file da quelle di global.js
 
+    // ROUND 60 -- L'ATTESA CHE NON FINIVA MAI.
+    //
+    // Lo stato "pending" si chiudeva SOLO se global.js scriveva un messaggio o
+    // se comparivano le anteprime. Se il servizio non risponde affatto non
+    // succede ne' l'una ne' l'altra cosa: il testo "Preparo l'anteprima…"
+    // restava li' per sempre, col pulsante "Riprova" nascosto, e l'unica via
+    // d'uscita era ricaricare la pagina perdendo tutto il design -- cioe'
+    // esattamente il difetto che il commento qui sopra dice di aver chiuso.
+    //
+    // E non e' un caso raro: il servizio sta su un piano gratuito e a freddo
+    // ci mette 31 secondi misurati (perla-editor-sveglia.js registrava 24, e
+    // da allora e' peggiorato). Il caso lento e il caso guasto si assomigliano
+    // molto, ed e' per questo che la soglia e' 45 e non 30: sotto quella
+    // dichiarerei guasto un servizio che sta solo svegliandosi.
+    var LIMITE_ATTESA = 45000;
+    var attesa = null;
+
+    function fermaAttesa() {
+      if (attesa) { clearTimeout(attesa); attesa = null; }
+    }
+
     var retry = document.createElement('button');
     retry.type = 'button';
     retry.className = 'product-personalize__retry';
@@ -303,6 +324,22 @@
       status.textContent = STR.mockupPending || (IT ? 'Preparo l’anteprima…' : 'Building your preview…');
       setState('pending');
       setTimeout(function () { mine = false; }, 0);
+
+      // Se dopo LIMITE_ATTESA non ha risposto ne' global.js ne' lo scaffale
+      // delle anteprime, si smette di far aspettare: si dice che non e'
+      // riuscita e si SCOPRE "Riprova". Il design resta dov'e'.
+      fermaAttesa();
+      attesa = setTimeout(function () {
+        attesa = null;
+        if (!status.classList.contains('product-personalize__status--pending')) return;
+        mine = true;
+        status.textContent = STR.mockupTimeout
+          || (IT ? 'L’anteprima non e’ arrivata in tempo. Riprova: il disegno resta com’e’.'
+                 : 'The preview didn’t arrive in time. Try again — your design is safe.');
+        setState('error');
+        retry.hidden = false;
+        setTimeout(function () { mine = false; }, 0);
+      }, LIMITE_ATTESA);
     });
 
     // global.js ha scritto un messaggio: l'attesa e' finita, in un modo o
@@ -310,6 +347,8 @@
     // bene; altrimenti e' un errore e offriamo di riprovare.
     new MutationObserver(function () {
       if (mine) return;
+      // Una risposta e' arrivata: il limite d'attesa non serve piu'.
+      fermaAttesa();
       var text = (status.textContent || '').trim();
       if (!text) { setState(null); retry.hidden = true; return; }
       var got = shelf && !shelf.hasAttribute('hidden') && shelf.children.length > 0;
@@ -323,6 +362,7 @@
       new MutationObserver(function () {
         if (shelf.hasAttribute('hidden') || !shelf.children.length) return;
         if (!status.classList.contains('product-personalize__status--pending')) return;
+        fermaAttesa();
         mine = true;
         status.textContent = '';
         setState(null);

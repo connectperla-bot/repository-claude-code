@@ -145,6 +145,7 @@
       "empty_hint_text": "Use + Text below to write what gets engraved.",
       "mockup_pending": "Building your preview — this takes about ten seconds.",
       "mockup_retry": "Try again",
+      "mockup_timeout": "The preview didn't arrive in time. Try again \u2014 your design is safe.",
       "neutro_hint": "On this design you can only add the name.",
       "neutro_cta": "Design it from scratch",
       "sticker_star": "Star",

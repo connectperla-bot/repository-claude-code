@@ -2,6 +2,21 @@
 
 // LA PROVA CHE MANCAVA: una riga personalizzata entra nel carrello E CI RESTA.
 //
+// COME SI LANCIA, E PERCHE' NON STA IN `npm test`
+//
+//     cd scripts && npm run prova-dal-vivo
+//
+// Questa prova parla al NEGOZIO VERO: crea carrelli, manda un file di stampa
+// vero al servizio di composizione, e alla fine svuota il carrello. Dentro
+// `npm test` renderebbe la suite dipendente dalla rete e dal negozio in
+// produzione: la prima volta che il negozio e' lento diventa rossa per un
+// motivo che non e' un difetto -- e una suite che ogni tanto fallisce senza
+// colpa smette di essere guardata, che e' il difetto peggiore di tutti.
+//
+// Va lanciata a mano nei due momenti in cui serve davvero:
+//   - prima di pubblicare il tema;
+//   - dopo ogni modifica a perla-guardia-carrello.js o al form della scheda.
+//
 // LA DOMANDA
 // "verifica che quando un cliente aggiunge un prodotto avendolo personalizzato
 // al carrello questo rimanga e non scompaia."
