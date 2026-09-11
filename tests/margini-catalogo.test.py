@@ -222,6 +222,55 @@ def tipo_printify_dal_titolo():
 prova("sulla linea Printify il tipo si legge dal titolo", tipo_printify_dal_titolo)
 
 
+def alias_tappetino_copre_la_scheda():
+    """Il costo del tappetino si accosta al titolo ITALIANO della scheda.
+
+    Il fornitore chiama la variante 'Bone shape (19" x 14") / White', la
+    scheda la chiama 'Osso piccolo (48x36 cm)'. Il foglio dei margini accosta
+    il costo per titolo: se i due elenchi si separano, le trentasei varianti
+    dei tappetini escono dal conto SENZA UN ERRORE -- finiscono nell'elenco
+    "senza costo noto" in coda, e il foglio continua a dire "sotto il 20%: 0"
+    perche' quelle righe non le sta piu' guardando. E' successo davvero.
+
+    Qui si chiede che ogni titolo italiano che varianti-fornitore.js conosce
+    sia raggiungibile da ALIAS_VARIANTE: le due tabelle devono dire la stessa
+    cosa, una per gli ordini e una per i costi.
+    """
+    sorgente = open(os.path.join(RADICE, "scripts", "varianti-fornitore.js"),
+                    encoding="utf-8").read()
+    blocco = re.search(r"tappetino:\s*\{(.*?)\}", sorgente, re.S)
+    assert blocco, "varianti-fornitore.js non ha piu' la mappa tappetino"
+    italiani = {t for t in re.findall(r"'([^']+)':\s*\d+", blocco.group(1))
+                if "shape" not in t.lower()}
+    assert italiani, "nessun titolo italiano nella mappa tappetino"
+
+    raggiunti = set(m.ALIAS_VARIANTE.get(623, {}).values())
+    mancanti = sorted(italiani - raggiunti)
+    assert not mancanti, (
+        "questi titoli di scheda non hanno un alias nei costi, quindi le loro "
+        "varianti uscirebbero dal foglio in silenzio: %s" % ", ".join(mancanti))
+
+
+prova("il tappetino: il costo raggiunge i titoli italiani della scheda",
+      alias_tappetino_copre_la_scheda)
+
+
+def pareggia_le_due_scritture():
+    """Virgolette dritte o curve, x o ×: il catalogo usa tutt'e due."""
+    a = m._pareggia(u'Bone shape (30" × 18") / White')
+    b = m._pareggia(u'Bone shape (30” x 18”) / White')
+    assert a == b, (
+        "lo stesso titolo scritto in due modi deve pareggiarsi, altrimenti "
+        "l'alias non aggancia: %r contro %r" % (a, b))
+    assert a in m.ALIAS_VARIANTE[623], (
+        "il titolo pareggiato deve essere una chiave viva di ALIAS_VARIANTE, "
+        "non una che non incontra mai niente: %r" % a)
+
+
+prova("virgolette e segno per non separano i due cataloghi",
+      pareggia_le_due_scritture)
+
+
 def preventivo_italiano():
     assert m.INDIRIZZO["country_code"] == "IT", (
         "il costo di spedizione dipende dal paese di consegna: chiederlo altrove "

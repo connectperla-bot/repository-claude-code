@@ -105,6 +105,39 @@ PRINTIFY_HANDLE = {"collare-in-pelle": "collare-pelle",
                    "medaglietta-incisa": "medaglietta-incisa",
                    "giacchetto-parka": "giacchetto"}
 
+# IL TITOLO DEL FORNITORE E IL TITOLO DELLA SCHEDA NON SONO PIU' LO STESSO
+#
+# Il costo arriva da Printify indicizzato per titolo di variante, e per quasi
+# tutto il catalogo basta, perche' le schede portano il titolo del fornitore
+# tale e quale. Sul tappetino no: l'opzione e' stata rinominata in italiano
+# ("Osso piccolo (48x36 cm)") e il "Color / White" del fornitore -- un'opzione
+# con un valore solo -- e' stato tolto dalla scheda.
+#
+# Da quel momento l'accostamento per titolo non trova piu' niente e le
+# TRENTASEI varianti dei tappetini escono dal foglio SENZA UN ERRORE: finiscono
+# nell'elenco "senza costo noto" in fondo, che e' molto piu' facile da non
+# leggere di una riga rossa. Il foglio continuava a dire "sotto il 20%: 0" ed
+# era vero soltanto perche' quelle righe non le stava piu' guardando.
+#
+# Stessa medicina di scripts/varianti-fornitore.js, che per gli ORDINI gli
+# alias inglesi ce li ha gia': qui servono nel verso opposto, dal titolo del
+# fornitore a quello della scheda. Nel catalogo Printify le virgolette e il
+# segno "per" sono scritti in due modi sulla stessa riga (" e ”, x e ×),
+# quindi prima di confrontare si pareggiano.
+ALIAS_VARIANTE = {
+    623: {'bone shape (19 x 14) / white': 'Osso piccolo (48x36 cm)',
+          'bone shape (30 x 18) / white': 'Osso grande (76x46 cm)',
+          'fish shape (19 x 14) / white': 'Pesce (48x36 cm)'},
+}
+
+
+def _pareggia(titolo):
+    """Virgolette e segno per uniformati, per confrontare due cataloghi."""
+    for a, b in (('“', ''), ('”', ''), ('"', ''), ('″', ''),
+                 ('×', 'x'), ("'", '')):
+        titolo = titolo.replace(a, b)
+    return " ".join(titolo.split()).lower()
+
 # L'UNICA DEROGA AL 20%, DECISA DALLA PROPRIETARIA IL 4 SETTEMBRE
 #
 # La ciotola europea costa 41,24 (prodotto + spedizione + IVA): con la regola
@@ -382,7 +415,7 @@ def costi_printify(tasso):
                 print("  nessuna spedizione verso %s per %s %s" % (paese, t2, titolo),
                       file=sys.stderr)
                 continue
-            fuori[(t2, titolo)] = {
+            voce = {
                 "prodotto": c * tasso,
                 "spedizione": s * tasso,
                 # L'imposta NON si sa qui: dipende da dove va il pacco, e su
@@ -392,6 +425,12 @@ def costi_printify(tasso):
                 "imposta": 0.0,
                 "totale": (c + s) * tasso,
             }
+            fuori[(t2, titolo)] = voce
+            # Lo stesso costo anche sotto il titolo che porta la SCHEDA, quando
+            # non e' quello del fornitore: vedi ALIAS_VARIANTE piu' sopra.
+            alias = ALIAS_VARIANTE.get(bp, {}).get(_pareggia(titolo))
+            if alias:
+                fuori[(t2, alias)] = voce
     return fuori
 
 
