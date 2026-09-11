@@ -116,6 +116,60 @@ async function unisciAlMotivo(buffer, fileName, productId) {
 
 const ALLOWED_MIME = new Set(['image/png', 'image/jpeg', 'image/webp']);
 
+// IL TIPO LO DICE IL FILE, NON CHI LO MANDA.
+//
+// fileFilter qui sotto guarda file.mimetype, che NON e' il contenuto: e'
+// l'header Content-Type scritto dal client. Chi manda la richiesta a mano lo
+// scrive come vuole. Fino a oggi bastava dichiarare "image/png" per far
+// arrivare un file qualunque a Printify e a Cloudinary CON LE NOSTRE CHIAVI:
+// probabilmente lo rifiutano loro, ma la difesa stava dal fornitore invece
+// che al nostro confine, ed e' proprio il contrario della regola del progetto
+// ("validare gli input ai confini del sistema").
+//
+// I primi byte invece il client non li puo' mentire senza mandare davvero
+// un'immagine. Sono le firme dei tre formati ammessi:
+//
+//   PNG   89 50 4E 47 0D 0A 1A 0A
+//   JPEG  FF D8 FF
+//   WEBP  "RIFF" .... "WEBP"   (quattro byte di lunghezza in mezzo)
+//
+// Si controlla dopo multer e non dentro fileFilter, perche' li' il buffer non
+// c'e' ancora: fileFilter vede solo le intestazioni.
+const FIRME = [
+  { nome: 'png', prova: function (b) {
+    return b.length >= 8 && b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47
+      && b[4] === 0x0d && b[5] === 0x0a && b[6] === 0x1a && b[7] === 0x0a;
+  } },
+  { nome: 'jpeg', prova: function (b) {
+    return b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff;
+  } },
+  { nome: 'webp', prova: function (b) {
+    return b.length >= 12 && b.toString('ascii', 0, 4) === 'RIFF'
+      && b.toString('ascii', 8, 12) === 'WEBP';
+  } },
+];
+
+function formatoDaiByte(buffer) {
+  if (!Buffer.isBuffer(buffer)) return null;
+  for (const f of FIRME) {
+    if (f.prova(buffer)) return f.nome;
+  }
+  return null;
+}
+
+// Il nome del file arriva dal client per intero e finisce come file_name
+// verso Printify e come nome risorsa su Cloudinary. Non va in un percorso --
+// il traversal chiuso piu' sotto qui non si applica -- ma un nome lungo
+// migliaia di caratteri, o pieno di byte di controllo, si propaga nei log e
+// nei nomi risorsa dei fornitori. Si normalizza in un punto solo, come si e'
+// gia' fatto per gli id immagine.
+function nomeFilePulito(nome) {
+  const grezzo = typeof nome === 'string' ? nome : '';
+  const base = grezzo.split(/[\\/]/).pop() || '';
+  const pulito = base.replace(/[^A-Za-z0-9._-]/g, '_').replace(/^\.+/, '').slice(0, 120);
+  return pulito || 'immagine.png';
+}
+
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: Number(MAX_UPLOAD_MB) * 1024 * 1024 },
@@ -233,6 +287,16 @@ app.post('/upload', limitePerIp, upload.single('photo'), async function (req, re
   if (!req.file) {
     return res.status(400).json({ error: 'Nessun file ricevuto' });
   }
+  // Il tipo dichiarato l'ha gia' guardato multer; qui si guarda il contenuto.
+  // Vedi formatoDaiByte() piu' sopra: fino a oggi bastava scrivere
+  // "Content-Type: image/png" per far arrivare un file qualunque ai fornitori
+  // con le nostre chiavi.
+  if (!formatoDaiByte(req.file.buffer)) {
+    return res.status(400).json({ error: 'Il file non e\' un\'immagine PNG, JPEG o WEBP' });
+  }
+  // Il nome arriva dal client: si normalizza una volta sola, e da qui in giu'
+  // si usa questo e non piu' req.file.originalname.
+  req.file.originalname = nomeFilePulito(req.file.originalname);
   try {
     // ROUND 44 -- sui prodotti EU il motivo va unito al livello del cliente
     // prima di tutto il resto: quello che sale su Printify deve gia' essere

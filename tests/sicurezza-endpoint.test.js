@@ -60,7 +60,7 @@ async function main() {
       // parlerebbe con Printify: qui non deve uscire niente
       NODE_ENV: 'test',
       PORT: String(PORTA),
-      RATE_MAX_AL_MINUTO: '5',
+      RATE_MAX_AL_MINUTO: '10',
       ALLOWED_ORIGIN: 'https://perlaitaly.com',
       // niente Cloudinary/Printful: il servizio avvisa e prosegue
       CLOUDINARY_CLOUD_NAME: '', CLOUDINARY_API_KEY: '', CLOUDINARY_API_SECRET: '',
@@ -74,6 +74,51 @@ async function main() {
   try {
     const su = await aspettaAvvio(40);
     assert.ok(su, 'il servizio non si e\' avviato sulla porta ' + PORTA);
+
+    // QUESTE PROVE STANNO PER PRIME, E NON E' UN CASO.
+    //
+    // limitePerIp protegge anche /pattern-source, che le prove qui sotto
+    // usano a ripetizione: messe in fondo, queste due ricevevano 429 invece
+    // del 400 che devono misurare, e la seconda passava lo stesso perche'
+    // guarda il messaggio e non lo stato. Una prova che passa per il motivo
+    // sbagliato e' peggio di nessuna prova.
+    console.log('\nIl contenuto del file caricato');
+
+    // IL TIPO LO DICE IL FILE, NON CHI LO MANDA.
+    //
+    // fileFilter di multer guarda file.mimetype, che e' l'header scritto dal
+    // client: chi manda la richiesta a mano lo scrive come vuole. Prima di
+    // questa prova bastava dichiarare "image/png" per far arrivare un file
+    // qualunque a Printify e a Cloudinary con le nostre chiavi.
+    await prova('un file che NON e\' un\'immagine viene respinto anche se si dichiara PNG', async function () {
+      const corpo = new FormData();
+      const finto = new Blob(['questo non e\' un\'immagine, e\' testo'], { type: 'image/png' });
+      corpo.append('photo', finto, 'finta.png');
+      const r = await fetch(BASE + '/upload', { method: 'POST', body: corpo });
+      assert.strictEqual(r.status, 400,
+        'accettato con stato ' + r.status + ': il contenuto non viene controllato');
+      const j = await r.json().catch(function () { return {}; });
+      assert.ok(/immagine/i.test(j.error || ''),
+        'il messaggio deve dire che non e\' un\'immagine, non un errore generico: '
+          + JSON.stringify(j));
+    });
+
+    // E il verso opposto: un PNG vero deve passare il controllo del formato.
+    // Qui la richiesta fallira' comunque piu' avanti (le credenziali del test
+    // sono finte), ma NON deve fallire con il messaggio del formato: se lo
+    // facesse, il controllo starebbe rifiutando le immagini buone.
+    await prova('un PNG vero supera il controllo del formato', async function () {
+      const png = Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+        'base64');
+      const corpo = new FormData();
+      corpo.append('photo', new Blob([png], { type: 'image/png' }), 'vera.png');
+      const r = await fetch(BASE + '/upload', { method: 'POST', body: corpo });
+      const j = await r.json().catch(function () { return {}; });
+      assert.ok(!/non e\' un\'immagine/i.test(j.error || ''),
+        'un PNG valido e\' stato scambiato per non-immagine: ' + JSON.stringify(j));
+    });
+
 
     console.log('\nValidazione di printify_product_id');
 
@@ -147,7 +192,8 @@ async function main() {
 
     console.log('\nLimite di richieste');
 
-    // RATE_MAX_AL_MINUTO=5 in questo test: la sesta deve essere respinta.
+    // RATE_MAX_AL_MINUTO=10 in questo test: il ciclo qui sotto cerca il 429 in
+    // dodici tentativi, quindi la soglia puo' cambiare senza rompere la prova.
     await prova('oltre il limite si riceve 429 con Retry-After', async function () {
       let ultimo = null;
       for (let i = 0; i < 12; i++) {
