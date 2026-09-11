@@ -518,6 +518,42 @@ function laComposizioneFallisce(f) {
   //
   // Questa prova legge il tema com'e' sul disco: se qualcuno riporta il tag
   // dentro il popup, o lo toglie dal layout, lo dice.
+  // ROUND 60 -- LA PORTA DI SERVIZIO.
+  //
+  // La guardia ascolta il 'submit'. Il bottone di aggiunta rapida nella
+  // griglia non sta in nessun form: global.js lo prende al 'click' e chiama
+  // /cart/add.js col solo id della variante. Misurato sul negozio vero: la
+  // riga entra con properties {} e allo stampatore non arriva niente.
+  //
+  // Non si puo' chiudere dalla guardia, perche' quel percorso non le passa
+  // davanti: si chiude non disegnando il bottone sui personalizzabili.
+  prova('la griglia non offre l\'aggiunta rapida sui personalizzabili', function () {
+    const fs = require('fs');
+    const card = fs.readFileSync(
+      path.join(__dirname, '..', 'theme', 'snippets', 'card-product.liquid'), 'utf8');
+    const riga = card.split('\n').find(function (r) { return r.indexOf('data-quick-add') !== -1; });
+    assert.ok(riga, 'il bottone di aggiunta rapida non esiste piu\': se e\' voluto, togli questa prova');
+
+    const guardia = card.match(/\{%-?\s*if\s+single_variant([^%]*)%\}/);
+    assert.ok(guardia, 'il bottone deve restare dentro una condizione su single_variant');
+    assert.ok(/is_custom\s*==\s*false/.test(guardia[1]),
+      'il bottone rapido salta la guardia del carrello: sui personalizzabili ' +
+      'deve restare spento, altrimenti la riga entra senza _Personalizzazione ' +
+      'e il cliente paga un pezzo che nessuno stampa');
+  });
+
+  // E il ramo alternativo deve restare, se no i personalizzabili perdono il
+  // richiamo all'azione e la griglia diventa muta.
+  prova('i personalizzabili mostrano comunque "Scegli le opzioni"', function () {
+    const fs = require('fs');
+    const card = fs.readFileSync(
+      path.join(__dirname, '..', 'theme', 'snippets', 'card-product.liquid'), 'utf8');
+    assert.ok(/card__add--options/.test(card),
+      'senza il ramo alternativo la scheda non ha piu\' nessun invito a cliccare');
+    assert.ok(/products\.product\.choose_options/.test(card),
+      'il richiamo deve passare dalle traduzioni, non essere scritto a mano');
+  });
+
   prova('la guardia si carica dal layout, non dal popup della newsletter', function () {
     const fs = require('fs');
     const tema = path.join(__dirname, '..', 'theme');

@@ -126,8 +126,30 @@
     {% render 'price', product: p %}
   </div>
 
+  {%- comment -%}
+    ROUND 60 -- L'AGGIUNTA RAPIDA NON VALE SUI PERSONALIZZABILI.
+
+    La guardia del carrello (assets/perla-guardia-carrello.js) ascolta il
+    'submit' del form della scheda prodotto: e' li' che si controlla che la
+    personalizzazione ci sia davvero prima di far partire l'ordine. Questo
+    bottone pero' non sta in nessun form: global.js lo prende al 'click' e
+    chiama /cart/add.js con il solo id della variante. Nessun submit, nessuna
+    properties[], nessuna guardia.
+
+    Misurato sul negozio vero l'11 settembre: POST /cart/add.js con il solo
+    id della Ciotola "Smeraldo" (che porta il tag personalizzabile) crea la
+    riga con properties {} -- vuota. Il cliente paga, e allo stampatore non
+    arriva niente da stampare: e' lo stesso ordine fantasma di ROUND 45, da
+    una porta che ROUND 45 non guardava. In vetrina erano 11 bottoni cosi',
+    tutti su ciotole europee, e 41 i prodotti esposti in tutto il catalogo.
+
+    is_custom era gia' calcolato qui sopra e non veniva usato per questo.
+    Adesso i personalizzabili mostrano "Scegli le opzioni" come fanno i
+    prodotti a piu' varianti: si passa dalla scheda, dove c'e' l'editor e
+    c'e' la guardia. Chi non personalizza niente non perde niente.
+  {%- endcomment -%}
   {%- if settings.card_quick_add and p.available -%}
-    {%- if single_variant -%}
+    {%- if single_variant and is_custom == false -%}
       <button type="button" class="card__add" data-quick-add data-variant-id="{{ p.selected_or_first_available_variant.id }}">{{ 'products.product.quick_add' | t }}</button>
     {%- else -%}
       <a class="card__add card__add--options" href="{{ p.url }}">{{ 'products.product.choose_options' | t }}</a>
