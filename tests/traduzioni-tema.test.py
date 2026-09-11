@@ -226,4 +226,46 @@ def i_due_locali_hanno_le_stesse_chiavi():
 
 prova("i due file di lingua contengono le stesse chiavi", i_due_locali_hanno_le_stesse_chiavi)
 
+
+TAG_LIQUID = re.compile(r"\{\{.*?\}\}|\{%.*?%\}", re.S)
+BARRA = re.compile(r"\\['\"]")
+
+
+def niente_barra_rovescia_nelle_stringhe():
+    """Liquid non conosce la barra rovescia, e chi ci prova perde la frase.
+
+    Il 12 settembre snippets/assistant.liquid scriveva la risposta del chip
+    «Traccia ordine» dentro virgolette semplici, mettendo una barra rovescia
+    davanti agli apostrofi di "nell'email" e "d'ordine" -- come si fa in quasi
+    tutti i linguaggi. In Liquid non protegge niente: la barra e' un carattere
+    qualunque e la stringa finisce all'apostrofo che la segue.
+
+    Shopify se ne accorge quando il file sale sul tema: lo riscrive da solo,
+    tronca la stringa e lascia in coda un commento che lo dichiara. Nessun
+    errore, nessun log. In vetrina, per giorni, chi toccava quel chip ha letto
+    «Trovi il link di tracciamento nell'» e basta -- mezza parola, proprio
+    sulla domanda «dov'e' il mio ordine?».
+
+    Si guarda solo DENTRO i tag Liquid: nei commenti e nei blocchi schema una
+    barra rovescia e' legittima (il JSON la usa per le virgolette doppie).
+    """
+    colpevoli = []
+    for percorso in file_del_tema():
+        if not percorso.endswith(".liquid"):
+            continue
+        testo = open(percorso, encoding="utf-8", errors="replace").read()
+        for tag in TAG_LIQUID.findall(testo):
+            if BARRA.search(tag):
+                riga = testo[:testo.find(tag)].count("\n") + 1
+                colpevoli.append("%s:%d  %s"
+                                 % (os.path.relpath(percorso, RADICE), riga,
+                                    " ".join(tag.split())[:110]))
+    assert not colpevoli, (
+        "qui la stringa si tronca dove c'e' la barra rovescia, e il cliente "
+        "legge mezza frase:\n        " + "\n        ".join(colpevoli))
+
+
+prova("nessuna stringa Liquid protegge l'apostrofo con la barra rovescia",
+      niente_barra_rovescia_nelle_stringhe)
+
 print("\n  %d verifiche\n" % fatte)

@@ -19,6 +19,24 @@
 {%- if request.locale.iso_code == 'en' -%}
   {%- assign etichetta_persona = 'Talk to a person' -%}
 {%- endif -%}
+{%- comment -%}
+  ROUND 61 — QUESTA RISPOSTA ARRIVAVA AL CLIENTE TAGLIATA A META'.
+
+  La risposta del chip «Traccia ordine» era scritta dentro virgolette
+  semplici, con una barra rovescia davanti a ciascuno dei due apostrofi --
+  quello di "nell'email" e quello di "d'ordine".
+
+  Liquid non conosce la barra rovescia. Non protegge niente: e' un carattere
+  come un altro, e la stringa finisce all'apostrofo che lo segue. Shopify se
+  ne accorgeva e riscriveva il file da solo, troncando la frase a «nell'» e
+  lasciando in coda un commento che lo dichiarava. In vetrina, su Round 17,
+  chi toccava «Traccia ordine» leggeva mezza parola e piu' niente -- proprio
+  sulla domanda «dov'e' il mio ordine?».
+
+  Le virgolette doppie non hanno niente da proteggere. E' lo stesso modo gia'
+  usato qui sopra per etichetta_persona.
+{%- endcomment -%}
+{%- assign risposta_traccia = "Trovi il link di tracciamento nell'email di spedizione. Non lo trovi? Scrivici il numero d'ordine e controlliamo subito." -%}
 <div class="assistant" data-assistant aria-live="polite"
   data-assistant-ai-endpoint="{{ settings.assistant_ai_endpoint | escape }}"
   data-assistant-ask-error="{{ 'assistant.ask_error' | t | escape }}"
@@ -51,7 +69,7 @@
       <button type="button" class="assistant__chip" data-assistant-answer="{{ settings.assistant_a_returns | default: 'Hai 30 giorni dalla consegna per il reso. Scrivici e ti guidiamo passo passo.' | escape }}">{{ settings.assistant_q_returns | default: 'Resi' }}</button>
       <button type="button" class="assistant__chip" data-assistant-answer="{{ settings.assistant_a_sizes | default: 'Ogni prodotto ha una guida taglie nella scheda. Se hai dubbi, scrivici razza e peso del tuo cane: ti consigliamo noi.' | escape }}">{{ settings.assistant_q_sizes | default: 'Taglie' }}</button>
       <button type="button" class="assistant__chip" data-assistant-answer="{{ settings.assistant_a_payment | default: 'Accettiamo carte (Visa, Mastercard, American Express), Apple Pay, Google Pay e Shop Pay. Pagamenti sempre sicuri.' | escape }}">{{ settings.assistant_q_payment | default: 'Pagamenti' }}</button>
-      <button type="button" class="assistant__chip" data-assistant-answer="{{ settings.assistant_a_track | default: 'Trovi il link di tracciamento nell\'email di spedizione. Non lo trovi? Scrivici il numero d\'ordine e controlliamo subito.' | escape }}">{{ settings.assistant_q_track | default: 'Traccia ordine' }}</button>
+      <button type="button" class="assistant__chip" data-assistant-answer="{{ settings.assistant_a_track | default: risposta_traccia | escape }}">{{ settings.assistant_q_track | default: 'Traccia ordine' }}</button>
     </div>
 
     {%- comment -%} Domanda libera con risposta reale (vedi assets/global.js + scripts/perla-assistant-bot.js) {%- endcomment -%}
