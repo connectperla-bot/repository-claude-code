@@ -16,10 +16,12 @@ se ne accorge finche' non se ne contano di nuovo cento. Per questo il
 controllo e' uno script e non una nota.
 
 COSA NON SERVE
-Nessuna chiave: legge /products.json, che e' pubblico e contiene quello che
-vede un cliente. Quindi controlla lo stato REALE del negozio, non quello che
-l'Admin crede -- ed e' proprio quella la differenza che conta, visto che i
-cataloghi di mercato mostrano linee diverse a paesi diversi.
+Nessuna chiave: legge /products.json, che e' pubblico. Attenzione pero' a cosa
+vuol dire "pubblico": quel file elenca cosa e' pubblicato sul CANALE "Negozio
+online", che non e' la stessa cosa dell'essere dentro un CATALOGO DI MERCATO.
+Un prodotto puo' stare li' dentro e avere la pagina che risponde 404 in ogni
+paese -- e' successo a dodici tappetini l'11 settembre. Per questo c'e' anche
+senza_pagina(), che la pagina la chiede davvero.
 
 COSA QUESTO CONTROLLO NON PUO' VEDERE, E VA GUARDATO A MANO
 /products.json NON espone i campi SEO (seo.title, seo.description): li' dentro
@@ -41,6 +43,7 @@ USO
 Esce con 1 se trova qualcosa, cosi' si puo' mettere in una verifica automatica.
 """
 import collections
+import concurrent.futures
 import json
 import re
 import subprocess
@@ -178,6 +181,42 @@ def controlla(prodotti):
     return difetti
 
 
+def senza_pagina(prodotti, negozio, lavoratori=12):
+    """Prodotti che il catalogo elenca ma che nessun cliente puo' aprire.
+
+    IL GUASTO CHE QUESTO CONTROLLO CERCA
+    L'11 settembre dodici tappetini -- i sei europei e i sei globali, tutti
+    creati il giorno prima -- erano ATTIVI, con prezzo, foto, SEO, descrizione
+    e magazzino, ed erano elencati qui dentro come gli altri centodiciassette.
+    La loro pagina rispondeva 404 in ogni paese: Italia, Germania, Stati Uniti.
+    Dodici prodotti finiti che nessuno poteva comprare, e nessun controllo lo
+    vedeva.
+
+    PERCHE' /products.json NON BASTA
+    Elencava i dodici. Quel file dice cosa e' pubblicato sul canale "Negozio
+    online", e i dodici lo erano: quello che mancava era l'appartenenza a un
+    CATALOGO DI MERCATO ("Perla EU - solo linea europea", "Perla USA - solo
+    linea americana"). Sono due cose diverse, e solo la seconda decide se la
+    pagina esiste. Da fuori si vede in un modo solo: chiedendo la pagina.
+
+    Una richiesta HEAD per prodotto, nel mercato giusto -- Italia per la linea
+    europea, Stati Uniti per quella globale, perche' ogni linea e' 404
+    nell'altro mercato per costruzione e non e' un difetto.
+    """
+    def esito(p):
+        url = "%s/products/%s" % (negozio, p["handle"])
+        if not linea_eu(p):
+            url += "?country=US"
+        r = subprocess.run(["curl", "-s", "-I", "-o", "/dev/null",
+                            "-w", "%{http_code}", "-m", "25", url],
+                           capture_output=True, text=True)
+        return p["handle"], r.stdout.strip()
+
+    with concurrent.futures.ThreadPoolExecutor(lavoratori) as ex:
+        esiti = list(ex.map(esito, prodotti))
+    return ["%s (%s)" % (h, c or "nessuna risposta") for h, c in esiti if c != "200"]
+
+
 def main(argv):
     negozio = NEGOZIO
     if "--negozio" in argv:
@@ -190,6 +229,10 @@ def main(argv):
     print("%d prodotti pubblici da %s\n" % (len(prodotti), negozio))
 
     difetti = controlla(prodotti)
+    morti = senza_pagina(prodotti, negozio)
+    if morti:
+        difetti.insert(0, ("la scheda non si apre: il prodotto e' in catalogo ma "
+                           "la sua pagina non esiste nel suo mercato", morti))
     if not difetti:
         print("Nessun difetto.")
         return 0
