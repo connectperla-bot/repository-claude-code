@@ -51,7 +51,6 @@ out-foto-nome/
 # un comando, e gli URL degli originali sono gia' versionati in
 # scripts/perla-eu-prodotti.json. In git ci va lo script, non la sua uscita.
 generated-designs/motivi-stampa/
-out-foto/
 
 # Anteprima di scripts/perla-motivi-nuovi.py eseguito a mano: e' un provino
 # per guardare i motivi, si rifa' con `python3 scripts/perla-motivi-nuovi.py`.
@@ -96,4 +95,23 @@ generated-designs/prezzi-da-scrivere.json
 # ricostruiscono in sei minuti dal codice che li disegna. Nel repository sta
 # la ricetta, non la torta.
 generated-designs/motivi-rifatti/
-scripts/anteprima-motivi-ornati.png
+
+# Stesso principio, due cartelle che erano sfuggite: 387 MB in tutto, in ogni
+# clone, e un diff binario enorme a ogni rigenerazione.
+#   stampe-scaricate/  le stampe che perla-verifica-prodotti.py scarica per
+#                      controllarle: sono una COPIA di quello che sta sui
+#                      fornitori, 331 MB, e si riscaricano quando servono.
+#   tappetini/         i file di stampa dei tappetini, 56 MB, disegnati da
+#                      perla-tappetini-motivi.py e gia' caricati su Printify.
+generated-designs/stampe-scaricate/
+generated-designs/tappetini/
+
+# Lo stato di questa macchina, non del progetto. La regola c'era gia' ma il
+# file era stato aggiunto PRIMA che esistesse, e .gitignore non ha effetto su
+# cio' che e' gia' in indice: andava scollegato a mano.
+.claude/memory.db
+# ...e l'anteprima a contatto dei motivi ornati. La riga diceva
+# "scripts/anteprima-motivi-ornati.png", ma perla-motivi-ornati.py la
+# scrive nella RADICE: la regola mancava il bersaglio di una cartella, e
+# quel PNG da 1,8 MB e' finito tracciato.
+anteprima-motivi-ornati.png
