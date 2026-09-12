@@ -48,8 +48,18 @@ import json
 import re
 import subprocess
 import sys
+import time
 
 NEGOZIO = "https://perlaitaly.com"
+
+# Il negozio sta dietro un filtro anti-bot. A una richiesta senza User-Agent
+# risponde con una pagina di verifica da 9 KB invece che col catalogo, e questo
+# controllo diceva "il negozio risponde?" mentre il negozio stava benissimo --
+# un allarme che punta nella direzione sbagliata e' peggio di nessun allarme.
+# Qui si dichiara un browser normale: sono pagine pubbliche del negozio di chi
+# esegue lo script, lette e basta.
+BROWSER = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+           "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36")
 
 # I valori attesi. Sono la decisione presa, non un'opinione: la marca e' una
 # sola, il tipo di prodotto e' in italiano e specifico (serve a Google Shopping
@@ -69,7 +79,7 @@ def scarica(negozio):
     prodotti = []
     for pagina in (1, 2, 3):
         r = subprocess.run(
-            ["curl", "-sfL", "-m", "90",
+            ["curl", "-sfL", "-m", "90", "-A", BROWSER,
              "%s/products.json?limit=250&page=%d" % (negozio, pagina)],
             capture_output=True, text=True)
         if r.returncode != 0:
@@ -181,7 +191,7 @@ def controlla(prodotti):
     return difetti
 
 
-def senza_pagina(prodotti, negozio, lavoratori=12):
+def senza_pagina(prodotti, negozio, lavoratori=4):
     """Prodotti che il catalogo elenca ma che nessun cliente puo' aprire.
 
     IL GUASTO CHE QUESTO CONTROLLO CERCA
@@ -202,19 +212,38 @@ def senza_pagina(prodotti, negozio, lavoratori=12):
     Una richiesta HEAD per prodotto, nel mercato giusto -- Italia per la linea
     europea, Stati Uniti per quella globale, perche' ogni linea e' 404
     nell'altro mercato per costruzione e non e' un difetto.
+
+    IL 429, E PERCHE' NON E' UN DIFETTO
+    La prima versione lanciava dodici richieste in parallelo e il negozio
+    rispondeva 429 ("troppe richieste") su decine di prodotti sani: il
+    controllo li elencava come irraggiungibili. Un allarme che punta nella
+    direzione sbagliata e' peggio di nessun allarme -- dopo due volte non lo
+    guarda piu' nessuno. Adesso le richieste sono quattro per volta, un 429
+    si riprova due volte aspettando sempre di piu', e se resta 429 quel
+    prodotto finisce fra i NON MISURATI invece che fra i difetti: non si sa,
+    e dirlo e' piu' onesto che inventare una risposta.
     """
     def esito(p):
         url = "%s/products/%s" % (negozio, p["handle"])
         if not linea_eu(p):
             url += "?country=US"
-        r = subprocess.run(["curl", "-s", "-I", "-o", "/dev/null",
-                            "-w", "%{http_code}", "-m", "25", url],
-                           capture_output=True, text=True)
-        return p["handle"], r.stdout.strip()
+        codice = ""
+        for tentativo in range(3):
+            r = subprocess.run(["curl", "-s", "-I", "-o", "/dev/null", "-A", BROWSER,
+                                "-w", "%{http_code}", "-m", "25", url],
+                               capture_output=True, text=True)
+            codice = r.stdout.strip()
+            if codice != "429":
+                break
+            time.sleep(2 + 3 * tentativo)
+        return p["handle"], codice
 
     with concurrent.futures.ThreadPoolExecutor(lavoratori) as ex:
         esiti = list(ex.map(esito, prodotti))
-    return ["%s (%s)" % (h, c or "nessuna risposta") for h, c in esiti if c != "200"]
+    morti = ["%s (%s)" % (h, c or "nessuna risposta")
+             for h, c in esiti if c not in ("200", "429")]
+    non_misurati = [h for h, c in esiti if c == "429"]
+    return morti, non_misurati
 
 
 def main(argv):
@@ -229,7 +258,13 @@ def main(argv):
     print("%d prodotti pubblici da %s\n" % (len(prodotti), negozio))
 
     difetti = controlla(prodotti)
-    morti = senza_pagina(prodotti, negozio)
+    morti, non_misurati = senza_pagina(prodotti, negozio)
+    if non_misurati:
+        print("%d schede non misurate: il negozio ha risposto 429 (troppe "
+              "richieste). Non sono difetti, sono domande senza risposta: "
+              "riprova fra qualche minuto.\n    %s%s\n"
+              % (len(non_misurati), ", ".join(non_misurati[:6]),
+                 " ..." if len(non_misurati) > 6 else ""))
     if morti:
         difetti.insert(0, ("la scheda non si apre: il prodotto e' in catalogo ma "
                            "la sua pagina non esiste nel suo mercato", morti))
