@@ -1,0 +1,147 @@
+<meta property="og:site_name" content="{{ shop.name }}">
+<meta property="og:url" content="{{ canonical_url }}">
+<meta property="og:title" content="{{ page_title | default: shop.name }}">
+<meta property="og:type" content="{% if request.page_type == 'product' %}product{% elsif request.page_type == 'article' %}article{% else %}website{% endif %}">
+<meta property="og:description" content="{{ page_description | default: shop.description | default: shop.name | escape }}">
+{%- if page_image -%}
+  <meta property="og:image" content="http:{{ page_image | image_url: width: 1200 }}">
+  <meta property="og:image:secure_url" content="https:{{ page_image | image_url: width: 1200 }}">
+{%- endif -%}
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ page_title | default: shop.name }}">
+<meta name="twitter:description" content="{{ page_description | default: shop.description | default: shop.name | escape }}">
+{%- if request.page_type == 'product' and product -%}
+  {%- comment -%}
+    ROUND 62 — QUESTO BLOCCO E' QUELLO CHE GOOGLE LEGGE, E DICEVA COSE
+    DIVERSE DAL NEGOZIO.
+
+    LA MARCA. C'era {{ shop.name }}, che e' "PERLA ITALIA" tutto maiuscolo:
+    e' il nome del negozio, non la marca del prodotto. Su Shopify il campo
+    marca dice "Perla Italia", e scripts/perla-controlla-catalogo.py lo
+    impone con un commento che spiega proprio questo -- il maiuscolo e' del
+    cartiglio stampato sul tessuto, non del campo che il cliente legge e che
+    finisce nel feed di Google. Il controllo passava e Google riceveva lo
+    stesso l'altra versione, perche' guardava Shopify e non questa pagina.
+    Adesso la marca viene da product.vendor, che e' quel campo.
+
+    LA DESCRIZIONE era product.description tagliata a 300 caratteri: finiva
+    a meta' parola, con i puntini, in mezzo all'elenco dei materiali. La
+    meta description e' scritta a mano, e' intera ed e' pensata per essere
+    letta in un risultato di ricerca: si usa quella quando c'e'.
+
+    IL RESO NON E' UNO SOLO, E DICHIARARNE UNO SAREBBE FALSO. La pagina
+    dice: "Reso entro 30 giorni dalla consegna sui prodotti non
+    personalizzati" e "sui prodotti personalizzati il reso per ripensamento
+    non e' previsto". Sono due politiche diverse -- la seconda e'
+    l'esclusione di legge sui beni confezionati su misura -- e qui sotto
+    restano due. Un 30 giorni buttato su tutto avrebbe promesso a Google
+    qualcosa che il cliente non ottiene.
+
+    COSA NON C'E', DI PROPOSITO
+    - aggregateRating: di recensioni non ce n'e' nessuna. Metterlo vorrebbe
+      dire inventarsele.
+    - shippingDetails: la spedizione gratuita la pagina la dichiara "in
+      Europa", e la linea globale ha altre condizioni. Finche' non e'
+      misurata mercato per mercato, dichiararla sarebbe una promessa non
+      verificata.
+  {%- endcomment -%}
+  {%- assign variante_ld = product.selected_or_first_available_variant -%}
+  {%- assign marca_ld = product.vendor | default: shop.name -%}
+  {%- assign anno_ld = 'now' | date: '%Y' | plus: 1 -%}
+  {%- assign paese_ld = localization.country.iso_code | default: shop.address.country_code -%}
+  {%- assign descrizione_ld = page_description -%}
+  {%- if descrizione_ld == blank -%}
+    {%- assign descrizione_ld = product.description | strip_html | truncate: 300 -%}
+  {%- endif -%}
+  {%- assign personalizzato_ld = false -%}
+  {%- if product.tags contains 'personalizzabile' or product.tags contains 'POD' or product.tags contains 'custom' -%}
+    {%- assign personalizzato_ld = true -%}
+  {%- endif -%}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": {{ product.title | json }},
+    "image": [{% for media in product.media limit: 3 %}"https:{{ media.preview_image | image_url: width: 1000 }}"{% unless forloop.last %},{% endunless %}{% endfor %}],
+    "description": {{ descrizione_ld | json }},
+    "brand": { "@type": "Brand", "name": {{ marca_ld | json }} },
+    {% if variante_ld.sku != blank %}"sku": {{ variante_ld.sku | json }},{% endif %}
+    "offers": {
+      "@type": "Offer",
+      "priceCurrency": {{ cart.currency.iso_code | json }},
+      "price": "{{ product.price | divided_by: 100.0 }}",
+      "priceValidUntil": "{{ anno_ld }}-12-31",
+      "itemCondition": "https://schema.org/NewCondition",
+      "availability": "{% if product.available %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}",
+      "url": "{{ shop.url }}{{ product.url }}",
+      "hasMerchantReturnPolicy": {
+        "@type": "MerchantReturnPolicy",
+        "applicableCountry": {{ paese_ld | json }},
+        {% if personalizzato_ld %}"returnPolicyCategory": "https://schema.org/MerchantReturnNotPermitted"{% else %}"returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+        "merchantReturnDays": 30,
+        "returnMethod": "https://schema.org/ReturnByMail"{% endif %}
+      }
+    }
+  }
+  </script>
+{%- endif -%}
+
+{%- comment -%} Organization + WebSite — sempre presenti {%- endcomment -%}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": {{ shop.name | json }},
+  "url": "{{ shop.url }}",
+  {%- assign org_logo = settings.share_image | default: settings.favicon -%}
+  {%- if org_logo -%}"logo": "https:{{ org_logo | image_url: width: 512 }}",{%- endif -%}
+  "sameAs": [
+    {%- assign socials = '' -%}
+    {%- if settings.social_instagram_link != blank -%}{%- assign socials = socials | append: settings.social_instagram_link | append: '|' -%}{%- endif -%}
+    {%- if settings.social_tiktok_link != blank -%}{%- assign socials = socials | append: settings.social_tiktok_link | append: '|' -%}{%- endif -%}
+    {%- if settings.social_facebook_link != blank -%}{%- assign socials = socials | append: settings.social_facebook_link | append: '|' -%}{%- endif -%}
+    {%- if settings.social_pinterest_link != blank -%}{%- assign socials = socials | append: settings.social_pinterest_link | append: '|' -%}{%- endif -%}
+    {%- assign social_arr = socials | split: '|' -%}
+    {%- assign first = true -%}{%- for s in social_arr -%}{%- if s != blank -%}{%- unless first -%},{%- endunless -%}{{ s | json }}{%- assign first = false -%}{%- endif -%}{%- endfor -%}
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": {{ shop.name | json }},
+  "url": "{{ shop.url }}",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "{{ shop.url }}/search?q={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
+
+{%- comment -%} BreadcrumbList {%- endcomment -%}
+{%- if request.page_type == 'product' and product -%}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "{{ shop.url }}" },
+      {%- if collection -%}{ "@type": "ListItem", "position": 2, "name": {{ collection.title | json }}, "item": "{{ shop.url }}{{ collection.url }}" },{%- endif -%}
+      { "@type": "ListItem", "position": {% if collection %}3{% else %}2{% endif %}, "name": {{ product.title | json }}, "item": "{{ shop.url }}{{ product.url }}" }
+    ]
+  }
+  </script>
+{%- elsif request.page_type == 'collection' and collection -%}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "{{ shop.url }}" },
+      { "@type": "ListItem", "position": 2, "name": {{ collection.title | json }}, "item": "{{ shop.url }}{{ collection.url }}" }
+    ]
+  }
+  </script>
+{%- endif -%}
