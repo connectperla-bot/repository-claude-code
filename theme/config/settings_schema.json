@@ -16,7 +16,7 @@
       { "type": "color", "id": "color_bg", "label": "Sfondo (bianco perla)", "default": "#FCFAF6" },
       { "type": "color", "id": "color_cream", "label": "Crema (sezioni alternate)", "default": "#F3E9DA" },
       { "type": "color", "id": "color_gold", "label": "Amber Resin (accenti)", "default": "#C8862B" },
-      { "type": "color", "id": "color_gold_deep", "label": "Champagne Alloy (hover)", "default": "#B9986A" },
+      { "type": "color", "id": "color_gold_deep", "label": "Champagne Alloy (testo e hover)", "default": "#8F601F", "info": "Non e' solo un hover: base.css lo usa come colore del testo in una cinquantina di punti — occhiello, marca del prodotto, prezzo scontato, etichette, stelle, icone. Era #B9986A, che su crema da' 2,25:1 dove ne servono 4,5 e rende quel testo quasi illeggibile; sul bottone oro in hover il testo bianco stava a 2,71:1. #8F601F e' il piu' chiaro della stessa tinta che passa la soglia. Se lo schiarisci, tests/contrasto-colori.test.py fallisce e ti dice di quanto." },
       { "type": "color", "id": "color_sage", "label": "Accento caldo (terracotta)", "default": "#E26D5C" },
       { "type": "color", "id": "color_line", "label": "Bordi e divisori", "default": "#E8DCC9" },
       { "type": "header", "content": "Footer" },
