@@ -20,8 +20,22 @@
           {%- if block.settings.image != blank -%}
             <img src="{{ block.settings.image | image_url: width: 400 }}" width="400" height="400" alt="" loading="lazy">
           {%- else -%}
+            {%- comment -%}
+              ROUND 63 — asset_url serve il file com'e', a piena risoluzione.
+              Misurate il 12 settembre sulla home: le sei ig-*.jpg pesavano da
+              41 a 84 KB l'una, circa 350 KB in tutto, per riquadri da 400
+              pixel. L'immagine caricata dall'editor qui sopra passava gia'
+              per il ridimensionatore di Shopify; queste no, ed erano le
+              uniche sei rimaste indietro.
+
+              asset_img_url le fa passare di li': stessa foto, larghezza 400,
+              e Shopify serve WebP o AVIF a chi li accetta. Larghezza sola e
+              non "400x400": l'altezza resta proporzionale, cosi' il ritaglio
+              lo continua a fare il CSS esattamente come prima e nessuna foto
+              cambia inquadratura.
+            {%- endcomment -%}
             {%- assign ig_n = forloop.index0 | modulo: 6 | plus: 1 -%}
-            <img src="{{ 'ig-' | append: ig_n | append: '.jpg' | asset_url }}" width="400" height="400" alt="" loading="lazy">
+            <img src="{{ 'ig-' | append: ig_n | append: '.jpg' | asset_img_url: '400x' }}" width="400" height="400" alt="" loading="lazy">
           {%- endif -%}
         </a>
       {%- endfor -%}

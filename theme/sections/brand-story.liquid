@@ -1,0 +1,80 @@
+<section class="section {% if section.settings.bg == 'cream' %}section--cream bg-cream-texture{% endif %}">
+  <div class="page-width">
+    {%- if section.settings.section_number != blank -%}
+      <span class="section-number" data-section-number aria-hidden="true">{{ section.settings.section_number }}</span>
+    {%- endif -%}
+    <div class="story {% if section.settings.layout == 'right' %}story--reverse{% endif %}">
+      <div class="story__media" data-reveal data-spotlight>
+        <div class="frame" data-reveal data-curtain data-blinds {% if settings.enable_parallax %}data-parallax data-parallax-speed="0.1"{% endif %}>
+          {%- if section.settings.image != blank -%}
+            <img src="{{ section.settings.image | image_url: width: 1000 }}" sizes="(max-width:749px) 100vw, 50vw" width="1000" height="1250" alt="{{ section.settings.image.alt | escape }}" loading="lazy">
+          {%- else -%}
+            {%- comment -%}
+              ROUND 63 — asset_url serviva il file com'e'. Misurato il 12
+              settembre sulla home: story-1.jpg pesava 260 KB, un quarto di
+              tutta la pagina, per un riquadro da mille pixel. L'immagine
+              caricata dall'editor qui sopra passava gia' per il
+              ridimensionatore di Shopify; questa, che e' quella che si vede
+              finche' nessuno ne carica un'altra, no.
+
+              asset_img_url la fa passare di li': stessa foto, larghezza 1000,
+              e Shopify serve WebP o AVIF a chi li accetta. Larghezza sola e
+              non "1000x1333", cosi' l'altezza resta quella vera della foto e
+              l'inquadratura non cambia di un pixel.
+            {%- endcomment -%}
+            <img src="{{ 'story-1.jpg' | asset_img_url: '1000x' }}" sizes="(max-width:749px) 100vw, 50vw" width="1000" height="1333" alt="Aron & Mia" loading="lazy">
+          {%- endif -%}
+        </div>
+        {%- if section.settings.show_seal -%}<div class="seal"><img src="{{ 'emblem-mark.png' | asset_url }}" alt="" width="116" height="116" data-spin="0.05"></div>{%- endif -%}
+      </div>
+      <div class="story__text" data-reveal data-reveal-delay="1">
+        {%- if section.settings.eyebrow != blank -%}<span class="eyebrow" data-scramble>{{ section.settings.eyebrow }}</span>{%- endif -%}
+        {%- if section.settings.heading != blank -%}<h2 data-words>{{ section.settings.heading }}</h2>{%- endif -%}
+        {%- if section.settings.pullquote != blank -%}<p class="pullquote" data-reveal>{{ section.settings.pullquote }}</p>{%- endif -%}
+        <div class="rte">{{ section.settings.text }}</div>
+        {%- if section.settings.signature != blank -%}<p class="signature">{{ section.settings.signature }}</p>{%- endif -%}
+
+        {%- if section.settings.button_label != blank -%}
+          <div class="btn-row" style="margin-top:1.8rem"><a class="btn" href="{{ section.settings.button_link | default: routes.all_products_collection_url }}" data-magnetic><span>{{ section.settings.button_label }}</span></a></div>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+</section>
+
+{%- comment -%}
+  ROUND 33 -- i default di questo schema erano una terza copia del paragrafo
+  della storia, gia' presente (in due varianti leggermente diverse) in
+  templates/index.json e templates/page.about.json. Chi aggiungeva una nuova
+  sezione dall'editor tema si ritrovava la vecchia versione con "senza
+  compromessi" e il tricolon "pensato, scelto e provato", cioe' proprio le
+  formule che stiamo togliendo dal sito. Riallineati al testo nuovo.
+
+  Il sopratitolo non ha piu' un valore di default (la chiave "default" e'
+  proprio assente: Shopify rifiuta il file se la si lascia come stringa
+  vuota). Sul sito quasi ogni sezione aveva la coppia sopratitolo + titolo, e
+  quella regolarita' e' meta' del motivo per cui la pagina sembrava compilata
+  da un modello invece che scritta.
+{%- endcomment -%}
+{% schema %}
+{
+  "name": "Storia del brand",
+  "settings": [
+    { "type": "image_picker", "id": "image", "label": "Immagine (Aron & Mia)" },
+    { "type": "select", "id": "layout", "label": "Posizione immagine", "options": [ {"value":"left","label":"Sinistra"}, {"value":"right","label":"Destra"} ], "default": "left" },
+    { "type": "checkbox", "id": "show_seal", "label": "Mostra emblema", "default": true },
+    { "type": "text", "id": "section_number", "label": "Numero sezione (decorativo)", "default": "02" },
+    { "type": "text", "id": "eyebrow", "label": "Sopratitolo (opzionale)", "info": "Lascialo vuoto se il titolo si spiega da solo: non serve su ogni sezione." },
+    { "type": "text", "id": "heading", "label": "Titolo", "default": "Tutto è iniziato con Aron e Mia" },
+    { "type": "text", "id": "pullquote", "label": "Citazione in evidenza (opzionale)", "default": "Diciassette anni, due cani, un collare che non esisteva." },
+    { "type": "richtext", "id": "text", "label": "Testo", "default": "<p>Perla nasce da Emanuele e Nicola, diciassette anni, e dai loro due cani. Cercavano un collare che non fosse né di plastica né da novanta euro, e non lo trovavano.</p><p>Così hanno iniziato a disegnarli. Ogni pezzo passa prima da Aron e Mia: se non piace a loro, non arriva a te.</p>" },
+    { "type": "text", "id": "signature", "label": "Firma", "default": "— Emanuele, Nicola, Aron & Mia" },
+    { "type": "text", "id": "button_label", "label": "Bottone", "default": "Vedi i prodotti" },
+    { "type": "url", "id": "button_link", "label": "Link bottone" },
+    { "type": "select", "id": "bg", "label": "Sfondo", "options": [ {"value":"default","label":"Bianco perla"}, {"value":"cream","label":"Crema"} ], "default": "cream" }
+  ],
+  "presets": [
+    { "name": "Storia del brand" }
+  ]
+}
+{% endschema %}
