@@ -33,6 +33,11 @@
               non "400x400": l'altezza resta proporzionale, cosi' il ritaglio
               lo continua a fare il CSS esattamente come prima e nessuna foto
               cambia inquadratura.
+
+              QUANTO SI GUADAGNA, MISURATO DOPO: 348 KB -> 279 KB sulle sei.
+              Viene dal formato (image/jpeg -> image/webp), non dalle misure:
+              le foto erano gia' vicine ai 400 pixel. Per scendere davvero
+              bisogna rifarle piu' compresse, non cambiare il filtro.
             {%- endcomment -%}
             {%- assign ig_n = forloop.index0 | modulo: 6 | plus: 1 -%}
             <img src="{{ 'ig-' | append: ig_n | append: '.jpg' | asset_img_url: '400x' }}" width="400" height="400" alt="" loading="lazy">

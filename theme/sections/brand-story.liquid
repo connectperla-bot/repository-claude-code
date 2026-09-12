@@ -21,6 +21,13 @@
               e Shopify serve WebP o AVIF a chi li accetta. Larghezza sola e
               non "1000x1333", cosi' l'altezza resta quella vera della foto e
               l'inquadratura non cambia di un pixel.
+
+              QUANTO SI GUADAGNA, MISURATO DOPO: 260 KB -> 243 KB. Poco, ed e'
+              giusto saperlo: la foto era gia' larga quasi mille pixel, quindi
+              non c'era niente da rimpicciolire. Il guadagno viene tutto dal
+              formato -- prima usciva image/jpeg, adesso image/webp -- e il
+              resto del peso e' la compressione del file di partenza, che si
+              sistema solo rifacendo la foto.
             {%- endcomment -%}
             <img src="{{ 'story-1.jpg' | asset_img_url: '1000x' }}" sizes="(max-width:749px) 100vw, 50vw" width="1000" height="1333" alt="Aron & Mia" loading="lazy">
           {%- endif -%}
