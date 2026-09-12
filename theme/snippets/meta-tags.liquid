@@ -53,6 +53,14 @@
   {%- if descrizione_ld == blank -%}
     {%- assign descrizione_ld = product.description | strip_html | truncate: 300 -%}
   {%- endif -%}
+  {%- comment -%}
+    page_description esce con le entita' HTML gia' dentro (&quot;, &#39;),
+    perche' e' fatto per finire in un attributo. Qui invece finisce in un JSON
+    che legge una macchina: senza questo passaggio Google leggeva
+    «Collare &quot;Barocco&quot;» alla lettera. &amp; va per ultimo, se no
+    decodificherebbe due volte quello appena scritto dagli altri.
+  {%- endcomment -%}
+  {%- assign descrizione_ld = descrizione_ld | replace: '&quot;', '"' | replace: '&#34;', '"' | replace: '&#39;', "'" | replace: '&apos;', "'" | replace: '&lt;', '<' | replace: '&gt;', '>' | replace: '&amp;', '&' -%}
   {%- assign personalizzato_ld = false -%}
   {%- if product.tags contains 'personalizzabile' or product.tags contains 'POD' or product.tags contains 'custom' -%}
     {%- assign personalizzato_ld = true -%}
